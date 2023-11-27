@@ -12,7 +12,7 @@ from typing import Union, List, Dict, Tuple
 
 import numpy as np
 from qiskit.opflow import PauliSumOp, PauliOp, OperatorBase
-from qiskit.quantum_info import PauliTable, SparsePauliOp, Pauli
+from qiskit.quantum_info import PauliList, SparsePauliOp, Pauli
 
 
 def remove_unused_qubits(
@@ -65,7 +65,8 @@ def _compress_pauli_sum_op(
     total_hamiltonian: Union[PauliSumOp, PauliOp, OperatorBase],
     unused_qubits: List[int],
 ) -> Union[PauliSumOp, PauliOp, OperatorBase]:
-    new_tables = []
+    new_tables_x = []
+    new_tables_z = []
     new_coeffs = []
     for term in total_hamiltonian:
         table_z = term.primitive.paulis.z[0]
@@ -74,10 +75,10 @@ def _compress_pauli_sum_op(
         new_table_z, new_table_x = _calc_reduced_pauli_tables(
             num_qubits, table_x, table_z, unused_qubits
         )
-        new_table = np.concatenate((new_table_x, new_table_z), axis=0)
-        new_tables.append(new_table)
+        new_tables_z.append(new_table_z)
+        new_tables_x.append(new_table_x)
         new_coeffs.append(coeffs)
-    new_pauli_table = PauliTable(data=new_tables)
+    new_pauli_table = PauliList.from_symplectic(new_tables_z, new_tables_x)
     total_hamiltonian_compressed = PauliSumOp(
         SparsePauliOp(data=new_pauli_table, coeffs=new_coeffs)
     ).reduce()

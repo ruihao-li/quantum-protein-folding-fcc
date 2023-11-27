@@ -12,7 +12,7 @@ from typing import Union
 
 import numpy as np
 from qiskit.opflow import PauliSumOp, OperatorBase, PauliOp
-from qiskit.quantum_info import PauliTable, SparsePauliOp, Pauli
+from qiskit.quantum_info import PauliList, SparsePauliOp, Pauli
 
 
 def _fix_qubits(
@@ -39,7 +39,8 @@ def _fix_qubits(
     ):
         return operator
     operator = operator.reduce()
-    new_tables = []
+    new_tables_x = []
+    new_tables_z = []
     new_coeffs = []
     if isinstance(operator, PauliOp):
         table_z = np.copy(operator.primitive.z)
@@ -52,10 +53,10 @@ def _fix_qubits(
         table_x = np.copy(hamiltonian.primitive.paulis.x[0])
         coeffs = _calc_updated_coeffs(hamiltonian, table_z, has_side_chain_second_bead)
         _preset_binary_vals(table_z, has_side_chain_second_bead)
-        new_table = np.concatenate((table_x, table_z), axis=0)
-        new_tables.append(new_table)
+        new_tables_x.append(table_x)
+        new_tables_z.append(table_z)
         new_coeffs.append(coeffs)
-    new_pauli_table = PauliTable(data=new_tables)
+    new_pauli_table = PauliList.from_symplectic(new_tables_z, new_tables_x)
     operator_updated = PauliSumOp(
         SparsePauliOp(data=new_pauli_table, coeffs=new_coeffs)
     )
