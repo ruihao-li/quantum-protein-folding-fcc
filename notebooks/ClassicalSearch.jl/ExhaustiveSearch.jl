@@ -172,5 +172,11 @@ results = ThreadSafeDict{String,Float64}()
 end
 
 # sort the results by energy and list the 10 lowest energy conformers
-sort(collect(results), by=x -> x[2])[1:10]
+# sort(collect(results), by=x -> x[2])[1:10]
+
+# write the results to a text file
+f = open(joinpath(@__DIR__, "results_13AA_fake.txt"), "w+")
+for (config, energy) in sort(collect(results), by=x -> x[2])[1:50]
+    write(f, "$config $energy\n")
+end
 
