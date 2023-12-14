@@ -8,7 +8,7 @@ using ThreadSafeDicts
 nthreads()
 
 # Add path
-push!(LOAD_PATH, "/Users/ruihaoli/Library/CloudStorage/OneDrive-TheUniversityofSydney (Students)/CCF Work/protein_folding/temp_codes")
+push!(LOAD_PATH, "~/protein-folding-qc/classical_search/")
 
 println(@__DIR__)
 
@@ -42,7 +42,7 @@ function compute_energy(hamiltonian::Dict, config::String)
     Compute the energy of a given qubit configuration based on the Hamiltonian that consists of only Pauli-Z and identity operators.
     =#
     energy = 0.0
-    for (op, coeff) in hamiltonian
+    @inbounds for (op, coeff) in hamiltonian
         # compute the energy of each term
         z_pos = findall(x -> x == 'Z', op)
         # count how many 1s in the corresponding qubit positions
