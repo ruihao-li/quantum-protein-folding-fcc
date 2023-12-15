@@ -100,7 +100,7 @@ int main()
 			{
 			case 'Z':
 				bitshift = (QBITS - 1 - i);
-				if (bitshift <= 64)
+				if (bitshift < 64)
 					bits[terms] += ((uint64_t)1) << bitshift;
 				else
 					bits_2[terms] += ((uint64_t)1) << (bitshift - 64);
