@@ -471,7 +471,7 @@ int main()
 		for (k = 0; k < QBITS; k++)		// right to left (LSB to MSB)
 		{
 			bitshift = (QBITS - 1 - k);
-			if (bitshift <= 64)
+			if (bitshift < 64)
 			{
 				bitval = (xtop_all[i] & (one64u << bitshift)) ? 1 : 0;
 			}
