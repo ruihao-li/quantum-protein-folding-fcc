@@ -143,7 +143,5 @@ class DistanceMap:
         if is_side_chain_upper == 1:
             upper_bead = upper_bead.side_chain[0]
         x = self.distance_map[lower_bead][upper_bead]
-        expression = lambda_1 * (
-            2 * (_build_full_identity(x.num_qubits)) - x
-        ) + pair_energies_multiplier * energy * _build_full_identity(x.num_qubits)
+        expression = lambda_1 * (2 * (_build_full_identity(x.num_qubits)) - x)
         return _fix_qubits(expression)
