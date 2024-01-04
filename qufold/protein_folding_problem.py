@@ -115,6 +115,52 @@ class ProteinFoldingProblem(SamplingProblem):
             turn_sequence=best_turn_sequence,
         )
 
+    def interpret_new(
+        self, raw_result: MinimumEigensolverResult
+    ) -> "ProteinFoldingResult":
+        """
+        Interprets the raw algorithm result, in the context of this problem, and returns a
+        ProteinFoldingResult. The returned class can plot the protein and generate a
+        .xyz file with the coordinates of each of its atoms.
+        Args:
+            raw_result: The raw result of solving the protein folding problem.
+
+        Returns:
+            A :class:`~qiskit_research.protein_folding.ProteinFoldingResult`
+            instance that contains the protein folding result.
+        """
+        # pylint: disable=import-outside-toplevel
+        from .protein_folding_result import ProteinFoldingResult
+
+        best_turn_sequence = raw_result.best_measurement["bitstring"]
+        return ProteinFoldingResult(
+            unused_qubits=self.unused_qubits,
+            peptide=self.peptide,
+            turn_sequence=best_turn_sequence,
+        )
+
+    def interpret_bitstring(self, bitstring: str) -> "ProteinFoldingResult":
+        """
+        Interprets the a particular bitstring solution and returns a
+        ProteinFoldingResult. The returned class can plot the protein and generate a
+        .xyz file with the coordinates of each of its atoms.
+        Args:
+            raw_result: The raw result of solving the protein folding problem.
+
+        Returns:
+            A :class:`~qiskit_research.protein_folding.ProteinFoldingResult`
+            instance that contains the protein folding result.
+        """
+        # pylint: disable=import-outside-toplevel
+        from .protein_folding_result import ProteinFoldingResult
+
+        best_turn_sequence = bitstring
+        return ProteinFoldingResult(
+            unused_qubits=self.unused_qubits,
+            peptide=self.peptide,
+            turn_sequence=best_turn_sequence,
+        )
+
     @property
     def unused_qubits(self) -> List[int]:
         """Returns the list of indices for qubits in the original problem formulation that were
