@@ -154,6 +154,13 @@ class ProteinFoldingProblem(SamplingProblem):
         # pylint: disable=import-outside-toplevel
         from .protein_folding_result import ProteinFoldingResult
 
+        # This is a hacky way to make sure the interpretation works correctly when there is no side chain without having to build qubit_op
+        if (
+            self._peptide.get_side_chains()
+            == [None for _ in range(len(self._peptide.get_main_chain))]
+            and 5 not in self.unused_qubits
+        ):
+            self._unused_qubits.append(5)
         best_turn_sequence = bitstring
         return ProteinFoldingResult(
             unused_qubits=self.unused_qubits,
