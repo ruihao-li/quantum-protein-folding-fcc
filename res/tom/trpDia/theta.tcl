@@ -1,4 +1,4 @@
-# this takes some time to run (guess ~15 minutes) 
+# with minimal printing of just theta to the console, this is now much faster!! 
 set d216  [atomselect 0 "resid 1 to 216"]
 set d [$d216 get {x y z}]
 set t11   [atomselect 2 "resid 10 to 20"]

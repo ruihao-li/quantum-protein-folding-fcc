@@ -38,14 +38,14 @@ source center.tcl
 source spin.tcl
 source theta.tcl
 
-# The last one takes time, and the first one simply sources in dia.tcl, alf.tcl and trp0.tcl, to 
+# The first one simply sources in dia.tcl, alf.tcl and trp0.tcl, to 
 # bring in the diamond lattice, the 1-D helical lattice, and trp-Cage centered in the diamond.
 # The second one aligns the first 9 CA of trp-cage to middle the middle of the helical lattice.
 # The third one moves the cylinder's axis to the z axis; after this the user needs to click on 
 # the big yellow sulfur atom in the center a few times and the hit "r" to rotate about this center
 # And spin.tcl does a 360 spin about the z-axis, which is what is happening when we scan theta angles to form RMSD. 
 
-The workhorse is theta.tcl.  This takes time to run, and was a challenge to write, so it may take effort grasp.
+The workhorse is theta.tcl.  This was a challenge to write, so it may take effort grasp.
 
 
 
