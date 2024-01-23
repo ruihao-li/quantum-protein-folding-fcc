@@ -1,2 +1,2 @@
 # protein-folding-qc
-Protein confirmation prediction with quantum computing
+Protein conformation prediction with quantum computing
