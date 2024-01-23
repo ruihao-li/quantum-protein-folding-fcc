@@ -1,2 +1,2 @@
 # protein-folding-qc
-Protein conformation prediction with quantum computing
+Quantum Computing-based coarse-grained predictions of protein conformations on lattices.   
