@@ -5,7 +5,7 @@ __pycache__/
 
 # R project files
 *.Rproj
-
+.Rhistory
 
 # C extensions
 *.so
