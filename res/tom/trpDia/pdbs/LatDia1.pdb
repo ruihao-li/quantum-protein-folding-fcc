@@ -1,0 +1,16 @@
+CRYST1    9.000    9.000    9.000  90.00  90.00  90.00
+ATOM      1 N    Dia A   1        0.00    0.00    0.00     0     1         
+ATOM      2 F    Dia B   2        2.25    2.25    2.25     0     1         
+ATOM      3 N    Dia A   3        0.00    4.50    4.50     0     1         
+ATOM      4 F    Dia B   4        2.25    6.75    6.75     0     1         
+ATOM      5 N    Dia A   5        4.50    0.00    4.50     0     1         
+ATOM      6 F    Dia B   6        6.75    2.25    6.75     0     1         
+ATOM      7 N    Dia A   7        4.50    4.50    0.00     0     1         
+ATOM      8 F    Dia B   8        6.75    6.75    2.25     0     1         
+CONECT    1    2
+CONECT    2    3
+CONECT    2    5
+CONECT    2    7
+CONECT    3    4
+CONECT    5    6
+CONECT    7    8

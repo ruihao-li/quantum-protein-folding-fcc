@@ -1,0 +1,40 @@
+CRYST1   54.000   54.000   54.000  90.00  90.00  90.00
+HETATM    1 F    DIA B 686       15.75   20.25   24.75     0     1         
+HETATM    2 N    DIA A 689       18.00   18.00   18.00     0     1         
+HETATM    3 F    DIA B 690       20.25   20.25   20.25     0     1         
+HETATM    4 N    DIA A 691       18.00   22.50   22.50     0     1         
+HETATM    5 F    DIA B 742       24.75   29.25   24.75     0     1         
+HETATM    6 F    DIA B 974       15.75   20.25   33.75     0     1         
+HETATM    7 N    DIA A 977       18.00   18.00   27.00     0     1         
+HETATM    8 F    DIA B 978       20.25   20.25   29.25     0     1         
+HETATM    9 N    DIA A 979       18.00   22.50   31.50     0     1         
+HETATM   10 F    DIA B 984       24.75   24.75   29.25     0     1         
+HETATM   11 N    DIA A 987       27.00   22.50   31.50     0     1         
+HETATM   12 F    DIA B 988       29.25   24.75   33.75     0     1         
+HETATM   13 N    DIA A1033       27.00   27.00   27.00     0     1         
+HETATM   14 N    DIA A1265       18.00   18.00   36.00     0     1         
+HETATM   15 F    DIA B1266       20.25   20.25   38.25     0     1         
+HETATM   16 N    DIA A1271       22.50   22.50   36.00     0     1         
+HETATM   17 F    DIA B1272       24.75   24.75   38.25     0     1         
+HETATM   18 F    DIA B1274       29.25   20.25   38.25     0     1         
+HETATM   19 N    DIA A1275       27.00   22.50   40.50     0     1         
+HETATM   20 N    DIA A1279       31.50   22.50   36.00     0     1         
+CONECT    1    4
+CONECT    1    7
+CONECT    2    3
+CONECT    3    4
+CONECT    5   13
+CONECT    6    9
+CONECT    6   14
+CONECT    7    8
+CONECT    8    9
+CONECT   10   11
+CONECT   10   13
+CONECT   11   12
+CONECT   12   20
+CONECT   14   15
+CONECT   15   16
+CONECT   16   17
+CONECT   17   19
+CONECT   18   19
+CONECT   18   20

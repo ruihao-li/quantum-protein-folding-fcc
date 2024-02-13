@@ -1,0 +1,7 @@
+rm(list=ls())
+library(tidyverse) 
+library(Rpdb)
+x=read.pdb("trpDia/pdbs/trpCageDia.pdb")
+x$conect <- conect(x,safety=4)
+visualize(x)
+write.pdb(x,"trpDia/pdbs/trpCageDiaCon.pdb")
