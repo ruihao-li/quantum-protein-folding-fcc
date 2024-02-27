@@ -1,0 +1,140 @@
+HEADER    LATTICE PROTEIN STRUCTURE               19-FEB-D4   2JOF              
+TITLE     FIT OF THE PDB STRUCTURE 2JOF ONTO A LATTICE                          
+COMPND    MOL_ID: 1;                                                            
+COMPND   2 MOLECULE: LATTICE PROTEIN;                                           
+COMPND   3 CHAIN: L, P;                                                         
+COMPND   4 ENGINEERED: YES                                                      
+SOURCE    MOL_ID: 1                                                             
+KEYWDS    LATTICE FITTING                                                       
+EXPDTA    THEORETICAL MODEL                                                     
+AUTHOR    LATFIT SOFTWARE                                                       
+REMARK  40                                                                      
+REMARK  40 GENERATED WITH LATFIT (C) MARTIN MANN 2008                           
+REMARK  40  LATTICE = cub                                                       
+REMARK  40  PDB ID  = 2JOF                                                      
+REMARK  40  CRMSD   =   1.9238                                                  
+REMARK  40  DRMSD   =   1.3404                                                  
+REMARK 220                                                                      
+REMARK 220 EXPERIMENTAL DETAILS                                                 
+REMARK 220 EXPERIMENT TYPE : THEORETICAL MODELLING                              
+REMARK 220                                                                      
+REMARK 220 PARAMETER SET APPLIED TO LATFIT :                                    
+REMARK 220                                                                      
+REMARK 220  pdb-file=input.pdb                                                  
+REMARK 220  pdb-chain=A                                                         
+REMARK 220  pdb-chain-gaps=true                                                 
+REMARK 220  pdb-atom=CA                                                         
+REMARK 220  pdb-model=1                                                         
+REMARK 220  lattice=cub                                                         
+REMARK 220  bond-len=3.8                                                        
+REMARK 220  nKeep=100                                                           
+REMARK 220  optimizing=cRMSD                                                    
+REMARK 220  rot-steps=5                                                         
+REMARK 220  rot-max=0.5*PI                                                      
+REMARK 220  do-refinement=false                                                 
+REMARK 220  ref-rot-steps=0                                                     
+REMARK 220  ref-rot-max=0.1*PI                                                  
+REMARK 220  side-chain=false                                                    
+REMARK 220  sc-lattice=cub                                                      
+REMARK 220  sc-contrib=1                                                        
+REMARK 220  fit-dir-vec=false                                                   
+REMARK 220  dirVecLength=3.8                                                    
+REMARK 220  outOrigData=true                                                    
+REMARK 220  outMode=PDB                                                         
+REMARK 220                                                                      
+REMARK 220 REMARK: THE LATTICE STRUCTURE WAS FITTED USING A GREEDY METHOD       
+REMARK 225                                                                      
+REMARK 225 THEORETICAL MODEL                                                    
+REMARK 225 THE COORDINATES IN THIS ENTRY REPRESENT A LATTICE MODEL STRUCTURE.   
+REMARK 225                                                                      
+REMARK 225 THE LATTICE PROTEIN STRUCTURE IS GIVEN AS CHAIN L.                   
+REMARK 225 THE BACKBONE IS REPRESENTED BY A CA-ATOMS AS A 'C'-elements.         
+REMARK 225                                                                      
+REMARK 225 THE INITIAL PROTEIN POSITIONS THAT WERE FITTED ARE GIVEN AS CHAIN P. 
+REMARK 225                                                                      
+SEQRES   1 L   20  ASP ALA TYR ALA GLN TRP LEU LYS ASP GLY GLY PRO SER
+SEQRES   2 L   20  SER GLY ARG PRO PRO PRO SER
+SEQRES   1 P   20  ASP ALA TYR ALA GLN TRP LEU LYS ASP GLY GLY PRO SER
+SEQRES   2 P   20  SER GLY ARG PRO PRO PRO SER
+HETATM    1  CA  ASP L   1      22.746   6.821  -3.378  1.00  0.00           C  
+HETATM    2  CA  ALA L   2      25.820   4.587  -3.378  1.00  0.00           C  
+HETATM    3  CA  TYR L   3      26.510   5.537   0.236  1.00  0.00           C  
+HETATM    4  CA  ALA L   4      24.386   2.614   1.410  1.00  0.00           C  
+HETATM    5  CA  GLN L   5      23.696   1.664  -2.204  1.00  0.00           C  
+HETATM    6  CA  TRP L   6      26.770  -0.570  -2.204  1.00  0.00           C  
+HETATM    7  CA  LEU L   7      27.460   0.380   1.410  1.00  0.00           C  
+HETATM    8  CA  LYS L   8      25.336  -2.544   2.585  1.00  0.00           C  
+HETATM    9  CA  ASP L   9      28.410  -4.777   2.585  1.00  0.00           C  
+HETATM   10  CA  GLY L  10      29.101  -3.827   6.199  1.00  0.00           C  
+HETATM   11  CA  GLY L  11      31.225  -0.904   5.024  1.00  0.00           C  
+HETATM   12  CA  PRO L  12      34.299  -3.137   5.024  1.00  0.00           C  
+HETATM   13  CA  SER L  13      32.175  -6.061   6.199  1.00  0.00           C  
+HETATM   14  CA  SER L  14      31.485  -7.011   2.585  1.00  0.00           C  
+HETATM   15  CA  GLY L  15      33.609  -4.087   1.410  1.00  0.00           C  
+HETATM   16  CA  ARG L  16      35.733  -1.163   0.236  1.00  0.00           C  
+HETATM   17  CA  PRO L  17      37.858   1.760  -0.938  1.00  0.00           C  
+HETATM   18  CA  PRO L  18      34.783   3.994  -0.938  1.00  0.00           C  
+HETATM   19  CA  PRO L  19      31.709   6.228  -0.938  1.00  0.00           C  
+HETATM   20  CA  SER L  20      33.833   9.151  -2.113  1.00  0.00           C  
+HETATM   21  CA  ASP P   1      22.746   6.821  -3.378  1.00  0.00           C  
+HETATM   22  CA  ALA P   2      25.968   4.821  -3.656  1.00  0.00           C  
+HETATM   23  CA  TYR P   3      26.691   5.317   0.123  1.00  0.00           C  
+HETATM   24  CA  ALA P   4      23.305   3.738   1.010  1.00  0.00           C  
+HETATM   25  CA  GLN P   5      24.324   0.636  -1.015  1.00  0.00           C  
+HETATM   26  CA  TRP P   6      27.939   0.765   0.370  1.00  0.00           C  
+HETATM   27  CA  LEU P   7      26.513   0.223   3.896  1.00  0.00           C  
+HETATM   28  CA  LYS P   8      23.983  -2.465   2.653  1.00  0.00           C  
+HETATM   29  CA  ASP P   9      26.833  -4.578   1.163  1.00  0.00           C  
+HETATM   30  CA  GLY P  10      28.693  -4.383   4.580  1.00  0.00           C  
+HETATM   31  CA  GLY P  11      30.828  -1.185   4.062  1.00  0.00           C  
+HETATM   32  CA  PRO P  12      34.440  -1.955   5.252  1.00  0.00           C  
+HETATM   33  CA  SER P  13      33.561  -5.719   5.076  1.00  0.00           C  
+HETATM   34  CA  SER P  14      33.098  -5.543   1.266  1.00  0.00           C  
+HETATM   35  CA  GLY P  15      36.410  -3.643   0.636  1.00  0.00           C  
+HETATM   36  CA  ARG P  16      34.727  -1.465  -2.108  1.00  0.00           C  
+HETATM   37  CA  PRO P  17      36.016   2.191  -1.791  1.00  0.00           C  
+HETATM   38  CA  PRO P  18      33.451   4.462   0.024  1.00  0.00           C  
+HETATM   39  CA  PRO P  19      31.901   7.248  -2.156  1.00  0.00           C  
+HETATM   40  CA  SER P  20      33.016  10.745  -0.974  1.00  0.00           C  
+TER                                                                             
+CONECT    1    2                                                                
+CONECT    2    1    3                                                           
+CONECT    3    2    4                                                           
+CONECT    4    3    5                                                           
+CONECT    5    4    6                                                           
+CONECT    6    5    7                                                           
+CONECT    7    6    8                                                           
+CONECT    8    7    9                                                           
+CONECT    9    8   10                                                           
+CONECT   10    9   11                                                           
+CONECT   11   10   12                                                           
+CONECT   12   11   13                                                           
+CONECT   13   12   14                                                           
+CONECT   14   13   15                                                           
+CONECT   15   14   16                                                           
+CONECT   16   15   17                                                           
+CONECT   17   16   18                                                           
+CONECT   18   17   19                                                           
+CONECT   19   18   20                                                           
+CONECT   20   19                                                                
+CONECT   21   22                                                                
+CONECT   22   21   23                                                           
+CONECT   23   22   24                                                           
+CONECT   24   23   25                                                           
+CONECT   25   24   26                                                           
+CONECT   26   25   27                                                           
+CONECT   27   26   28                                                           
+CONECT   28   27   29                                                           
+CONECT   29   28   30                                                           
+CONECT   30   29   31                                                           
+CONECT   31   30   32                                                           
+CONECT   32   31   33                                                           
+CONECT   33   32   34                                                           
+CONECT   34   33   35                                                           
+CONECT   35   34   36                                                           
+CONECT   36   35   37                                                           
+CONECT   37   36   38                                                           
+CONECT   38   37   39                                                           
+CONECT   39   38   40                                                           
+CONECT   40   39                                                                
+END   

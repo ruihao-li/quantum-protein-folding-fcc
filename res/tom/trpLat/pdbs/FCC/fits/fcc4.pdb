@@ -1,0 +1,39 @@
+HETATM    1  CA  ASP A   1      26.870  24.183  24.183     1     0         
+HETATM    2  CA  ALA A   2      24.183  24.183  26.870     1     0         
+HETATM    3  CA  TYR A   3      26.870  26.870  26.870     1     0         
+HETATM    4  CA  ALA A   4      29.557  29.557  26.870     1     0         
+HETATM    5  CA  GLN A   5      26.870  29.557  29.557     1     0         
+HETATM    6  CA  TRP A   6      26.870  26.870  32.244     1     0         
+HETATM    7  CA  LEU A   7      29.557  29.557  32.244     1     0         
+HETATM    8  CA  LYS A   8      26.870  32.244  32.244     1     0         
+HETATM    9  CA  ASP A   9      24.183  32.244  34.931     1     0         
+HETATM   10  CA  GLY A  10      26.870  32.244  37.618     1     0         
+HETATM   11  CA  GLY A  11      29.557  29.557  37.618     1     0         
+HETATM   12  CA  PRO A  12      29.557  26.870  40.305     1     0         
+HETATM   13  CA  SER A  13      26.870  29.557  40.305     1     0         
+HETATM   14  CA  SER A  14      24.183  26.870  40.305     1     0         
+HETATM   15  CA  GLY A  15      26.870  24.183  40.305     1     0         
+HETATM   16  CA  ARG A  16      24.183  24.183  37.618     1     0         
+HETATM   17  CA  PRO A  17      26.870  21.496  37.618     1     0         
+HETATM   18  CA  PRO A  18      29.557  21.496  34.931     1     0         
+HETATM   19  CA  PRO A  19      29.557  18.809  32.244     1     0         
+HETATM   20  CA  SER A  20      32.244  18.809  29.557     1     0         
+CONECT    1    2
+CONECT    2    3
+CONECT    3    4
+CONECT    4    5
+CONECT    5    6
+CONECT    6    7
+CONECT    7    8
+CONECT    8    9
+CONECT    9   10
+CONECT   10   11
+CONECT   11   12
+CONECT   12   13
+CONECT   13   14
+CONECT   14   15
+CONECT   15   16
+CONECT   16   17
+CONECT   17   18
+CONECT   18   19
+CONECT   19   20
