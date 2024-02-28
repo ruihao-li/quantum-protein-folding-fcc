@@ -1,0 +1,11 @@
+## In my home directory, the file .zshrc contains 
+alias cx="/Applications/ChimeraX-1.7.1.app/Contents/bin/ChimeraX"
+# so when I open a terminal in trpLat, cx starts ChimeraX where the py files are, so e.g. "runscript scanBCC.py" works inside ChimeraX.
+
+# The work flow here is to first run the mkLatXXX.R files to create lattice pdb files like LatFCC.pdb and conFCC.rxr
+# Then go into the ChimeraX python shell and do all 4 of "runscript scanXXX.py" to make files like FCCfits.txt
+# Then go back to R to run mkPDBs.R to make xxx2.pdb to xxx19.pdb for all 4 lattices xxx (see fits folder of each xxx lattice folder)
+# Now go back into the ChimeraX python shell and do all 4 of "runscript vFitsX.py" to view all of the fits of a lattice at once.
+# Finally, use "runscript vBestFits.py" to view best fits of each lattice; transparent fits (blue for FCC, orange for cubic) are LatFit fits
+
+
