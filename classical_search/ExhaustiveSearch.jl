@@ -78,7 +78,7 @@ function rel_turn_to_config_qubits(rel_turns::Tuple{Vararg{Int}})
 end
 
 @inline turn_ind_func_0(i::Int, full_config_seq::BitVector) = ~full_config_seq[2*i-1] & ~full_config_seq[2*i]
-@inline turn_ind_func_1(i::Int, full_config_seq::BitVector) = ~full_config_seq[2*i-1]& full_config_seq[2*i]
+@inline turn_ind_func_1(i::Int, full_config_seq::BitVector) = ~full_config_seq[2*i-1] & full_config_seq[2*i]
 @inline turn_ind_func_2(i::Int, full_config_seq::BitVector) = full_config_seq[2*i-1] & ~full_config_seq[2*i]
 @inline turn_ind_func_3(i::Int, full_config_seq::BitVector) = full_config_seq[2*i-1] & full_config_seq[2*i]
 
@@ -121,7 +121,7 @@ function generate_final_qubit_seq(full_config_seq::BitVector)
     # reverse the sequence and remove the last four qubits
     full_seq = reverse!(full_seq)[1:end-4]
     # remove the qubit to the left of the last qubit
-    deleteat!(full_seq, length(full_seq)-1)
+    deleteat!(full_seq, length(full_seq) - 1)
     return full_seq
 end
 
@@ -131,7 +131,7 @@ N = 7; # length of the amino acid sequence
 # generate all possible 3-turn encoding {0, 1, 2} of length N - 3
 all_rel_turns = generate_all_rel_turns(N)
 
-results = ThreadSafeDict{BitVector, Float64}()
+results = ThreadSafeDict{BitVector,Float64}()
 @time @threads for rel_turns in all_rel_turns
     # convert relative turns to absolute turns and then to qubit representation
     full_config_seq = rel_turn_to_config_qubits(rel_turns)
