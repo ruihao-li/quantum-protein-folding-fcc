@@ -1,3 +1,16 @@
+# GROMACS files
+*.gro
+*.itp
+*.top
+*.tpr
+*.log
+*.trr
+*.edr
+*.cpt
+*.xtc
+*.xvg
+mdout.mdp
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
