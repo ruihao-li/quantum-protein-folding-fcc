@@ -14,24 +14,24 @@ from typing import Tuple, List
 import numpy as np
 
 
-def _load_energy_matrix_file() -> Tuple[np.ndarray, List[str]]:
+def _load_energy_matrix_file(file_name: str = "mj_matrix") -> Tuple[np.ndarray, List[str]]:
     """Returns the energy matrix from the Miyazawa-Jernigan potential file."""
 
-    path = _construct_resource_path()
+    path = _construct_resource_path(file_name)
     matrix = np.loadtxt(fname=path, dtype=str)
     energy_matrix = _parse_energy_matrix(matrix)
     symbols = list(matrix[0, :])
     return energy_matrix, symbols
 
 
-def _construct_resource_path():
+def _construct_resource_path(file_name: str = "mj_matrix") -> str:
     path = os.path.realpath(
         os.path.join(
             os.path.dirname(__file__),
             "..",
             "interactions",
             "resources",
-            "mj_matrix.txt",
+            file_name + ".txt",
         )
     )
 
