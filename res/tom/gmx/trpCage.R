@@ -13,9 +13,9 @@ NGLVieweR("../pulchra/pdbs/FCC2.pdb")%>%addRepresentation("cartoon")%>%addRepres
 
 # i=2
 # lat="DIA"  #set things up for for-loops later
-for (i in 3:19)
-  for (lat in c("DIA")) {
-#   for (lat in c("FCC")) {
+for (i in 2:19)
+  # for (lat in c("DIA")) {
+  for (lat in c("CUB","BCC","FCC")) {
     # system(paste0("gmx pdb2gmx -ignh -f ../pulchra/pdbs/",lat,i,".pdb -ff oplsaa -o gros/",lat,i,"_Pro.gro -p topol.top -i posre.itp -water spce"))
     system(paste0("gmx pdb2gmx -ignh -f ../pulchra/pdbs/",lat,i,".pdb -ff oplsaa -o gros/pro.gro -p topol.top -i posre.itp -water spce"))
     # different options used in https://tutorials.gromacs.org/docs/md-intro-tutorial.html are -ff charm27 and -water tip3p

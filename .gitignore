@@ -11,6 +11,8 @@
 *.xtc
 *.xvg
 mdout.mdp
+temp.*
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
