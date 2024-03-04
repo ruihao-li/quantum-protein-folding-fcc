@@ -23,11 +23,11 @@ from ..data_loaders.energy_matrix_loader import (
 class MixedInteraction(Interaction):
     """A class defining a mixed interaction between beads of a peptide."""
 
-    def __init__(self, additional_energies: np.ndarray = None):
+    def __init__(self, additional_energies: np.ndarray = None, energy_matrix_file: str = "mj_matrix"):
         """
         Args:
-            additional_energies: additional energies to be used in the construction of an energy
-                                matrix for the MixedInteraction.
+            additional_energies: additional energies to be used in the construction of an energy matrix for the MixedInteraction.
+            energy_matrix_file: Name of the file containing the Miyazawa-Jernigan potential.
         """
         self.additional_energies = additional_energies
 
@@ -37,15 +37,14 @@ class MixedInteraction(Interaction):
         potential file.
 
         Args:
-            residue_sequence: A string that contains characters defining residues for
-                            a chain of proteins.
+            residue_sequence: A string that contains characters defining residues for a chain of proteins.
 
         Returns:
             Numpy array of pair energies for amino acids.
         """
         chain_len = len(residue_sequence)
         _validate_residue_sequence(residue_sequence)
-        mj_interaction, list_aa = _load_energy_matrix_file()
+        mj_interaction, list_aa = _load_energy_matrix_file(self.energy_matrix_file)
         pair_energies = np.zeros((chain_len + 1, 2, chain_len + 1, 2))
         for i in range(1, chain_len + 1):
             for j in range(i + 1, chain_len + 1):
