@@ -1,6 +1,6 @@
 library(Peptides) # for plotXVG() views of gmx output
 library(NGLVieweR) # for nglviewer looks at gmx inputs (pdbs)
-library(tidyverse)
+# library(tidyverse)
 setwd("gmx") # switch to gmx to keep topol.top and posre.top in the gmx folder
 Sys.setenv(GMX_MAXBACKUP=-1)
 Sys.setenv(GMX_NO_QUOTES=1)

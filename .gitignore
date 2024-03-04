@@ -4,6 +4,7 @@
 *.top
 *.tpr
 *.log
+*.tex
 *.trr
 *.edr
 *.cpt
