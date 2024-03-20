@@ -1,3 +1,15 @@
+# AMBER files
+*.ncrst
+*.nc
+*.out
+*.rst7
+*.prmtop
+*.log
+*.binpos
+logfile
+mdinfo
+summary*
+
 # GROMACS files
 *.gro
 *.itp
