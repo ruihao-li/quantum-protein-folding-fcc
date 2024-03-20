@@ -92,7 +92,7 @@ for (i in 2:19)
     system("rm pdbs/tmp*")
   }
 
-
+system("rm temp.top*")
 
 ###### end main computational for loop over lattices and tripeptide center AA numbers 2 to 19
 
