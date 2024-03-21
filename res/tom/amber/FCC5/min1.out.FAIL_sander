@@ -1,0 +1,258 @@
+
+          -------------------------------------------------------
+          Amber 22 SANDER                              2022
+          -------------------------------------------------------
+
+| Run on 03/21/2024 at 17:24:48
+
+|   Executable path: /home/radivot/soft/amber22/bin/sander.MPI
+| Working directory: /home/radivot/GH/protein-folding-qc/res/tom/amber/FCC5
+|          Hostname: Unknown
+  [-O]verwriting output
+
+File Assignments:
+|  MDIN: min1.in                                                               
+| MDOUT: min1.out.FAIL_sander                                                  
+|INPCRD: TC5b.rst7                                                             
+|  PARM: TC5b.prmtop                                                           
+|RESTRT: min1.ncrst                                                            
+|  REFC: refc                                                                  
+| MDVEL: mdvel                                                                 
+| MDFRC: mdfrc                                                                 
+|  MDEN: mden                                                                  
+| MDCRD: mdcrd                                                                 
+|MDINFO: mdinfo                                                                
+|  MTMD: mtmd                                                                  
+|INPDIP: inpdip                                                                
+|RSTDIP: rstdip                                                                
+|INPTRA: inptraj                                                               
+
+|    REMLOG: rem.log
+|   REMTYPE: rem.type
+|  REMSTRIP: 
+|   SAVEENE: saveene
+|CLUSTERINF: cluster.info
+| RESERVOIR: reserv/frame
+|   REMDDIM: 
+
+
+ Here is the input file:
+
+Stage 1 - minimisation of TC5b                                                 
+ &cntrl                                                                        
+  imin=1, maxcyc=1000, ncyc=500,                                               
+  cut=999., rgbmax=999.,igb=1, ntb=0,                                          
+  ntpr=100                                                                     
+ /                                                                             
+                                                                               
+
+--------------------------------------------------------------------------------
+   1.  RESOURCE   USE: 
+--------------------------------------------------------------------------------
+
+| Flags: MPI                                                                    
+| New format PARM file being parsed.
+| Version =    1.000 Date = 03/21/24 Time = 16:52:20
+ NATOM  =     304 NTYPES =      12 NBONH =     150 MBONA  =     160
+ NTHETH =     346 MTHETA =     219 NPHIH =     700 MPHIA  =     656
+ NHPARM =       0 NPARM  =       0 NNB   =    1701 NRES   =      20
+ NBONA  =     160 NTHETA =     219 NPHIA =     656 NUMBND =      57
+ NUMANG =     137 NPTRA  =     138 NATYP =      27 NPHB   =       0
+ IFBOX  =       0 NMXRS  =      24 IFCAP =       0 NEXTRA =       0
+ NCOPY  =       0
+
+ Implicit solvent radii are modified Bondi radii (mbondi)                                                   
+| CMAP information read from topology file: 
+
+|     Memory Use     Allocated
+|     Real              729430
+|     Hollerith            934
+|     Integer            37221
+|     Max Pairs              1
+|     nblistReal             0
+|     nblist Int             0
+|       Total             5847 kbytes
+
+| Note: 1-4 EEL scale factors are being read from the topology file.
+
+| Note: 1-4 VDW scale factors are being read from the topology file.
+| Duplicated    0 dihedrals
+| Duplicated    0 dihedrals
+|CMAP: Reticulating splines.
+
+--------------------------------------------------------------------------------
+   2.  CONTROL  DATA  FOR  THE  RUN
+--------------------------------------------------------------------------------
+
+default_name                                                                    
+
+General flags:
+     imin    =       1, nmropt  =       0
+
+Nature and format of input:
+     ntx     =       1, irest   =       0, ntrx    =       1
+
+Nature and format of output:
+     ntxo    =       2, ntpr    =     100, ntrx    =       1, ntwr    =       1
+     iwrap   =       0, ntwx    =       0, ntwv    =       0, ntwe    =       0
+     ioutfm  =       1, ntwprt  =       0, idecomp =       0, rbornstat=      0
+
+Potential function:
+     ntf     =       1, ntb     =       0, igb     =       1, nsnb    =      25
+     ipol    =       0, gbsa    =       0, iesp    =       0
+     dielc   =   1.00000, cut     = 999.00000, intdiel =   1.00000
+     saltcon =   0.00000, offset  =   0.09000, gbalpha=    1.00000
+     gbbeta  =   0.00000, gbgamma =   0.00000, surften =   0.00500
+     rdt     =   0.00000, rgbmax  = 999.00000  extdiel =  78.50000
+     alpb  =        0
+
+Frozen or restrained atoms:
+     ibelly  =       0, ntr     =       0
+
+Energy minimization:
+     maxcyc  =    1000, ncyc    =     500, ntmin   =       1
+     dx0     =   0.01000, drms    =   0.00010
+
+| MPI Timing options:
+|      profile_mpi =        0
+|  INFO: Old style inpcrd file read
+
+
+--------------------------------------------------------------------------------
+   3.  ATOMIC COORDINATES AND VELOCITIES
+--------------------------------------------------------------------------------
+
+default_name                                                                    
+ begin time read from input coords =     0.000 ps
+
+ Number of triangulated 3-point waters found:        0
+|  Atom division among processors:
+|         0      26      52      78     104     129     154     179
+|       204     229     254     279     304
+|  Running AMBER/MPI version on   12 nodes
+
+|  WARNING: The number of processors is not a power of 2
+|           this may be inefficient on some systems.
+
+--------------------------------------------------------------------------------
+   4.  RESULTS
+--------------------------------------------------------------------------------
+
+
+
+   NSTEP       ENERGY          RMS            GMAX         NAME    NUMBER
+      1              NaN            NaN     0.0000E+00     N           1
+
+ BOND    =      701.3693  ANGLE   =      622.1185  DIHED      =      164.2290
+ VDWAALS = *************  EEL     =    -1209.7985  EGB        =           NaN
+ 1-4 VDW =      793.2167  1-4 EEL =      877.7161  RESTRAINT  =        0.0000
+ CMAP    =       32.3607
+
+
+   NSTEP       ENERGY          RMS            GMAX         NAME    NUMBER
+    100              NaN            NaN     0.0000E+00     N           1
+
+ BOND    =           NaN  ANGLE   =    38218.5127  DIHED      =       51.8880
+ VDWAALS =        0.0000  EEL     =        0.0000  EGB        =    -3937.5608
+ 1-4 VDW =           NaN  1-4 EEL =           NaN  RESTRAINT  =        0.0000
+ CMAP    =      -42.8253
+
+
+   NSTEP       ENERGY          RMS            GMAX         NAME    NUMBER
+    200              NaN            NaN     0.0000E+00     N           1
+
+ BOND    =           NaN  ANGLE   =    38218.5127  DIHED      =       51.8880
+ VDWAALS =        0.0000  EEL     =        0.0000  EGB        =    -3937.5608
+ 1-4 VDW =           NaN  1-4 EEL =           NaN  RESTRAINT  =        0.0000
+ CMAP    =      -42.8253
+
+
+   NSTEP       ENERGY          RMS            GMAX         NAME    NUMBER
+    300              NaN            NaN     0.0000E+00     N           1
+
+ BOND    =           NaN  ANGLE   =    38218.5127  DIHED      =       51.8880
+ VDWAALS =        0.0000  EEL     =        0.0000  EGB        =    -3937.5608
+ 1-4 VDW =           NaN  1-4 EEL =           NaN  RESTRAINT  =        0.0000
+ CMAP    =      -42.8253
+
+
+   NSTEP       ENERGY          RMS            GMAX         NAME    NUMBER
+    400              NaN            NaN     0.0000E+00     N           1
+
+ BOND    =           NaN  ANGLE   =    38218.5127  DIHED      =       51.8880
+ VDWAALS =        0.0000  EEL     =        0.0000  EGB        =    -3937.5608
+ 1-4 VDW =           NaN  1-4 EEL =           NaN  RESTRAINT  =        0.0000
+ CMAP    =      -42.8253
+
+
+   NSTEP       ENERGY          RMS            GMAX         NAME    NUMBER
+    500              NaN            NaN     0.0000E+00     N           1
+
+ BOND    =           NaN  ANGLE   =    38218.5127  DIHED      =       51.8880
+ VDWAALS =        0.0000  EEL     =        0.0000  EGB        =    -3937.5608
+ 1-4 VDW =           NaN  1-4 EEL =           NaN  RESTRAINT  =        0.0000
+ CMAP    =      -42.8253
+
+     ... RESTARTED DUE TO LINMIN FAILURE ...
+
+     ... RESTARTED DUE TO LINMIN FAILURE ...
+
+     ... RESTARTED DUE TO LINMIN FAILURE ...
+
+     ... RESTARTED DUE TO LINMIN FAILURE ...
+
+     ... RESTARTED DUE TO LINMIN FAILURE ...
+
+     ***** REPEATED LINMIN FAILURE *****
+
+     ***** SEE http://ambermd.org/Questions/linmin.html FOR MORE INFO *****
+
+
+                    FINAL RESULTS
+
+
+
+   NSTEP       ENERGY          RMS            GMAX         NAME    NUMBER
+    521              NaN            NaN     0.0000E+00     N           1
+
+ BOND    =           NaN  ANGLE   =    38218.5127  DIHED      =       51.8880
+ VDWAALS =        0.0000  EEL     =        0.0000  EGB        =    -3937.5608
+ 1-4 VDW =           NaN  1-4 EEL =           NaN  RESTRAINT  =        0.0000
+ CMAP    =      -42.8253
+
+--------------------------------------------------------------------------------
+   5.  TIMINGS
+--------------------------------------------------------------------------------
+
+|    Read coords time           0.00 ( 0.32% of Total)
+|                Calc gb radii              0.00 (10.25% of Gen B)
+|                Communicate gb radii       0.02 (65.24% of Gen B)
+|                Calc gb diag               0.00 (16.02% of Gen B)
+|                Calc gb off-diag           0.00 ( 7.95% of Gen B)
+|                Other                      0.00 ( 0.54% of Gen B)
+|             Gen Born time              0.02 (100.0% of Nonbo)
+|             IPS excludes               0.00 ( 0.05% of Nonbo)
+|          Nonbond force              0.02 (48.53% of Force)
+|          Bond/Angle/Dihedral        0.00 ( 8.94% of Force)
+|          FRC Collect time           0.01 (17.90% of Force)
+|          Other                      0.01 (24.63% of Force)
+|       Force time                 0.05 (100.0% of Runmd)
+|    Runmd Time                 0.05 (57.13% of Total)
+|    Other                      0.04 (42.54% of Total)
+| Total time                 0.08 (100.0% of ALL  )
+
+| Highest rstack allocated:          0
+| Highest istack allocated:          0
+|           Job began  at 17:24:48.067  on 03/21/2024
+|           Setup done at 17:24:48.081  on 03/21/2024
+|           Run   done at 17:24:48.150  on 03/21/2024
+|     wallclock() was called   12538 times
+
+|3D-RISM memory allocation summary
+|Type          Maximum        Current   
+|Integer       0.00000 GB     0.00000 GB
+|Real          0.00000 GB     0.00000 GB
+|Logical       0.00000 GB     0.00000 GB
+|Character     0.00000 GB     0.00000 GB
+|---------------------------------------
+|Total         0.00000 GB     0.00000 GB
