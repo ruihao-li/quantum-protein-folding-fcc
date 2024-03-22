@@ -1,0 +1,11 @@
+Stage 1 heating of TC5b 200 to 250K
+ &cntrl
+  imin=0, irest=1, ntx=5,
+  nstlim=10000, dt=0.0005,
+  ntc=2, ntf=2,
+  ntt=1, tautp=1.0,
+  tempi=200.0, temp0=250.0,
+  ntpr=50, ntwx=50,
+  ntb=0, igb=1,
+  cut=999.,rgbmax=999.
+ /
