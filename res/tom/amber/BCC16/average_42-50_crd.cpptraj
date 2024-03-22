@@ -1,0 +1,3 @@
+trajin equil_1-10.binpos 42000 50000
+rms first mass @C,CA,N
+average equil_average_42-50.pdb pdb
