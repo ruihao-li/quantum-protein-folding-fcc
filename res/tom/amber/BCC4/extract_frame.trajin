@@ -1,0 +1,2 @@
+trajin equil10.nc 2346 2346
+trajout lowest_energy_struct.pdb pdb

@@ -1,0 +1,11 @@
+Stage 2 equilibration 1 0-5ns
+ &cntrl
+  imin=0, irest=1, ntx=5,
+  nstlim=2500000, dt=0.002,
+  ntc=2, ntf=2,
+  ntt=1, tautp=0.5,
+  tempi=325.0, temp0=325.0,
+  ntpr=500, ntwx=500,
+  ntb=0, igb=1,
+  cut=999.,rgbmax=999.
+ /
