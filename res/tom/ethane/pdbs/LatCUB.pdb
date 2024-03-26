@@ -1,0 +1,82 @@
+CRYST1    4.620    4.620    4.620  90.00  90.00  90.00
+ATOM      1 F    CUB A   1        0.00    0.00    0.00     0     1         
+ATOM      2 F    CUB A   2        1.54    0.00    0.00     0     1         
+ATOM      3 F    CUB A   3        3.08    0.00    0.00     0     1         
+ATOM      4 F    CUB A   4        0.00    1.54    0.00     0     1         
+ATOM      5 F    CUB A   5        1.54    1.54    0.00     0     1         
+ATOM      6 F    CUB A   6        3.08    1.54    0.00     0     1         
+ATOM      7 F    CUB A   7        0.00    3.08    0.00     0     1         
+ATOM      8 F    CUB A   8        1.54    3.08    0.00     0     1         
+ATOM      9 F    CUB A   9        3.08    3.08    0.00     0     1         
+ATOM     10 F    CUB A  10        0.00    0.00    1.54     0     1         
+ATOM     11 F    CUB A  11        1.54    0.00    1.54     0     1         
+ATOM     12 F    CUB A  12        3.08    0.00    1.54     0     1         
+ATOM     13 F    CUB A  13        0.00    1.54    1.54     0     1         
+ATOM     14 F    CUB A  14        1.54    1.54    1.54     0     1         
+ATOM     15 F    CUB A  15        3.08    1.54    1.54     0     1         
+ATOM     16 F    CUB A  16        0.00    3.08    1.54     0     1         
+ATOM     17 F    CUB A  17        1.54    3.08    1.54     0     1         
+ATOM     18 F    CUB A  18        3.08    3.08    1.54     0     1         
+ATOM     19 F    CUB A  19        0.00    0.00    3.08     0     1         
+ATOM     20 F    CUB A  20        1.54    0.00    3.08     0     1         
+ATOM     21 F    CUB A  21        3.08    0.00    3.08     0     1         
+ATOM     22 F    CUB A  22        0.00    1.54    3.08     0     1         
+ATOM     23 F    CUB A  23        1.54    1.54    3.08     0     1         
+ATOM     24 F    CUB A  24        3.08    1.54    3.08     0     1         
+ATOM     25 F    CUB A  25        0.00    3.08    3.08     0     1         
+ATOM     26 F    CUB A  26        1.54    3.08    3.08     0     1         
+ATOM     27 F    CUB A  27        3.08    3.08    3.08     0     1         
+CONECT    1    2
+CONECT    1    4
+CONECT    1   10
+CONECT    2    3
+CONECT    2    5
+CONECT    2   11
+CONECT    3    6
+CONECT    3   12
+CONECT    4    5
+CONECT    4    7
+CONECT    4   13
+CONECT    5    6
+CONECT    5    8
+CONECT    5   14
+CONECT    6    9
+CONECT    6   15
+CONECT    7    8
+CONECT    7   16
+CONECT    8    9
+CONECT    8   17
+CONECT    9   18
+CONECT   10   11
+CONECT   10   13
+CONECT   10   19
+CONECT   11   12
+CONECT   11   14
+CONECT   11   20
+CONECT   12   15
+CONECT   12   21
+CONECT   13   14
+CONECT   13   16
+CONECT   13   22
+CONECT   14   15
+CONECT   14   17
+CONECT   14   23
+CONECT   15   18
+CONECT   15   24
+CONECT   16   17
+CONECT   16   25
+CONECT   17   18
+CONECT   17   26
+CONECT   18   27
+CONECT   19   20
+CONECT   19   22
+CONECT   20   21
+CONECT   20   23
+CONECT   21   24
+CONECT   22   23
+CONECT   22   25
+CONECT   23   24
+CONECT   23   26
+CONECT   24   27
+CONECT   25   26
+CONECT   26   27
