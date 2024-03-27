@@ -1,0 +1,5 @@
+source leaprc.gaff2
+loadamberprep et.prepi
+et = loadpdb NEWPDB.PDB
+saveamberparm et et.prmtop et.rst7
+quit
