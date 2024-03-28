@@ -32,9 +32,9 @@ Sys.setenv(GMX_NO_QUOTES=1)
 # NGLVieweR("../pulchra/pdbTC5b/FCC5.pdb")%>%addRepresentation("cartoon")%>%addRepresentation("ball+stick")  # higher packing density  => easier to get a clash
 # NGLVieweR("../pulchra/pdbTC5b/FCC10.pdb")%>%addRepresentation("cartoon")%>%addRepresentation("ball+stick")
 # 
-latS=c("EXT","TRU","BCC2","BCC10","DIA2","FCC5") # based on amber, only last two should fail
-latS="TRU"
-latS="EXT"
+latS="TRU"  # 50 ns =>2 hours   
+latS="EXT"  # 50 ns => 12+ hours due to bigger box of water (in top see 18529 waters vs 2662 in TRU)
+latS=c("BCC2","BCC10","DIA2","FCC5") # based on amber, only last two should fail (go back to 1 ns first just to test this)
 
 for (lat in latS) {
   (baseIC=paste0(base,"/",lat)) #make an AnteCham folder using gaff2 (lower case letters in prepi file)
@@ -138,6 +138,10 @@ for (lat in latS) {
 setwd(base)
 # NGLVieweR("EXT/pdbs/EXT.pdb")%>%addRepresentation("cartoon")%>%addRepresentation("ball+stick")
 # NGLVieweR("TRU/pdbs/TRU.pdb")%>%addRepresentation("cartoon")%>%addRepresentation("ball+stick")
+# NGLVieweR("BCC2/pdbs/BCC2.pdb")%>%addRepresentation("cartoon")%>%addRepresentation("ball+stick")
+# NGLVieweR("BCC10/pdbs/BCC10.pdb")%>%addRepresentation("cartoon")%>%addRepresentation("ball+stick")
+# NGLVieweR("DIA2/pdbs/DIA2.pdb")%>%addRepresentation("cartoon")%>%addRepresentation("ball+stick")
+# NGLVieweR("FCC5/pdbs/FCC5.pdb")%>%addRepresentation("cartoon")%>%addRepresentation("ball+stick")
 
   ######## Notes (to get Trp 6 distances to prolines 12 and 18) ################
   # gmx distance calculates distances between pairs of positions as a function of time. NOT what we want here
