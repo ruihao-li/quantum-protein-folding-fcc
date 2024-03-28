@@ -34,7 +34,7 @@ Sys.setenv(GMX_NO_QUOTES=1)
 # 
 latS="TRU"  # 50 ns =>2 hours   
 latS="EXT"  # 50 ns => 12+ hours due to bigger box of water (in top see 18529 waters vs 2662 in TRU)
-latS=c("BCC2","BCC10","DIA2","FCC5") # based on amber, only last two should fail (go back to 1 ns first just to test this)
+latS=c("BCC2","BCC10","DIA2","FCC5") # based on amber, only last two should fail (go back to 1 ns first just to test this, no go back up to 50 ns)
 
 for (lat in latS) {
   (baseIC=paste0(base,"/",lat)) #make an AnteCham folder using gaff2 (lower case letters in prepi file)
@@ -109,7 +109,7 @@ for (lat in latS) {
   system(paste0("gmx editconf -f gros/",lat,".gro -o pdbs/tmp0.pdb"))
   system(paste0("grep -v SOL pdbs/tmp0.pdb > pdbs/tmp1.pdb"))
   system(paste0("grep -v NA pdbs/tmp1.pdb  > pdbs/tmp2.pdb"))
-  system(paste0("grep -v CL pdbs/tmp2.pdb  > pdbs/",lat,".pdb"))
+  system(paste0("grep -v CL pdbs/tmp2.pdb  > pdbs/",lat,"50.pdb"))
   system("rm pdbs/tmp*")
   
   system("rm temp.top*")
