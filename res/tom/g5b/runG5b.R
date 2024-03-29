@@ -37,7 +37,7 @@ latS="EXT"  # 50 ns => 12+ hours due to bigger box of water (in top see 18529 wa
 latS=c("BCC2","BCC10","DIA2","FCC5") # based on amber, only last two should fail (go back to 1 ns first just to test this, no go back up to 50 ns)
 
 for (lat in latS) {
-  (baseIC=paste0(base,"/",lat)) #make an AnteCham folder using gaff2 (lower case letters in prepi file)
+  (baseIC=paste0(base,"/",lat,"_350")) 
   system(paste0("mkdir ",baseIC))
   setwd(baseIC) 
   system("mkdir bins")  
@@ -109,7 +109,7 @@ for (lat in latS) {
   system(paste0("gmx editconf -f gros/",lat,".gro -o pdbs/tmp0.pdb"))
   system(paste0("grep -v SOL pdbs/tmp0.pdb > pdbs/tmp1.pdb"))
   system(paste0("grep -v NA pdbs/tmp1.pdb  > pdbs/tmp2.pdb"))
-  system(paste0("grep -v CL pdbs/tmp2.pdb  > pdbs/",lat,"50.pdb"))
+  system(paste0("grep -v CL pdbs/tmp2.pdb  > pdbs/",lat,".pdb"))
   system("rm pdbs/tmp*")
   
   system("rm temp.top*")
@@ -142,6 +142,11 @@ setwd(base)
 # NGLVieweR("BCC10/pdbs/BCC10.pdb")%>%addRepresentation("cartoon")%>%addRepresentation("ball+stick")
 # NGLVieweR("DIA2/pdbs/DIA2.pdb")%>%addRepresentation("cartoon")%>%addRepresentation("ball+stick")
 # NGLVieweR("FCC5/pdbs/FCC5.pdb")%>%addRepresentation("cartoon")%>%addRepresentation("ball+stick")
+# NGLVieweR("BCC2/pdbs/BCC250.pdb")%>%addRepresentation("cartoon")%>%addRepresentation("ball+stick")
+# NGLVieweR("BCC10/pdbs/BCC1050.pdb")%>%addRepresentation("cartoon")%>%addRepresentation("ball+stick")
+# NGLVieweR("DIA2/pdbs/DIA250.pdb")%>%addRepresentation("cartoon")%>%addRepresentation("ball+stick")
+# NGLVieweR("FCC5/pdbs/FCC550.pdb")%>%addRepresentation("cartoon")%>%addRepresentation("ball+stick")
+
 
   ######## Notes (to get Trp 6 distances to prolines 12 and 18) ################
   # gmx distance calculates distances between pairs of positions as a function of time. NOT what we want here
