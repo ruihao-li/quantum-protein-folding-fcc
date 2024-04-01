@@ -12,8 +12,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, List, Union
 
-from qiskit.algorithms.minimum_eigensolvers import MinimumEigensolverResult
-from qiskit.opflow import PauliOp, PauliSumOp
+from qiskit_algorithms.minimum_eigensolvers import MinimumEigensolverResult
+
+# from qiskit.opflow import PauliOp, PauliSumOp
+from qiskit.quantum_info import SparsePauliOp
 
 from .interactions.interaction import Interaction
 from .penalty_parameters import PenaltyParameters
@@ -50,8 +52,7 @@ class ProteinFoldingProblem(SamplingProblem):
         Args:
             peptide: A peptide object that defines the protein subject to the folding problem.
             interaction: A type of interaction between the beads of the peptide.
-            penalty_parameters: Parameters that define the strength of constraints enforcing in
-                                the problem.
+            penalty_parameters: Parameters that define the strength of constraints enforcing in the problem.
         """
         self._peptide = peptide
         self._interaction = interaction
@@ -64,7 +65,7 @@ class ProteinFoldingProblem(SamplingProblem):
         )
         self._unused_qubits: List[int] = []
 
-    def qubit_op(self) -> Union[PauliSumOp, PauliOp]:
+    def qubit_op(self) -> SparsePauliOp:
         """
         Builds a qubit operator for the Hamiltonian encoding a protein folding problem. The
         number of qubits needed for optimization is optimized (compressed), if possible.
@@ -80,7 +81,7 @@ class ProteinFoldingProblem(SamplingProblem):
         self._unused_qubits = unused_qubits
         return qubit_operator
 
-    def _qubit_op_full(self) -> Union[PauliOp, PauliSumOp]:
+    def _qubit_op_full(self) -> SparsePauliOp:
         """
         Builds a full qubit operator for the Hamiltonian encoding a protein folding problem. Full
         means that the number of qubits needed for optimization is not optimized and may be

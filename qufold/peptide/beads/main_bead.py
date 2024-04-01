@@ -10,7 +10,8 @@
 """A class defining a main bead of a peptide."""
 from typing import Tuple
 
-from qiskit.opflow import PauliOp, OperatorBase
+# from qiskit.opflow import PauliOp, OperatorBase
+from qiskit.quantum_info import SparsePauliOp
 
 from .base_bead import BaseBead
 from ..chains.side_chain import SideChain
@@ -23,15 +24,14 @@ class MainBead(BaseBead):
         self,
         main_index: int,
         residue_type: str,
-        turn_qubits: Tuple[PauliOp, PauliOp],
+        turn_qubits: Tuple[SparsePauliOp, SparsePauliOp],
         side_chain: SideChain,
     ):
         """
         Args:
             main_index: index of the bead on the main chain in a peptide.
             residue_type: A character representing the type of a residue for the bead.
-            turn_qubits: A tuple of two Pauli operators that encodes the turn following from a
-                            given bead index.
+            turn_qubits: A tuple of two Pauli operators that encodes the turn following from a given bead index.
             side_chain: An object representing a side chain attached to this main bead.
         """
         super().__init__(
@@ -59,29 +59,31 @@ class MainBead(BaseBead):
             self.main_index == other.main_index and self.chain_type == other.chain_type
         )
 
-    def _build_turn_indicator_fun_0(self) -> OperatorBase:
+    def _build_turn_indicator_fun_0(self) -> SparsePauliOp:
         return (
             self._full_id
             ^ (
                 (self._full_id - self._turn_qubits[0])
                 @ (self._full_id - self._turn_qubits[1])
             )
-        ).reduce()
+        ).simplify()
 
-    def _build_turn_indicator_fun_1(self) -> OperatorBase:
+    def _build_turn_indicator_fun_1(self) -> SparsePauliOp:
         return (
             self._full_id
             ^ (self._turn_qubits[1] @ (self._turn_qubits[1] - self._turn_qubits[0]))
-        ).reduce()
+        ).simplify()
 
-    def _build_turn_indicator_fun_2(self) -> OperatorBase:
+    def _build_turn_indicator_fun_2(self) -> SparsePauliOp:
         return (
             self._full_id
             ^ (self._turn_qubits[0] @ (self._turn_qubits[0] - self._turn_qubits[1]))
-        ).reduce()
+        ).simplify()
 
-    def _build_turn_indicator_fun_3(self) -> OperatorBase:
-        return (self._full_id ^ (self._turn_qubits[0] @ self._turn_qubits[1])).reduce()
+    def _build_turn_indicator_fun_3(self) -> SparsePauliOp:
+        return (
+            self._full_id ^ (self._turn_qubits[0] @ self._turn_qubits[1])
+        ).simplify()
 
     @property
     def side_chain(self) -> SideChain:

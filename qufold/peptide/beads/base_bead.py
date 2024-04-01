@@ -11,7 +11,8 @@
 from abc import ABC
 from typing import Tuple, Union, Callable, Optional
 
-from qiskit.opflow import PauliOp, OperatorBase
+# from qiskit.opflow import PauliOp, OperatorBase
+from qiskit.quantum_info import SparsePauliOp
 
 from ..pauli_ops_builder import _build_full_identity
 from ...residue_validator import _validate_residue_symbol
@@ -25,40 +26,35 @@ class BaseBead(ABC):
         chain_type: str,
         main_index: int,
         residue_type: Optional[str],
-        turn_qubits: Tuple[PauliOp, PauliOp],
-        build_turn_indicator_fun_0: Callable[[], OperatorBase],
-        build_turn_indicator_fun_1: Callable[[], OperatorBase],
-        build_turn_indicator_fun_2: Callable[[], OperatorBase],
-        build_turn_indicator_fun_3: Callable[[], OperatorBase],
+        turn_qubits: Tuple[SparsePauliOp, SparsePauliOp],
+        build_turn_indicator_fun_0: Callable[[], SparsePauliOp],
+        build_turn_indicator_fun_1: Callable[[], SparsePauliOp],
+        build_turn_indicator_fun_2: Callable[[], SparsePauliOp],
+        build_turn_indicator_fun_3: Callable[[], SparsePauliOp],
     ):
         """
         Args:
             chain_type: Type of the chain, either "main_chain" or "side_chain".
             main_index: index of the bead on the main chain in a peptide.
-            residue_type: A character representing the type of a residue for the bead. An empty
-                        string in case of non-existing side bead.
-            turn_qubits: A tuple of two of Pauli operators that encodes the turn following from a
-                            given bead index.
+            residue_type: A character representing the type of a residue for the bead. An empty string in case of non-existing side bead.
+            turn_qubits: A tuple of two of Pauli operators that encodes the turn following from a given bead index.
             build_turn_indicator_fun_0: method that build turn indicator functions for the bead.
-                                        It is passed by a child class (SideBead or MainBead) and
-                                        uses turn qubits to construct a corresponding turn
-                                        indicator function (for details, see the paper: paper
-                                        Robert et al., npj quantum information 7, 38, 2021).
+            It is passed by a child class (SideBead or MainBead) and uses turn qubits to construct a corresponding turn indicator function (for details, see the paper: paper Robert et al., npj quantum information 7, 38, 2021).
             build_turn_indicator_fun_1: method that build turn indicator functions for the bead.
-                                        It is passed by a child class (SideBead or MainBead) and
-                                        uses turn qubits to construct a corresponding turn
-                                        indicator function (for details, see the paper: paper
-                                        Robert et al., npj quantum information 7, 38, 2021).
+            It is passed by a child class (SideBead or MainBead) and
+            uses turn qubits to construct a corresponding turn
+            indicator function (for details, see the paper: paper
+            Robert et al., npj quantum information 7, 38, 2021).
             build_turn_indicator_fun_2: method that build turn indicator functions for the bead.
-                                        It is passed by a child class (SideBead or MainBead) and
-                                        uses turn qubits to construct a corresponding turn
-                                        indicator function (for details, see the paper: paper
-                                        Robert et al., npj quantum information 7, 38, 2021).
+            It is passed by a child class (SideBead or MainBead) and
+            uses turn qubits to construct a corresponding turn
+            indicator function (for details, see the paper: paper
+            Robert et al., npj quantum information 7, 38, 2021).
             build_turn_indicator_fun_3: method that build turn indicator functions for the bead.
-                                        It is passed by a child class (SideBead or MainBead) and
-                                        uses turn qubits to construct a corresponding turn
-                                        indicator function (for details, see the paper: paper
-                                        Robert et al., npj quantum information 7, 38, 2021).
+            It is passed by a child class (SideBead or MainBead) and
+            uses turn qubits to construct a corresponding turn
+            indicator function (for details, see the paper: paper
+            Robert et al., npj quantum information 7, 38, 2021).
         """
         self.chain_type = chain_type
         self.main_index = main_index
@@ -73,7 +69,7 @@ class BaseBead(ABC):
             self._turn_indicator_fun_3 = build_turn_indicator_fun_3()
 
     @property
-    def turn_qubits(self) -> Tuple[PauliOp, PauliOp]:
+    def turn_qubits(self) -> Tuple[SparsePauliOp, SparsePauliOp]:
         """Returns the list of two qubits that encode the turn following from the bead."""
         return self._turn_qubits
 
@@ -86,7 +82,7 @@ class BaseBead(ABC):
     @property
     def indicator_functions(
         self,
-    ) -> Union[None, Tuple[OperatorBase, OperatorBase, OperatorBase, OperatorBase]]:
+    ) -> Union[None, Tuple[SparsePauliOp, SparsePauliOp, SparsePauliOp, SparsePauliOp]]:
         """
         Returns all turn indicator functions for the bead.
         Returns:

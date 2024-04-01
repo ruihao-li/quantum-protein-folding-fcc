@@ -28,14 +28,8 @@ class ProteinFoldingResult:
     """
     The Protein Folding Result.
     This class interprets a bitstring encoding the turns of a protein from
-    :class:`~qiskit_research.protein_folding.protein_folding_problem.ProteinFoldingProblem`
-    and decodes it. One can generate a .xyz file
-    (using :meth:`~qiskit_research.protein_folding.ProteinFoldingResult.save_xyz_file`), which is a
-    file containing the cartesian coordinates of each atom in the protein. This kind of file can be
-    used with other software to generate plots of the molecule.
-    Alternatively, one can use
-    :meth:`~qiskit_research.protein_folding.ProteinFoldingResult.get_figure`.
-    Note that `matplotlib` needs to be installed in order to generate such a figure.
+    :class:`~qiskit_research.protein_folding.protein_folding_problem.ProteinFoldingProblem` and decodes it. One can generate a .xyz file
+    (using :meth:`~qiskit_research.protein_folding.ProteinFoldingResult.save_xyz_file`), which is a file containing the cartesian coordinates of each atom in the protein. This kind of file can be used with other software to generate plots of the molecule. Alternatively, one can use :meth:`~qiskit_research.protein_folding.ProteinFoldingResult.get_figure`. Note that `matplotlib` needs to be installed in order to generate such a figure.
     """
 
     def __init__(
@@ -47,8 +41,7 @@ class ProteinFoldingResult:
         """
         Args:
             peptide: The peptide defining the protein subject to the folding problem.
-            unused_qubits: The list of indices for qubits in the original problem formulation that
-                were removed during compression.
+            unused_qubits: The list of indices for qubits in the original problem formulation that were removed during compression.
             turn_sequence: The bit sequence encoding the turns of the shape of the protein.
 
         """
@@ -92,33 +85,16 @@ class ProteinFoldingResult:
         return self._turn_sequence
 
     def get_result_binary_vector(self) -> str:
-        """Returns a string that encodes a solution of the
-        :class:`~qiskit_research.protein_folding.protein_folding_problem.ProteinFoldingProblem`.
-        The :class:`~qiskit_research.protein_folding.protein_folding_problem.ProteinFoldingProblem`
-        uses a compressed optimization problem that does not match the
-        number of qubits in the original objective function. This method calculates the original
-        version of the solution vector. Bits that can take any value without changing the
-        solution are denoted by '_'.
-        This string is read from right to left, and every pair of bits encodes a turn ranging from 0
-        to 4:
+        """Returns a string that encodes a solution of the :class:`~qiskit_research.protein_folding.protein_folding_problem.ProteinFoldingProblem`.
+        The :class:`~qiskit_research.protein_folding.protein_folding_problem.ProteinFoldingProblem` uses a compressed optimization problem that does not match the number of qubits in the original objective function. This method calculates the original version of the solution vector. Bits that can take any value without changing the solution are denoted by '_'. This string is read from right to left, and every pair of bits encodes a turn ranging from 0 to 4:
 
-        * The first 4 correspond to the first 2 turns in the sequence. These 2 turns can arbitrarily
-          be set to any value due to rotation symmetry. Therefore the first 4 bits will be unused.
+        * The first 4 correspond to the first 2 turns in the sequence. These 2 turns can arbitrarily be set to any value due to rotation symmetry. Therefore the first 4 bits will be unused.
 
-        * If there is no secondary chain going out from the 2nd bead in the main chain, another
-          symmetry argument makes it such that the 3rd turn has effectively only 2 options.
-          Therefore the 5th qubit can sometimes be unused as well.
+        * If there is no secondary chain going out from the 2nd bead in the main chain, another symmetry argument makes it such that the 3rd turn has effectively only 2 options. Therefore the 5th qubit can sometimes be unused as well.
 
-        * The remaining pairs of qubits will encode the remaining turns of the main bead and then
-          the turns of the secondary chains in that order.
+        * The remaining pairs of qubits will encode the remaining turns of the main bead and then the turns of the secondary chains in that order.
 
-        Example: In the context of a protein of length 5 with secondary chains in the 2nd and 4th
-        position ``10110110`` encodes the most efficient configuration. We start by flipping the
-        string and pairing up the bits ``01-10-11-01``. Note that in this case we have an even
-        number of bits. This is only due to the fact that we have a secondary chain in the second
-        position. Since the first 2 turns on the main chain were arbitrarily set (In qiskit we
-        chose to set them to ``[1,0]`` respectively) the sequence of turns in the main chain is
-        ``[0,1,1,2]``. The remaining pairs of bits indicate that the turns from the secondary
+        Example: In the context of a protein of length 5 with secondary chains in the 2nd and 4th position ``10110110`` encodes the most efficient configuration. We start by flipping the string and pairing up the bits ``01-10-11-01``. Note that in this case we have an even number of bits. This is only due to the fact that we have a secondary chain in the second position. Since the first 2 turns on the main chain were arbitrarily set (In qiskit we chose to set them to ``[1,0]`` respectively) the sequence of turns in the main chain is ``[0,1,1,2]``. The remaining pairs of bits indicate that the turns from the secondary
         chains in the 2nd and 4th position are ``3`` and ``1`` respectively.
         For more information see: `<https://doi.org/10.1038/s41534-021-00368-4>`__.
 
@@ -147,14 +123,9 @@ class ProteinFoldingResult:
         Generates a .xyz file.
 
         Args:
-            name: Name of the file to be generated. If the name is ``None`` the
-                name of the file will be the letters of the aminoacids on the main_chain.
-                If a file of the same name already exists then the action taken is dependent
-                on the `replace` arg.
-            path: Path where the file will be generated. If left empty the file will
-                be saved in the working directory.
-            comment: Comment to be added to the second line of the file. By default, the line will
-                be left blank.
+            name: Name of the file to be generated. If the name is ``None`` the name of the file will be the letters of the aminoacids on the main_chain. If a file of the same name already exists then the action taken is dependent on the `replace` arg.
+            path: Path where the file will be generated. If left empty the file will be saved in the working directory.
+            comment: Comment to be added to the second line of the file. By default, the line will be left blank.
             replace: If ``True``, the file will be overwritten if it already exists.
         Raises:
             FileExistsError: If the file already exists and replace is ``False``.
