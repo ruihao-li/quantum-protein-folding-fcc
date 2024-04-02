@@ -4,6 +4,8 @@ on:
   push:
     paths:
       - qufold/**
+      - docs/**
+      - .github/workflows/documentation.yml
 
 permissions:
   contents: write
@@ -19,7 +21,8 @@ jobs:
           pip install sphinx qiskit-sphinx-theme sphinx-autodoc-typehints nbsphinx matplotlib
       - name: Sphinx build
         run: |
-          sphinx-build docs/source _build
+          sphinx-apidoc -f -o docs/source qufold -M -E
+          sphinx-build -M html docs/source _build
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
