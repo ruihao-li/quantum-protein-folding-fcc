@@ -2,4 +2,5 @@ chimerax==0.1.71
 matplotlib==3.8.3
 numpy==1.26.4
 qiskit==1.0.2
-qiskit_nature==0.7.2
+qiskit_algorithms==0.3.0
+qiskit-ibm-runtime==0.22.0
