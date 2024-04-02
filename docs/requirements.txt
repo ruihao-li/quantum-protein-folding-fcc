@@ -1,2 +1,2 @@
-sphinx
-qiskit-sphinx-theme
+sphinx==7.2.6
+qiskit-sphinx-theme==1.16.1
