@@ -10,7 +10,6 @@
 """A class defining a random interaction between beads of a peptide."""
 
 import numpy as np
-from qiskit.utils import algorithm_globals
 
 from .interaction import Interaction
 
@@ -31,7 +30,5 @@ class RandomInteraction(Interaction):
             Numpy array of pair energies for amino acids.
         """
         chain_len = len(residue_sequence)
-        pair_energies = -1 - 4 * algorithm_globals.random.random(
-            (chain_len + 1, 2, chain_len + 1, 2)
-        )
+        pair_energies = -1 - 4 * np.random.random((chain_len + 1, 2, chain_len + 1, 2))
         return pair_energies

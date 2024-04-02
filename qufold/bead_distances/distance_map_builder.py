@@ -12,7 +12,8 @@ import collections
 import logging
 from typing import Dict, DefaultDict, Tuple, Union, List
 
-from qiskit.opflow import OperatorBase, PauliSumOp, PauliOp
+# from qiskit.opflow import OperatorBase, PauliSumOp, PauliOp
+from qiskit.quantum_info import SparsePauliOp
 
 from ..peptide.beads.base_bead import BaseBead
 from ..peptide.beads.main_bead import MainBead
@@ -36,7 +37,7 @@ class DistanceMapBuilder:
     def create_distance_qubits(
         self,
         peptide: Peptide,
-    ) -> Tuple[DefaultDict[BaseBead, Dict[BaseBead, OperatorBase]], int]:
+    ) -> Tuple[DefaultDict[BaseBead, Dict[BaseBead, SparsePauliOp]], int]:
         """
         Creates total distances between all bead pairs by summing the
         distances over all turns with axes, a = 0,1,2,3.
@@ -52,9 +53,9 @@ class DistanceMapBuilder:
         self._add_distances_side_chain(peptide)
         main_chain_len = len(peptide.get_main_chain)
 
-        distance_map: DefaultDict[
-            BaseBead, Dict[BaseBead, OperatorBase]
-        ] = collections.defaultdict(dict)
+        distance_map: DefaultDict[BaseBead, Dict[BaseBead, SparsePauliOp]] = (
+            collections.defaultdict(dict)
+        )
 
         for lower_bead_ind in range(1, main_chain_len):  # upper_bead_ind>lower_bead_ind
             for upper_bead_ind in range(lower_bead_ind + 1, main_chain_len + 1):
@@ -100,7 +101,7 @@ class DistanceMapBuilder:
         self,
         lower_bead: BaseBead,
         upper_bead: BaseBead,
-    ) -> Union[PauliSumOp, PauliOp]:
+    ) -> SparsePauliOp:
         distance = 0
         for dist_map_ax in self._distance_map_axes:
             distance += dist_map_ax[lower_bead][upper_bead] ** 2
@@ -112,8 +113,7 @@ class DistanceMapBuilder:
         the main chain. Note, here we consider distances between beads
         not on side chains. For a particular axis, a, we calculate the
         distance between lower_bead_ind and upper_bead_ind bead pairs,
-        distance_map_axis_a :math:`= \sum_k (-1)^k*indica(k)` where :math:`k` iterates from
-        lower_bead_ind to upper_bead_ind - 1.
+        distance_map_axis_a :math:`= \sum_k (-1)^k*indica(k)` where :math:`k` iterates from lower_bead_ind to upper_bead_ind - 1.
 
         Args:
             peptide: A Peptide object that includes all information about a protein.
@@ -150,9 +150,7 @@ class DistanceMapBuilder:
 
     def _add_distances_side_chain(self, peptide: Peptide) -> None:
         """
-        Calculates distances between beads located on side chains and adds the contribution to the
-        distance calculated between beads (lower_bead_ind and upper_bead_ind) on the main chain. In
-        the absence of side chains, this function returns a value of 0.
+        Calculates distances between beads located on side chains and adds the contribution to the distance calculated between beads (lower_bead_ind and upper_bead_ind) on the main chain. In the absence of side chains, this function returns a value of 0.
 
         Args:
             peptide: A Peptide object that includes all information about a protein.
@@ -219,7 +217,7 @@ class DistanceMapBuilder:
         peptide: Peptide, side_chain: List[bool], bead_ind: int
     ) -> Union[
         Tuple[None, None, None, None],
-        Tuple[OperatorBase, OperatorBase, OperatorBase, OperatorBase],
+        Tuple[SparsePauliOp, SparsePauliOp, SparsePauliOp, SparsePauliOp],
     ]:
         if side_chain[bead_ind - 1]:
             indic_0, indic_1, indic_2, indic_3 = (
@@ -234,10 +232,14 @@ class DistanceMapBuilder:
         peptide: Peptide,
         lower_bead_ind: int,
         lower_side_bead: BaseBead,
-        lower_indic_funs: Tuple[OperatorBase, OperatorBase, OperatorBase, OperatorBase],
+        lower_indic_funs: Tuple[
+            SparsePauliOp, SparsePauliOp, SparsePauliOp, SparsePauliOp
+        ],
         upper_bead_ind: int,
         upper_side_bead: BaseBead,
-        upper_indic_funs: Tuple[OperatorBase, OperatorBase, OperatorBase, OperatorBase],
+        upper_indic_funs: Tuple[
+            SparsePauliOp, SparsePauliOp, SparsePauliOp, SparsePauliOp
+        ],
     ) -> None:
         for dist_map_ax, lower_indic_fun_x, upper_indic_fun_x in zip(
             self._distance_map_axes, lower_indic_funs, upper_indic_funs
@@ -258,7 +260,7 @@ class DistanceMapBuilder:
         lower_side_bead: BaseBead,
         upper_bead_ind: int,
         upper_main_bead: BaseBead,
-        indic_funs: Tuple[OperatorBase, OperatorBase, OperatorBase, OperatorBase],
+        indic_funs: Tuple[SparsePauliOp, SparsePauliOp, SparsePauliOp, SparsePauliOp],
     ) -> None:
         for dist_map_ax, indic_fun_x in zip(self._distance_map_axes, indic_funs):
             dist_map_ax[lower_side_bead][upper_main_bead] = self._calc_distance_term(
@@ -272,7 +274,7 @@ class DistanceMapBuilder:
         lower_bead: BaseBead,
         upper_bead_ind: int,
         upper_bead: BaseBead,
-        indic_funs: Tuple[OperatorBase, OperatorBase, OperatorBase, OperatorBase],
+        indic_funs: Tuple[SparsePauliOp, SparsePauliOp, SparsePauliOp, SparsePauliOp],
     ) -> None:
         for dist_map_ax, indic_fun_x in zip(self._distance_map_axes, indic_funs):
             dist_map_ax[lower_bead][upper_bead] = self._calc_distance_term(
@@ -282,12 +284,12 @@ class DistanceMapBuilder:
     def _calc_distance_term(
         self,
         peptide: Peptide,
-        distance_map_axis_x: Dict[BaseBead, OperatorBase],
+        distance_map_axis_x: Dict[BaseBead, SparsePauliOp],
         lower_bead_ind: int,
-        lower_indic_fun: OperatorBase,
+        lower_indic_fun: SparsePauliOp,
         upper_bead_ind: int,
-        upper_indic_fun: OperatorBase,
-    ) -> Union[PauliSumOp, PauliOp]:
+        upper_indic_fun: SparsePauliOp,
+    ) -> SparsePauliOp:
         lower_main_bead = peptide.get_main_chain[lower_bead_ind - 1]
         upper_main_bead = peptide.get_main_chain[upper_bead_ind - 1]
         result = distance_map_axis_x[lower_main_bead][upper_main_bead]

@@ -21,9 +21,7 @@ from ..data_loaders.energy_matrix_loader import (
 
 
 class MiyazawaJerniganInteraction(Interaction):
-    """A class defining a Miyazawa-Jernigan interaction between beads of a peptide.
-    Details of this model can be found in Miyazawa, S. and Jernigan, R. L. J. Mol. Biol.256,
-    623–644 (1996), Table 3."""
+    """A class defining a Miyazawa-Jernigan interaction between beads of a peptide. Details of this model can be found in Miyazawa, S. and Jernigan, R. L. J. Mol. Biol.256, 623–644 (1996), Table 3."""
 
     def __init__(self, energy_matrix_file: str = "mj_matrix"):
         """
@@ -34,8 +32,7 @@ class MiyazawaJerniganInteraction(Interaction):
 
     def calculate_energy_matrix(self, residue_sequence: str) -> np.ndarray:
         """
-        Calculates an energy matrix for a Miyazawa-Jernigan interaction based on the
-        Miyazawa-Jernigan potential file.
+        Calculates an energy matrix for a Miyazawa-Jernigan interaction based on the Miyazawa-Jernigan potential file.
 
         Args:
             residue_sequence: A string that contains characters defining residues for a chain of proteins.

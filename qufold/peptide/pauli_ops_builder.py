@@ -10,10 +10,11 @@
 """Builds Pauli operators of a given size."""
 from typing import Set
 
-from qiskit.opflow import PauliOp, I, Z
+# from qiskit.opflow import PauliOp, I,
+from qiskit.quantum_info import SparsePauliOp
 
 
-def _build_full_identity(num_qubits: int) -> PauliOp:
+def _build_full_identity(num_qubits: int) -> SparsePauliOp:
     """
     Builds a full identity operator of a given size.
 
@@ -23,34 +24,32 @@ def _build_full_identity(num_qubits: int) -> PauliOp:
     Returns:
         A full identity operator of a given size.
     """
-    full_identity = I
-    for _ in range(1, num_qubits):
-        full_identity = I ^ full_identity
+    full_identity = SparsePauliOp("I" * num_qubits)
     return full_identity
 
 
-def _build_pauli_z_op(num_qubits: int, pauli_z_indices: Set[int]) -> PauliOp:
+def _build_pauli_z_op(num_qubits: int, pauli_z_indices: Set[int]) -> SparsePauliOp:
     """
-    Builds a Pauli operator of a given size with Pauli Z operators on indicated positions and
-    identity operators on other positions.
+    Builds a Pauli operator of a given size with Pauli Z operators on indicated
+    positions and identity operators on other positions.
 
     Args:
         num_qubits: number of qubits on which a Pauli operator will be created.
-        pauli_z_indices: a set of indices in a Pauli operator on which a Pauli Z operator shall
-                        appear.
+        pauli_z_indices: a set of indices in a Pauli operator on which a Pauli Z
+        operator shall appear.
 
     Returns:
-        A Pauli operator of a given size with Pauli Z operators on indicated positions and
-        identity operators on other positions.
+        A Pauli operator of a given size with Pauli Z operators on indicated
+        positions and identity operators on other positions.
     """
     if 0 in pauli_z_indices:
-        operator = Z
+        operator_str = "Z"
     else:
-        operator = I
+        operator_str = "I"
     for i in range(1, num_qubits):
         if i in pauli_z_indices:
-            operator = Z ^ operator
+            operator_str = "Z" + operator_str
         else:
-            operator = I ^ operator
-
+            operator_str = "I" + operator_str
+    operator = SparsePauliOp(operator_str)
     return operator
