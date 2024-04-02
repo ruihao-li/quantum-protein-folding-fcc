@@ -35,7 +35,7 @@ class ProteinPlotter:
     def __init__(self, shape_gen: ProteinShapeFileGen) -> None:
         """
         Args:
-            shape_gen: :class:`~qiskit_research.protein_folding.utils.ProteinShapeFileGen`
+            shape_gen: :class:`~qufold.utils.ProteinShapeFileGen`
             with the shape to be plotted.
         """
         # pylint: disable=import-outside-toplevel

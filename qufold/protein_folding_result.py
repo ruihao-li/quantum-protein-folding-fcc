@@ -28,8 +28,8 @@ class ProteinFoldingResult:
     """
     The Protein Folding Result.
     This class interprets a bitstring encoding the turns of a protein from
-    :class:`~qiskit_research.protein_folding.protein_folding_problem.ProteinFoldingProblem` and decodes it. One can generate a .xyz file
-    (using :meth:`~qiskit_research.protein_folding.ProteinFoldingResult.save_xyz_file`), which is a file containing the cartesian coordinates of each atom in the protein. This kind of file can be used with other software to generate plots of the molecule. Alternatively, one can use :meth:`~qiskit_research.protein_folding.ProteinFoldingResult.get_figure`. Note that `matplotlib` needs to be installed in order to generate such a figure.
+    :class:`~qufold.protein_folding_problem.ProteinFoldingProblem` and decodes it. One can generate a .xyz file
+    (using :meth:`~qufold.ProteinFoldingResult.save_xyz_file`), which is a file containing the cartesian coordinates of each atom in the protein. This kind of file can be used with other software to generate plots of the molecule. Alternatively, one can use :meth:`~qufold.ProteinFoldingResult.get_figure`. Note that `matplotlib` needs to be installed in order to generate such a figure.
     """
 
     def __init__(
@@ -85,8 +85,8 @@ class ProteinFoldingResult:
         return self._turn_sequence
 
     def get_result_binary_vector(self) -> str:
-        """Returns a string that encodes a solution of the :class:`~qiskit_research.protein_folding.protein_folding_problem.ProteinFoldingProblem`.
-        The :class:`~qiskit_research.protein_folding.protein_folding_problem.ProteinFoldingProblem` uses a compressed optimization problem that does not match the number of qubits in the original objective function. This method calculates the original version of the solution vector. Bits that can take any value without changing the solution are denoted by '_'. This string is read from right to left, and every pair of bits encodes a turn ranging from 0 to 4:
+        """Returns a string that encodes a solution of the :class:`~qufold.protein_folding_problem.ProteinFoldingProblem`.
+        The :class:`~qufold.protein_folding_problem.ProteinFoldingProblem` uses a compressed optimization problem that does not match the number of qubits in the original objective function. This method calculates the original version of the solution vector. Bits that can take any value without changing the solution are denoted by '_'. This string is read from right to left, and every pair of bits encodes a turn ranging from 0 to 4:
 
         * The first 4 correspond to the first 2 turns in the sequence. These 2 turns can arbitrarily be set to any value due to rotation symmetry. Therefore the first 4 bits will be unused.
 

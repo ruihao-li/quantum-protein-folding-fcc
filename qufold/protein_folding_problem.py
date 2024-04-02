@@ -102,7 +102,7 @@ class ProteinFoldingProblem(SamplingProblem):
             raw_result: The raw result of solving the protein folding problem.
 
         Returns:
-            A :class:`~qiskit_research.protein_folding.ProteinFoldingResult`
+            A :class:`~qufold.ProteinFoldingResult`
             instance that contains the protein folding result.
         """
         # pylint: disable=import-outside-toplevel
@@ -127,7 +127,7 @@ class ProteinFoldingProblem(SamplingProblem):
             raw_result: The raw result of solving the protein folding problem.
 
         Returns:
-            A :class:`~qiskit_research.protein_folding.ProteinFoldingResult`
+            A :class:`~qufold.ProteinFoldingResult`
             instance that contains the protein folding result.
         """
         # pylint: disable=import-outside-toplevel
@@ -149,7 +149,7 @@ class ProteinFoldingProblem(SamplingProblem):
             raw_result: The raw result of solving the protein folding problem.
 
         Returns:
-            A :class:`~qiskit_research.protein_folding.ProteinFoldingResult`
+            A :class:`~qufold.ProteinFoldingResult`
             instance that contains the protein folding result.
         """
         # pylint: disable=import-outside-toplevel

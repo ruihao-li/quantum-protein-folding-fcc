@@ -7,109 +7,109 @@
 # Any modifications or derivative works of this code must retain this
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
-"""
-Protein Folding Problems (:mod:`qiskit_research.protein_folding`)
-=================================================================================
-The protein to be folded is defined in a Peptide class. Each peptide consists of one and only one
-main chain and optionally several side chains. Side chains cannot be attached to the first or
-last main bead. First and last main beads with a side chain can be modeled by
-elongating the main chain with corresponding side chains. No side chain attached to a second main
-bead allows for saving 1 qubit in the qubit encoding of a main chain without loss of generality
-due to symmetry arguments (see the paper cited below).
+# """
+# Protein Folding Problems (:mod:`qufold`)
+# =================================================================================
+# The protein to be folded is defined in a Peptide class. Each peptide consists of one and only one
+# main chain and optionally several side chains. Side chains cannot be attached to the first or
+# last main bead. First and last main beads with a side chain can be modeled by
+# elongating the main chain with corresponding side chains. No side chain attached to a second main
+# bead allows for saving 1 qubit in the qubit encoding of a main chain without loss of generality
+# due to symmetry arguments (see the paper cited below).
 
-Each chain consists of beads that encode information about the turn that follows to another main
-bead (in case of main beads) or into a side bead (in case of side beads). Moreover, each bead is
-characterized by a letter which encodes its residue sequence and defines the energy of
-interactions with other beads (unless interactions are random).
+# Each chain consists of beads that encode information about the turn that follows to another main
+# bead (in case of main beads) or into a side bead (in case of side beads). Moreover, each bead is
+# characterized by a letter which encodes its residue sequence and defines the energy of
+# interactions with other beads (unless interactions are random).
 
-Currently, only interactions involving first nearest neighbors are supported. Each side chain is
-attached to one and only one main bead.
+# Currently, only interactions involving first nearest neighbors are supported. Each side chain is
+# attached to one and only one main bead.
 
-At the moment, only side chains of length 1 (i.e. with 1 bead) are supported which is a
-simplifying assumption. A generalization of this approach is for future investigation.
+# At the moment, only side chains of length 1 (i.e. with 1 bead) are supported which is a
+# simplifying assumption. A generalization of this approach is for future investigation.
 
-Constraints on feasible folds are incorporated in the objective function using penalty terms
-whose importance is regulated by parameters in the PenaltyParameters class.
+# Constraints on feasible folds are incorporated in the objective function using penalty terms
+# whose importance is regulated by parameters in the PenaltyParameters class.
 
-In the final operator for the problem qubit registers have the following meaning:
-(interactions qubits) tensored with (conformation qubits),
-which can be further broken down into the following groups:
-(main-main beads interactions) tensored with (side-side beads interactions) tensored with
-(main-side beads interactions) tensored with (side-main beads interactions) tensored with
-(side conformation qubits) tensored with (main conformation qubits).
-We build interaction operators according to the following indexing:
-lower_bead_position * chain_len + upper_bead_position,
-i.e. the position of a block encodes the index of a lower bead and the position in a block
-encodes the index of an upper bead.
-All qubits are indexed from right to left.
+# In the final operator for the problem qubit registers have the following meaning:
+# (interactions qubits) tensored with (conformation qubits),
+# which can be further broken down into the following groups:
+# (main-main beads interactions) tensored with (side-side beads interactions) tensored with
+# (main-side beads interactions) tensored with (side-main beads interactions) tensored with
+# (side conformation qubits) tensored with (main conformation qubits).
+# We build interaction operators according to the following indexing:
+# lower_bead_position * chain_len + upper_bead_position,
+# i.e. the position of a block encodes the index of a lower bead and the position in a block
+# encodes the index of an upper bead.
+# All qubits are indexed from right to left.
 
-For more details consult the paper Robert et al., npj quantum information 7, 38, 2021
-(https://www.nature.com/articles/s41534-021-00368-4).
+# For more details consult the paper Robert et al., npj quantum information 7, 38, 2021
+# (https://www.nature.com/articles/s41534-021-00368-4).
 
-.. currentmodule:: qiskit_research.protein_folding
+# .. currentmodule:: qufold
 
-Protein Folding Problem
-=======================
-.. autosummary::
-   :toctree: ../stubs/
-   :nosignatures:
+# Protein Folding Problem
+# =======================
+# .. autosummary::
+#    :toctree: ../stubs/
+#    :nosignatures:
 
-   ProteinFoldingProblem
+#    ProteinFoldingProblem
 
-Peptide
-=======
-.. autosummary::
-   :toctree: ../stubs/
-   :nosignatures:
+# Peptide
+# =======
+# .. autosummary::
+#    :toctree: ../stubs/
+#    :nosignatures:
 
-   Peptide
+#    Peptide
 
-Main Chain
-==========
-.. autosummary::
-   :toctree: ../stubs/
-   :nosignatures:
+# Main Chain
+# ==========
+# .. autosummary::
+#    :toctree: ../stubs/
+#    :nosignatures:
 
-   MainChain
+#    MainChain
 
-Side Chain
-==========
-.. autosummary::
-   :toctree: ../stubs/
-   :nosignatures:
+# Side Chain
+# ==========
+# .. autosummary::
+#    :toctree: ../stubs/
+#    :nosignatures:
 
-   SideChain
+#    SideChain
 
-Interactions
-============
-.. autosummary::
-   :toctree: ../stubs/
-   :nosignatures:
+# Interactions
+# ============
+# .. autosummary::
+#    :toctree: ../stubs/
+#    :nosignatures:
 
-   Interaction
-   MixedInteraction
-   MiyazawaJerniganInteraction
-   RandomInteraction
+#    Interaction
+#    MixedInteraction
+#    MiyazawaJerniganInteraction
+#    RandomInteraction
 
-Penalty Parameters
-==================
-.. autosummary::
-   :toctree: ../stubs/
-   :nosignatures:
+# Penalty Parameters
+# ==================
+# .. autosummary::
+#    :toctree: ../stubs/
+#    :nosignatures:
 
-   PenaltyParameters
+#    PenaltyParameters
 
-Exceptions
-==========
-.. autosummary::
-   :toctree: ../stubs/
-   :nosignatures:
+# Exceptions
+# ==========
+# .. autosummary::
+#    :toctree: ../stubs/
+#    :nosignatures:
 
-   InvalidResidueException
-   InvalidSideChainException
-   InvalidSizeException
+#    InvalidResidueException
+#    InvalidSideChainException
+#    InvalidSizeException
 
-"""
+# """
 from .exceptions.invalid_residue_exception import InvalidResidueException
 from .exceptions.invalid_side_chain_exception import InvalidSideChainException
 from .exceptions.invalid_size_exception import InvalidSizeException

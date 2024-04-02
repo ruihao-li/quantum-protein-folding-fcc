@@ -7,23 +7,23 @@
 # Any modifications or derivative works of this code must retain this
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
-"""
-Utils (:mod:`qiskit_research.protein_folding.utils`)
-==========================================
+# """
+# Utils (:mod:`qufold.utils`)
+# ==========================================
 
-.. currentmodule:: qiskit_research.protein_folding.utils
+# .. currentmodule:: qufold.utils
 
-Support classes for :class:`~qiskit_research.protein_folding.ProteinFoldingResult`.
+# Support classes for :class:`~qufold.ProteinFoldingResult`.
 
-.. autosummary::
-   :toctree: ../stubs/
-   :nosignatures:
+# .. autosummary::
+#    :toctree: ../stubs/
+#    :nosignatures:
 
-    ProteinPlotter
-    ProteinShapeDecoder
-    ProteinShapeFileGen
+#     ProteinPlotter
+#     ProteinShapeDecoder
+#     ProteinShapeFileGen
 
-"""
+# """
 
 
 from .protein_plotter import ProteinPlotter
