@@ -1,0 +1,13 @@
+trajin equil1.nc
+trajin equil2.nc
+trajin equil3.nc
+trajin equil4.nc
+trajin equil5.nc
+trajin equil6.nc
+trajin equil7.nc
+trajin equil8.nc
+trajin equil9.nc
+trajin equil10.nc
+reference lowest_energy_struct.pdb
+reference /home/radivot/GH/protein-folding-qc/res/tom/chigLat/pdbs/5awl.pdb
+rms reference out rmsd_to_lowest_energy_struct.dat @N,CA,C time 1.0 
