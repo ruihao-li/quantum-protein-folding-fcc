@@ -24,8 +24,7 @@ class Interaction(ABC):
         Calculates an energy matrix for a particular interaction type.
 
         Args:
-            residue_sequence: A string that contains characters defining residues for
-                            a chain of proteins.
+            residue_sequence: A string that contains characters defining residues for a chain of proteins.
 
         Returns:
             Numpy array of pair energies for amino acids.

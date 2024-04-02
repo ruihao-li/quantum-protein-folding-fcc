@@ -30,9 +30,7 @@ class SideChain(BaseChain):
         Args:
             main_chain_len: Length of the main chain of a peptide.
             main_bead_id: Index of the main bead which the side chain is attached to.
-            side_chain_residue_sequences: List of characters that define residues for all side
-                                        beads in a side chain. Empty string if a side bead does
-                                        not exist.
+            side_chain_residue_sequences: List of characters that define residues for all side beads in a side chain. Empty string if a side bead does not exist.
         """
         beads_list = self._build_side_chain(
             main_chain_len, main_bead_id, side_chain_residue_sequences
@@ -51,9 +49,7 @@ class SideChain(BaseChain):
         Args:
             main_bead_id: id of a main bead that will host a side chain.
             main_chain_len: length of the main chain of a peptide.
-            side_chain_residue_sequences: list of characters that define residues for all side
-                                        beads in a side chain. Empty string if a side bead does
-                                        not exist.
+            side_chain_residue_sequences: list of characters that define residues for all side beads in a side chain. Empty string if a side bead does not exist.
 
         Returns:
             An instance of a SideChain class.

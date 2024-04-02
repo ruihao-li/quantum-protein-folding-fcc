@@ -11,7 +11,8 @@
 from typing import Union, Tuple, DefaultDict, Dict
 import numpy as np
 
-from qiskit.opflow import PauliSumOp, PauliOp, OperatorBase
+# from qiskit.opflow import PauliSumOp, PauliOp, OperatorBase
+from qiskit.quantum_info import SparsePauliOp
 
 from .distance_map_builder import DistanceMapBuilder
 from ..peptide.beads.base_bead import BaseBead
@@ -34,7 +35,7 @@ class DistanceMap:
             self._num_distances,
         ) = DistanceMapBuilder().create_distance_qubits(peptide)
 
-    def __getitem__(self, position: Tuple[BaseBead, BaseBead]) -> OperatorBase:
+    def __getitem__(self, position: Tuple[BaseBead, BaseBead]) -> SparsePauliOp:
         item1, item2 = position
         return self._distance_map[item1][item2]
 
@@ -44,7 +45,7 @@ class DistanceMap:
         return self._peptide
 
     @property
-    def distance_map(self) -> DefaultDict[BaseBead, Dict[BaseBead, OperatorBase]]:
+    def distance_map(self) -> DefaultDict[BaseBead, Dict[BaseBead, SparsePauliOp]]:
         """Returns a distance map."""
         return self._distance_map
 
@@ -63,13 +64,12 @@ class DistanceMap:
         lambda_1: float,
         pair_energies: np.ndarray,
         pair_energies_multiplier: float = 0.1,
-    ) -> Union[PauliSumOp, PauliOp]:
+    ) -> SparsePauliOp:
         """
         Creates first nearest neighbor interaction if beads are in contact
         and at a distance of 1 unit from each other. Otherwise, a large positive
         energetic penalty is added. Here, the penalty depends on the neighboring
-        beads of interest (i and j), that is, :math:`lambda_0 > 6*(j -i + 1)*lambda_1 + e_{ij}`.
-        Here, we chose, :math:`lambda_0 = 7*(j- 1 + 1)`.
+        beads of interest (i and j), that is, :math:`lambda_0 > 6*(j -i + 1)*lambda_1 + e_{ij}`. Here, we chose, :math:`lambda_0 = 7*(j- 1 + 1)`.
 
         Args:
             peptide: A Peptide object that includes all information about a protein.
@@ -77,8 +77,7 @@ class DistanceMap:
             is_side_chain_lower: Side chain on backbone bead i.
             upper_bead_ind: Backbone bead at turn j (j > i).
             is_side_chain_upper: Side chain on backbone bead j.
-            lambda_1: Constraint to penalize local overlap between
-                     beads within a nearest neighbor contact.
+            lambda_1: Constraint to penalize local overlap between beads within a nearest neighbor contact.
             pair_energies: Numpy array of pair energies for amino acids.
             pair_energies_multiplier: A constant that multiplies pair energy contributions.
 
@@ -112,12 +111,11 @@ class DistanceMap:
         lambda_1: float,
         pair_energies: np.ndarray,
         pair_energies_multiplier: float = 0.1,
-    ) -> Union[PauliSumOp, PauliOp]:
+    ) -> SparsePauliOp:
         """
         Creates energetic interaction that penalizes local overlap between
         beads that correspond to a nearest neighbor contact or adds no net
-        interaction (zero) if beads are at a distance of 2 units from each other.
-        Ensure second nearest neighbor does not overlap with reference point.
+        interaction (zero) if beads are at a distance of 2 units from each other. Ensure second nearest neighbor does not overlap with reference point.
 
         Args:
             peptide: A Peptide object that includes all information about a protein.
@@ -125,17 +123,13 @@ class DistanceMap:
             is_side_chain_lower: Side chain on backbone bead i.
             upper_bead_ind: Backbone bead at turn j (j > i).
             is_side_chain_upper: Side chain on backbone bead j.
-            lambda_1: Constraint to penalize local overlap between
-                     beads within a nearest neighbor contact.
+            lambda_1: Constraint to penalize local overlap between beads within a nearest neighbor contact.
             pair_energies: Numpy array of pair energies for amino acids.
             pair_energies_multiplier: A constant that multiplies pair energy contributions.
 
         Returns:
             Contribution to an energetic Hamiltonian.
         """
-        energy = pair_energies[lower_bead_ind][is_side_chain_upper][upper_bead_ind][
-            is_side_chain_lower
-        ]
         lower_bead = peptide.get_main_chain[lower_bead_ind - 1]
         upper_bead = peptide.get_main_chain[upper_bead_ind - 1]
         if is_side_chain_lower == 1:
