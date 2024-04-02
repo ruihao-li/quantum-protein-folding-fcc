@@ -18,10 +18,10 @@ jobs:
       - uses: actions/setup-python@v3
       - name: Install dependencies
         run: |
-          pip install sphinx qiskit-sphinx-theme sphinx-autodoc-typehints nbsphinx matplotlib qiskit
+          pip install sphinx qiskit-sphinx-theme sphinx-autodoc-typehints nbsphinx matplotlib qiskit qiskit-algorithms
       - name: Sphinx build
         run: |
-          sphinx-build -M html docs/source _build
+          sphinx-build docs/source _build
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
