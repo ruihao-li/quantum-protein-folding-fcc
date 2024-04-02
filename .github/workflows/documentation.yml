@@ -18,10 +18,9 @@ jobs:
       - uses: actions/setup-python@v3
       - name: Install dependencies
         run: |
-          pip install sphinx qiskit-sphinx-theme sphinx-autodoc-typehints nbsphinx matplotlib
+          pip install sphinx qiskit-sphinx-theme sphinx-autodoc-typehints nbsphinx matplotlib qiskit
       - name: Sphinx build
         run: |
-          sphinx-apidoc -f -o docs/source qufold -M -E
           sphinx-build -M html docs/source _build
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
