@@ -1,0 +1,4 @@
+# GROMACS files
+!inputs/topol.tpr
+*.h5
+*.html
