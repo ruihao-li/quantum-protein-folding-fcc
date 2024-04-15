@@ -115,6 +115,9 @@ for (lat in latS) {
   system(paste0("printf '1\n' | gmx mindist -s bins/",lat,".tpr -f bins/",lat,"_cen.xtc -pi -od xvgs/mindist.xvg")) #makes latex file *.tex
   plotXVG("xvgs/mindist.xvg")
   
+  system('gmx distance  -f em.xtc -select "atomnr 1,93" -oall xvgs/dists.xvg') 
+  plotXVG("xvgs/dists.xvg")
+  system('md-davis landscape_xvg -T 350 --common -x xvgs/rmsd.xvg -y xvgs/dists.xvg -n "Distance" -l "Chignolin" -o  xvgs/dists.html')  
   
   
 }
