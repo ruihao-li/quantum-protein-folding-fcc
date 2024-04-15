@@ -13,7 +13,10 @@ Sys.setenv(GMX_NO_QUOTES=1)
 
 ks=c(2,3,4,5,6,7,8,9)
 (latS=c(paste0("DIA",ks),paste0("FCC",ks)))
-lat="DIA2"
+dput(latS)
+latS=c("DIA3", "DIA4", "DIA5", "DIA6", "DIA7", "DIA8", "DIA9") #,
+# "FCC2", "FCC3", "FCC4", "FCC5", "FCC6", "FCC7", "FCC8", "FCC9")
+# lat="DIA2"
 
 
 for (lat in latS) {
@@ -26,7 +29,7 @@ for (lat in latS) {
   system("mkdir mdps")  
   system("mkdir pdbs")  
   system("mkdir xvgs")  
-  system(paste0("gmx pdb2gmx -ignh -f ../../pulchra/pdbTC5b/",lat,".pdb -ff oplsaa -o gros/pro.gro -p topol.top -i posre.itp -water spce"))
+  system(paste0("gmx pdb2gmx -ignh -f ../../pulchra/pdbChig/",lat,".pdb -ff oplsaa -o gros/pro.gro -p topol.top -i posre.itp -water spce")) #adds H's to pulchra structure
   system("gmx editconf -f gros/pro.gro   -o gros/nbx.gro -c -d 1.0 -bt cubic") # go with making fewer files by treating these gros as temporary
   system("gmx solvate -cp gros/nbx.gro -cs spc216.gro -o gros/sol.gro -p topol.top")
   system("gmx grompp -f ../inputs/ions.mdp -c gros/sol.gro -o bins/ions.tpr -po mdps/mdout.mdp  -p topol.top")
@@ -49,7 +52,7 @@ for (lat in latS) {
   
   ######## Raise Water Temperature to Room Temp ###########
   # system(paste0("gmx grompp -f ../inputs/minim.mdp -c gros/",lat,"_Ion.gro -o bins/em.tpr -po mdps/mdout.mdp  -p topol.top"))
-  system("gmx grompp -f ../inputs/minim.mdp -c gros/ion.gro -o bins/em.tpr -po mdps/mdout.mdp  -p topol.top")
+  # system("gmx grompp -f ../inputs/minim.mdp -c gros/ion.gro -o bins/em.tpr -po mdps/mdout.mdp  -p topol.top")
   system("gmx grompp -f ../inputs/nvt.mdp -c gros/em.gro -r gros/em.gro -p topol.top -o bins/nvt.tpr -po mdps/mdout.mdp") 
   system("gmx mdrun -deffnm bins/nvt")
   system("mv bins/nvt.log logs/nvt.log") 
@@ -92,9 +95,6 @@ for (lat in latS) {
   system(paste0("grep -v NA pdbs/tmp1.pdb  > pdbs/tmp2.pdb"))
   system(paste0("grep -v CL pdbs/tmp2.pdb  > pdbs/",lat,".pdb"))
   system("rm pdbs/tmp*")
-  
-  system("rm temp.top*")
-  
   ###### end main computational for loop over lattices and tripeptide center AA numbers 2 to 19
   
   ################### Analyses ##############
@@ -115,11 +115,8 @@ for (lat in latS) {
   system(paste0("printf '1\n' | gmx mindist -s bins/",lat,".tpr -f bins/",lat,"_cen.xtc -pi -od xvgs/mindist.xvg")) #makes latex file *.tex
   plotXVG("xvgs/mindist.xvg")
   
-  system('gmx distance  -f em.xtc -select "atomnr 1,93" -oall xvgs/dists.xvg') 
+  system(paste0('gmx distance  -f bins/',lat,'.xtc -select "atomnr 1,166" -oall xvgs/dists.xvg')) 
   plotXVG("xvgs/dists.xvg")
-  system('md-davis landscape_xvg -T 350 --common -x xvgs/rmsd.xvg -y xvgs/dists.xvg -n "Distance" -l "Chignolin" -o  xvgs/dists.html')  
-  
-  
 }
 
 setwd(base)
