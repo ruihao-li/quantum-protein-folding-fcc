@@ -16,8 +16,8 @@ ks=c(2,3,4,5,6,7,8,9)
 dput(latS)
 latS=c("DIA3", "DIA4", "DIA5", "DIA6", "DIA7", "DIA8", "DIA9") #,
 # "FCC2", "FCC3", "FCC4", "FCC5", "FCC6", "FCC7", "FCC8", "FCC9")
-# lat="DIA2"
-
+lat="FCC2"
+latS=c("TRU","EXT")
 
 for (lat in latS) {
   (baseIC=paste0(base,"/",lat,"_350")) 

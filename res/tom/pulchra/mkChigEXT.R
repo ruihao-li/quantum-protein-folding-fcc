@@ -1,0 +1,6 @@
+setwd("/home/radivot/GH/protein-folding-qc/res/tom/pulchra/pdbChig") 
+system("pwd")
+Sys.setenv(AMBERHOME= "/home/radivot/soft/amber22")
+system("echo $AMBERHOME")
+system("echo $PATH")
+system("$AMBERHOME/bin/tleap -s -f leap.in")
