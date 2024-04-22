@@ -1,8 +1,8 @@
 """A class defining the main chain of a peptide."""
 
 from qiskit.quantum_info import SparsePauliOp
-from .fcc_bead import Bead
-from .utils import _build_full_identity, _build_pauli_z_op
+from fcc_bead import Bead
+from utils import build_full_identity, build_pauli_z_op
 
 
 class Peptide:
@@ -75,8 +75,8 @@ class Peptide:
         Builds a SparsePauliOp of length 4 * (chain_len - 1) (number of qubits necessary to encode all turns for the chain of length chain_len on an FCC lattice) with a Pauli Z operator at a given index: q_i = 0.5 * (I - Z_i).
 
         Args:
-            chain_len: length of the chain.
-            pauli_z_index: index of a Pauli Z operator in a turn operator.
+            chain_len: Length of the chain.
+            pauli_z_index: Index of a Pauli Z operator in a turn operator.
 
         Returns:
             A Pauli operator that encodes the turn following from a given bead index.
@@ -84,7 +84,12 @@ class Peptide:
         num_turn_qubits = 4 * (chain_len - 1)
         norm_factor = 0.5
         turn_qubit = (
-            norm_factor * _build_full_identity(num_turn_qubits)
-            - norm_factor * _build_pauli_z_op(num_turn_qubits, {pauli_z_index})
+            norm_factor * build_full_identity(num_turn_qubits)
+            - norm_factor * build_pauli_z_op(num_turn_qubits, {pauli_z_index})
         ).simplify()
         return turn_qubit
+
+
+### Testing ###
+# peptide = Peptide("LHP")
+# print(peptide.beads_list[0]._turn_qubits)

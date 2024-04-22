@@ -1,7 +1,7 @@
 """A class defining a bead of a peptide (main chain only)."""
 
 from qiskit.quantum_info import SparsePauliOp
-from .utils import _build_full_identity
+from utils import build_full_identity
 
 
 class Bead:
@@ -14,7 +14,7 @@ class Bead:
     ):
         """
         Args:
-            main_index: index of the bead on the main chain in a peptide.
+            main_index: Index of the bead on the main chain in a peptide.
             residue_type: A character representing the type of a residue for the bead.
             turn_qubits: A tuple of four Pauli operators that encodes the turn following from a given bead index. Note that four qubits are needed to encode each turn in the FCC lattice.
         """
@@ -22,7 +22,7 @@ class Bead:
         self._residue_type = residue_type
         self._turn_qubits = turn_qubits
         if self._residue_type and self._turn_qubits is not None:
-            self._full_id = _build_full_identity(turn_qubits[0].num_qubits)
+            self._full_id = build_full_identity(turn_qubits[0].num_qubits)
             self._turn_indicator_pxpy = self._build_turn_indicator_pxpy()
             self._turn_indicator_pxmy = self._build_turn_indicator_pxmy()
             self._turn_indicator_mxpy = self._build_turn_indicator_mxpy()
