@@ -8,7 +8,6 @@ from fcc_contact_map import ContactMap
 from fcc_penalty_parameters import PenaltyParameters
 from utils import (
     build_full_identity,
-    build_pauli_z_op,
     fix_qubits,
 )
 
