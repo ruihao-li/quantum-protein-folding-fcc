@@ -15,6 +15,7 @@ class ContactMap:
         """
         self._peptide = peptide
         self._peptide_length = peptide.peptide_length
+        self._num_qubits = pow(self._peptide_length - 1, 2)
         (self._contact_map, self._num_contacts) = self._build_contact_map(peptide)
 
     @property
@@ -47,11 +48,10 @@ class ContactMap:
         """
         num_contacts = 0
         contact_map = defaultdict(dict)
-        num_qubits = pow(self._peptide_length - 1, 2)
         for lower_bead_idx in range(self._peptide_length - 2):
             for upper_bead_idx in range(lower_bead_idx + 2, self._peptide_length):
                 contact_map[lower_bead_idx][upper_bead_idx] = self._create_contact_op(
-                    lower_bead_idx, upper_bead_idx, num_qubits
+                    lower_bead_idx, upper_bead_idx, self._num_qubits
                 )
                 num_contacts += 1
         return contact_map, num_contacts

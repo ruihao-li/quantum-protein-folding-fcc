@@ -38,7 +38,7 @@ class DistanceMap:
         self, peptide: Peptide
     ) -> tuple[defaultdict[int, dict[int, SparsePauliOp]], int]:
         """
-        Builds a distance map for a given peptide, which contains distances squared between all pairs of beads on the main chain.
+        Builds a distance map for a given peptide, which contains the squared distances between all pairs of beads on the main chain.
 
         Args:
             peptide: A Peptide object that includes all information about a protein.
@@ -215,7 +215,7 @@ class DistanceMap:
         pair_energies_multiplier: float = 0.1,
     ) -> SparsePauliOp:
         """
-        Creates the first nearest neighbor interaction between two beads on the FCC lattice if they are at distance squared of 2 units from each other.
+        Creates the first nearest neighbor interaction between two beads on the FCC lattice if they are at squared distance of 2 units from each other.
 
         Args:
             lower_bead_idx: Index of the lower bead in the peptide.
