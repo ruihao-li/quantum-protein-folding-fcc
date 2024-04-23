@@ -72,7 +72,7 @@ class Peptide:
     @staticmethod
     def _build_turn_qubit(chain_len: int, pauli_z_index: int) -> SparsePauliOp:
         """
-        Builds a SparsePauliOp of length 4 * (chain_len - 1) (number of qubits necessary to encode all turns for the chain of length chain_len on an FCC lattice) with a Pauli Z operator at a given index: q_i = 0.5 * (I - Z_i).
+        Builds a SparsePauliOp of length 4 * (chain_len - 1) (number of qubits necessary to encode all turns for the chain of length chain_len on an FCC lattice) with a Pauli Z operator at a given index: :math:`q_i = (I - Z_i)/2`.
 
         Args:
             chain_len: Length of the chain.
@@ -88,8 +88,3 @@ class Peptide:
             - norm_factor * build_pauli_z_op(num_turn_qubits, {pauli_z_index})
         ).simplify()
         return turn_qubit
-
-
-### Testing ###
-# peptide = Peptide("LHP")
-# print(peptide.beads_list[0]._turn_qubits)

@@ -1,10 +1,10 @@
 """A class for building a distance map that stores distances between beads in a peptide on the FCC lattice."""
 
 from collections import defaultdict
+import numpy as np
 from qiskit.quantum_info import SparsePauliOp
-from fcc_bead import Bead
 from fcc_peptide import Peptide
-from utils import fix_qubits
+from utils import fix_qubits, build_full_identity
 
 
 class DistanceMap:
@@ -17,7 +17,7 @@ class DistanceMap:
         self._peptide = peptide
         self._peptide_length = peptide.peptide_length
         self._num_qubits = 4 * (self._peptide_length - 1)
-        (self._distance_map, self._num_distances) = self.build_distance_map(peptide)
+        (self._distance_map, self._num_distances) = self._build_distance_map(peptide)
 
     @property
     def peptide(self) -> Peptide:
@@ -25,7 +25,7 @@ class DistanceMap:
         return self._peptide
 
     @property
-    def distance_map(self) -> defaultdict[Bead, dict[Bead, SparsePauliOp]]:
+    def distance_map(self) -> defaultdict[int, dict[int, SparsePauliOp]]:
         """Returns a distance map."""
         return self._distance_map
 
@@ -36,9 +36,9 @@ class DistanceMap:
 
     def _build_distance_map(
         self, peptide: Peptide
-    ) -> tuple[defaultdict[Bead, dict[Bead, SparsePauliOp]], int]:
+    ) -> tuple[defaultdict[int, dict[int, SparsePauliOp]], int]:
         """
-        Builds a distance map for a given peptide.
+        Builds a distance map for a given peptide, which contains distances squared between all pairs of beads on the main chain.
 
         Args:
             peptide: A Peptide object that includes all information about a protein.
@@ -50,9 +50,9 @@ class DistanceMap:
         distance_map = defaultdict(dict)
         for lower_bead_idx in range(self._peptide_length - 1):
             for upper_bead_idx in range(lower_bead_idx + 1, self._peptide_length):
-                distance_map[peptide.beads_list[lower_bead_idx]][
-                    peptide.beads_list[upper_bead_idx]
-                ] = self._compute_distance(lower_bead_idx, upper_bead_idx)
+                distance_map[lower_bead_idx][upper_bead_idx] = self._compute_distance(
+                    lower_bead_idx, upper_bead_idx
+                )
                 num_distances += 1
         return distance_map, num_distances
 
@@ -186,7 +186,7 @@ class DistanceMap:
         self, lower_bead_idx: int, upper_bead_idx: int
     ) -> SparsePauliOp:
         """
-        Computes the distance squared between two beads on the FCC lattice.
+        Computes the distance squared between any two beads on the FCC lattice.
 
         Args:
             lower_bead_idx: Index of the lower bead in the peptide (assumed to be smaller than the upper bead index).
@@ -207,8 +207,31 @@ class DistanceMap:
             + (z_upper - z_lower) ** 2
         )
 
+    def first_neighbor(
+        self,
+        lower_bead_idx: int,
+        upper_bead_idx: int,
+        pair_energies: np.ndarray,
+        pair_energies_multiplier: float = 0.1,
+    ) -> SparsePauliOp:
+        """
+        Creates the first nearest neighbor interaction between two beads on the FCC lattice if they are at distance squared of 2 units from each other.
 
-### Testing ###
-peptide = Peptide("LHP")
-distance_map = DistanceMap(peptide)
-print(distance_map._distance_map)
+        Args:
+            lower_bead_idx: Index of the lower bead in the peptide.
+            upper_bead_idx: Index of the upper bead in the peptide.
+            pair_energies: Numpy array of pair energies for amino acids; these pair energies are negative.
+            pair_energies_multiplier: A constant that multiplies pair energy contributions.
+
+        Returns:
+            Contribution to an energetic Hamiltonian (without interaction qubits).
+        """
+        energy = pair_energies[lower_bead_idx][upper_bead_idx]
+        distance_op = self.distance_map[lower_bead_idx][upper_bead_idx]
+        # (3 - D) * E; D = 0 is penalized by the non-overlapping constraint; D > 2 has higher energies because E < 0
+        expression = (
+            pair_energies_multiplier
+            * energy
+            * (3 * build_full_identity(distance_op.num_qubits) - distance_op)
+        )
+        return fix_qubits(expression)
