@@ -3,8 +3,8 @@
 from collections import defaultdict
 import numpy as np
 from qiskit.quantum_info import SparsePauliOp
-from fcc_peptide import Peptide
-from utils import fix_qubits, build_full_identity
+from .fcc_peptide import Peptide
+from .utils import fix_qubits, build_full_identity
 
 
 class DistanceMap:
@@ -17,7 +17,7 @@ class DistanceMap:
         self._peptide = peptide
         self._peptide_length = peptide.peptide_length
         self._num_qubits = 4 * (self._peptide_length - 1)
-        (self._distance_map, self._num_distances) = self._build_distance_map(peptide)
+        (self._distance_map, self._num_distances) = self._build_distance_map()
 
     @property
     def peptide(self) -> Peptide:
@@ -35,7 +35,7 @@ class DistanceMap:
         return self._num_distances
 
     def _build_distance_map(
-        self, peptide: Peptide
+        self,
     ) -> tuple[defaultdict[int, dict[int, SparsePauliOp]], int]:
         """
         Builds a distance map for a given peptide, which contains the squared distances between all pairs of beads on the main chain.
@@ -212,7 +212,7 @@ class DistanceMap:
         lower_bead_idx: int,
         upper_bead_idx: int,
         pair_energies: np.ndarray,
-        pair_energies_multiplier: float = 0.1,
+        pair_energies_multiplier: float = 1,
     ) -> SparsePauliOp:
         """
         Creates the first nearest neighbor interaction between two beads on the FCC lattice if they are at squared distance of 2 units from each other.

@@ -2,11 +2,11 @@
 
 import numpy as np
 from qiskit.quantum_info import SparsePauliOp
-from fcc_peptide import Peptide
-from fcc_distance_map import DistanceMap
-from fcc_contact_map import ContactMap
-from fcc_penalty_parameters import PenaltyParameters
-from utils import (
+from .fcc_peptide import Peptide
+from .fcc_distance_map import DistanceMap
+from .fcc_contact_map import ContactMap
+from .fcc_penalty_parameters import PenaltyParameters
+from .utils import (
     build_full_identity,
     fix_qubits,
 )
@@ -160,6 +160,7 @@ class QubitOpBuilder:
         Returns:
             A qubit operator for the H_olap term.
         """
+        # TODO: Choosing appropriate values for these parameters is crucial for the correct implementation of the constraints. Need to investigate further.
         penalty_olap_1 = self._penalty_parameters.penalty_olap_1
         penalty_olap_2 = self._penalty_parameters.penalty_olap_2
         penalty_olap_3 = self._penalty_parameters.penalty_olap_3

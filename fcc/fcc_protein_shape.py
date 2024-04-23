@@ -2,7 +2,7 @@
 
 import numpy as np
 import os
-from fcc_peptide import Peptide
+from .fcc_peptide import Peptide
 
 
 class ProteinShapeDecoder:
@@ -10,14 +10,14 @@ class ProteinShapeDecoder:
     This class handles the decoding of the compact solution (bitstring) into the turns of the main chain of a protein on the FCC lattice.
     """
 
-    def __init__(self, peptide: Peptide, turn_bitstring: str):
+    def __init__(self, peptide: Peptide, solution_bitstring: str):
         """
         Args:
-            turn_sequence: Sequence to be decoded.
+            solution_bitstring: The compact bitstring representing both the configuration and interaction qubits.
         """
         self._peptide = peptide
         self._peptide_length = peptide.peptide_length
-        self._turn_bitstring = turn_bitstring
+        self._solution_bitstring = solution_bitstring
         self._turn_sequence = self._get_turn_sequence()
 
     @property
@@ -48,7 +48,7 @@ class ProteinShapeDecoder:
         Returns:
             A list of integers decoding the bitstring.
         """
-        # Reverse the bitstring to read from right to left such that it corresponds to the order of the configuration qubits
+        # Reverse the bitstring to read from right to left such that the order is configuration qubits followed by the interaction qubits
         bitstring = bitstring[::-1]
         # Unused bitstrings return None
         encoding = {
@@ -69,6 +69,7 @@ class ProteinShapeDecoder:
             "1101": None,
             "1110": None,
         }
+        # Only convert the configuration qubits
         length_turns = len(bitstring) // 4
         return [encoding[bitstring[4 * i : 4 * (i + 1)]] for i in range(length_turns)]
 
@@ -80,7 +81,7 @@ class ProteinShapeDecoder:
         """
         # Construct the full turn bitstring
         # Add the first 4 bits corresponding to the fixed first turn (0000)
-        full_bitstring = self._turn_bitstring + "0000"
+        full_bitstring = self._solution_bitstring + "0000"
         # Add the two qubits at positions 6 & 7 from the right (00)
         full_bitstring = full_bitstring[:-6] + "00" + full_bitstring[-6:]
         # Decode the bitstring

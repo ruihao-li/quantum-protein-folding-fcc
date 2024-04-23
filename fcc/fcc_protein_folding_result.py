@@ -1,28 +1,29 @@
 """A class for the result of the protein folding problem."""
 
-from fcc_peptide import Peptide
-from fcc_protein_shape import ProteinShapeDecoder, ProteinShapeFileGen
+from .fcc_peptide import Peptide
+from .fcc_protein_shape import ProteinShapeDecoder, ProteinShapeFileGen
 import numpy as np
 import matplotlib.pyplot as plt
 
 
 class ProteinFoldingResult:
 
-    def __init__(self, peptide: Peptide, unused_qubits: list[int], turn_bitstring: str):
+    def __init__(
+        self, peptide: Peptide, unused_qubits: list[int], solution_bitstring: str
+    ):
         """
         Args:
             peptide: The peptide defining the protein subject to the folding problem.
             unused_qubits: The list of indices for qubits in the original problem formulation that were removed during compression.
-            turn_bitstring: The bit sequence encoding the turns of the shape of the protein.
-
+            solution_bitstring: The compact bitstring representing both the configuration and interaction qubits.
         """
-        self._turn_bitstring = turn_bitstring
+        self._solution_bitstring = solution_bitstring
         self._unused_qubits = unused_qubits
         self._peptide = peptide
 
         self._protein_shape_decoder = ProteinShapeDecoder(
             peptide=self._peptide,
-            turn_bitstring=self._turn_bitstring,
+            solution_bitstring=self._solution_bitstring,
         )
 
         self._protein_shape_file_gen = ProteinShapeFileGen(
@@ -43,9 +44,9 @@ class ProteinFoldingResult:
         return self._protein_shape_file_gen
 
     @property
-    def turn_bitstring(self) -> str:
+    def solution_bitstring(self) -> str:
         """Returns the bitstring encoding the turns of the protein."""
-        return self._turn_bitstring
+        return self._solution_bitstring
 
     @property
     def turn_sequence(self) -> list:
@@ -57,13 +58,13 @@ class ProteinFoldingResult:
         unused_qubits = self._unused_qubits
         result = []
         offset = 0
-        size = len(self._turn_bitstring)
+        size = len(self._solution_bitstring)
         for i in range(size):
             index = size - 1 - i
             while i + offset in unused_qubits:
                 result.append("_")
                 offset += 1
-            result.append(self._turn_bitstring[index])
+            result.append(self._solution_bitstring[index])
 
         return "".join(result[::-1])
 

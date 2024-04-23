@@ -2,8 +2,8 @@
 
 from collections import defaultdict
 from qiskit.quantum_info import SparsePauliOp
-from fcc_peptide import Peptide
-from utils import build_full_identity, build_pauli_z_op
+from .fcc_peptide import Peptide
+from .utils import build_full_identity, build_pauli_z_op
 
 
 class ContactMap:
@@ -16,7 +16,7 @@ class ContactMap:
         self._peptide = peptide
         self._peptide_length = peptide.peptide_length
         self._num_qubits = pow(self._peptide_length - 1, 2)
-        (self._contact_map, self._num_contacts) = self._build_contact_map(peptide)
+        (self._contact_map, self._num_contacts) = self._build_contact_map()
 
     @property
     def peptide(self) -> Peptide:
@@ -34,7 +34,7 @@ class ContactMap:
         return self._num_contacts
 
     def _build_contact_map(
-        self, peptide: Peptide
+        self,
     ) -> tuple[defaultdict[int, dict[int, SparsePauliOp]], int]:
         """
         Builds a contact map for a given peptide -- a list of Pauli operators that represent nearest neighbor interactions. A nearest neighbor interaction between 2 beads is encoded using 1 qubit. Since we are considering only the main chain, the maximum number of qubits needed to encode all interactions is :math:`(N-1)^2`, where :math:`N` is the number of beads in the main chain. We build the contact operators based on the following indexing: lower_bead_idx * (N-1) + upper_bead_idx.

@@ -2,12 +2,12 @@
 
 from qiskit.quantum_info import SparsePauliOp
 from qiskit_algorithms.minimum_eigensolvers import MinimumEigensolverResult
-from fcc_peptide import Peptide
-from fcc_penalty_parameters import PenaltyParameters
-from fcc_mj_interaction import MiyazawaJerniganInteraction
-from fcc_qubit_op_builder import QubitOpBuilder
-from fcc_protein_folding_result import ProteinFoldingResult
-from utils import remove_unused_qubits
+from .fcc_peptide import Peptide
+from .fcc_penalty_parameters import PenaltyParameters
+from .fcc_mj_interaction import MiyazawaJerniganInteraction
+from .fcc_qubit_op_builder import QubitOpBuilder
+from .fcc_protein_folding_result import ProteinFoldingResult
+from .utils import remove_unused_qubits
 
 
 class ProteinFoldingProblem:
@@ -61,7 +61,7 @@ class ProteinFoldingProblem:
         return ProteinFoldingResult(
             peptide=self._peptide,
             unused_qubits=self._unused_qubits,
-            turn_bitstring=best_turn_bitstring,
+            solution_bitstring=best_turn_bitstring,
         )
 
     @property

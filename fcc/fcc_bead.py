@@ -1,7 +1,7 @@
 """A class defining a bead of a peptide (main chain only)."""
 
 from qiskit.quantum_info import SparsePauliOp
-from utils import build_full_identity
+from .utils import build_full_identity
 
 
 class Bead:

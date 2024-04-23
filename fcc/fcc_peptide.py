@@ -1,8 +1,8 @@
 """A class defining the main chain of a peptide."""
 
 from qiskit.quantum_info import SparsePauliOp
-from fcc_bead import Bead
-from utils import build_full_identity, build_pauli_z_op
+from .fcc_bead import Bead
+from .utils import build_full_identity, build_pauli_z_op
 
 
 class Peptide:
