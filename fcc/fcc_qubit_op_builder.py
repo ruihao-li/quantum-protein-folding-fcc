@@ -1,6 +1,7 @@
 """Builds the total qubit operator for the full Hamiltonian encoding a protein folding problem on the FCC lattice."""
 
 import numpy as np
+from sklearn.metrics import r2_score
 from qiskit.quantum_info import SparsePauliOp
 from .fcc_peptide import Peptide
 from .fcc_distance_map import DistanceMap
@@ -155,30 +156,41 @@ class QubitOpBuilder:
     def _create_h_olap(self) -> SparsePauliOp:
         r"""
         Creates qubit operators for the H_olap term, which penalizes overlapping beads. To ensure the non-overlapping condition, we impose constraints on the distance function that encodes the squared distance between beads, that is, for any two beads :math:`i` and :math:`j`, we require :math:`2 \leq D_{ij} leq 2(i-j)^2`.
-        Here we use the unbalanced penalization method proposed in arXiv:2211.13914 to implement the inequality constraints. The RHS constraint translates to a penalty term :math:`p_{ij}^{(1)} = -\lambda_1[2(i-j)^2-D_{ij}] + \lambda_2[2(i-j)^2-D_{ij}]^2`, where :math:`\lambda_1` and :math:`\lambda_2` are positive penalty parameters. The LHS constraint translates to a penalty term :math:`p_{ij}^{(2)} = -\lambda_3(D_{ij}-2) + \lambda_4(D_{ij}-2)^2`. The total penalty term for any pair of beads is :math:`p_{ij} = p_{ij}^{(1)} + p_{ij}^{(2)}`.
+        For each pair of beads, we define :math:`h_{ij} = D_{ij} - 2`. Ideally, the penalty function would have a large positive value (set by `penalty_olap`) when :math:`h_{ij} = -2` (corresponding to the case when the beads overlap) and zero otherwise. Practically, we cannot enforce this constraint directly, so we use polynomials to approximate the penalty function. Note that the degree of the polynomial required to achieve an accuracy threshold :math:`R^2_{ij}` depends on the domain of the function, which is :math:`[-2, 2(i-j)^2 - 2]`. The further the pair of beads are from each other, the higher the degree of the polynomial required to approximate the penalty function.
 
         Returns:
             A qubit operator for the H_olap term.
         """
-        # TODO: Choosing appropriate values for these parameters is crucial for the correct implementation of the constraints. Need to investigate further.
-        penalty_olap_1 = self._penalty_parameters.penalty_olap_1
-        penalty_olap_2 = self._penalty_parameters.penalty_olap_2
-        penalty_olap_3 = self._penalty_parameters.penalty_olap_3
-        penalty_olap_4 = self._penalty_parameters.penalty_olap_4
-        num_qubits = self._distance_map._num_qubits
-        full_id = build_full_identity(num_qubits)
+        penalty_olap = self._penalty_parameters.penalty_olap
+        full_id = build_full_identity(self._num_config_qubits)
         h_olap = 0
-        for i in range(self._peptide_length - 4):
+        for i in range(self._peptide_length - 3):
             for j in range(
-                i + 4, self._peptide_length
+                i + 3, self._peptide_length
             ):  # overlap cannot happen within 3 beads
-                distance = self._distance_map.distance_map[i][j]
-                h_olap += -penalty_olap_1 * ((2 * (j - i) ** 2) * full_id - distance)
-                h_olap += (
-                    penalty_olap_2 * ((2 * (j - i) ** 2) * full_id - distance) ** 2
-                )
-                h_olap += -penalty_olap_3 * (distance - 2 * full_id)
-                h_olap += penalty_olap_4 * (distance - 2 * full_id) ** 2
+                dist_op = self._distance_map[(i, j)]
+                # Perform Chebyshev fit to approximate the penalty function
+                x = np.arange(-2, 2 * (j - i) ** 2, 2)
+                y = [penalty_olap] + [0] * (len(x) - 1)
+                # Initialize the max degree of the polynomial to 6
+                degree = 4
+                r2 = r2_score(y, np.polynomial.Chebyshev.fit(x, y, degree)(x))
+                while r2 < 0.999:
+                    degree += 1
+                    cheb_fit = np.polynomial.Chebyshev.fit(x, y, degree)
+                    r2 = r2_score(y, cheb_fit(x))
+                # Convert the Chebyshev fit coefficients to polynomial coefficients
+                cheb_coeffs = cheb_fit.convert().coef
+                print(f"Highest degree of the polynomial for {i} and {j}: {degree}")
+                poly_coeffs = np.polynomial.chebyshev.cheb2poly(cheb_coeffs)
+                print(f"Penalty values: {np.polynomial.Polynomial(poly_coeffs)(x)}")
+                # Create the qubit operator based on the polynomial coefficients
+                h_olap += poly_coeffs[0] * full_id
+                for k in range(1, len(poly_coeffs)):
+                    h_op = (dist_op - 2 * full_id).simplify()
+                    for _ in range(k - 1):
+                        h_op = (h_op @ (dist_op - 2 * full_id)).simplify()
+                    h_olap += (poly_coeffs[k] * h_op).simplify()
         return fix_qubits(h_olap)
 
     def _create_h_contact(self) -> SparsePauliOp:

@@ -19,6 +19,10 @@ class DistanceMap:
         self._num_qubits = 4 * (self._peptide_length - 1)
         (self._distance_map, self._num_distances) = self._build_distance_map()
 
+    def __getitem__(self, position: tuple[int, int]) -> SparsePauliOp:
+        lower_bead_idx, upper_bead_idx = position
+        return self._distance_map[str(lower_bead_idx)][str(upper_bead_idx)]
+
     @property
     def peptide(self) -> Peptide:
         """Returns a peptide."""
@@ -36,7 +40,7 @@ class DistanceMap:
 
     def _build_distance_map(
         self,
-    ) -> tuple[defaultdict[int, dict[int, SparsePauliOp]], int]:
+    ) -> tuple[defaultdict[str, dict[str, SparsePauliOp]], int]:
         """
         Builds a distance map for a given peptide, which contains the squared distances between all pairs of beads on the main chain.
 
@@ -50,8 +54,8 @@ class DistanceMap:
         distance_map = defaultdict(dict)
         for lower_bead_idx in range(self._peptide_length - 1):
             for upper_bead_idx in range(lower_bead_idx + 1, self._peptide_length):
-                distance_map[lower_bead_idx][upper_bead_idx] = self._compute_distance(
-                    lower_bead_idx, upper_bead_idx
+                distance_map[str(lower_bead_idx)][str(upper_bead_idx)] = (
+                    self._compute_distance(lower_bead_idx, upper_bead_idx)
                 )
                 num_distances += 1
         return distance_map, num_distances
@@ -227,7 +231,7 @@ class DistanceMap:
             Contribution to an energetic Hamiltonian (without interaction qubits).
         """
         energy = pair_energies[lower_bead_idx][upper_bead_idx]
-        distance_op = self.distance_map[lower_bead_idx][upper_bead_idx]
+        distance_op = self.distance_map[str(lower_bead_idx)][str(upper_bead_idx)]
         # (3 - D) * E; D = 0 is penalized by the non-overlapping constraint; D > 2 has higher energies because E < 0
         expression = (
             pair_energies_multiplier

@@ -79,9 +79,10 @@ class ProteinShapeDecoder:
         Returns:
             A list of integers representing the sequence of turns of the peptide.
         """
-        # Construct the full turn bitstring
+        # Split the solution bitstring into configuration (4N - 10) and interaction qubits
+        config_bitstring = self._solution_bitstring[-(4 * self._peptide_length - 10) :]
         # Add the first 4 bits corresponding to the fixed first turn (0000)
-        full_bitstring = self._solution_bitstring + "0000"
+        full_bitstring = config_bitstring + "0000"
         # Add the two qubits at positions 6 & 7 from the right (00)
         full_bitstring = full_bitstring[:-6] + "00" + full_bitstring[-6:]
         # Decode the bitstring

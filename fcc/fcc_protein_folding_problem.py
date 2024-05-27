@@ -1,7 +1,8 @@
 """A class for the protein folding problem on an FCC lattice."""
 
 from qiskit.quantum_info import SparsePauliOp
-from qiskit_algorithms.minimum_eigensolvers import MinimumEigensolverResult
+from qiskit_algorithms.minimum_eigensolvers import SamplingVQEResult
+from qiskit.primitives import SamplerResult
 from .fcc_peptide import Peptide
 from .fcc_penalty_parameters import PenaltyParameters
 from .fcc_mj_interaction import MiyazawaJerniganInteraction
@@ -47,7 +48,9 @@ class ProteinFoldingProblem:
         self._unused_qubits = unused_qubits
         return reduced_qubit_op
 
-    def interpret(self, raw_result: MinimumEigensolverResult) -> ProteinFoldingResult:
+    def interpret(
+        self, raw_result: SamplingVQEResult | SamplerResult
+    ) -> ProteinFoldingResult:
         """
         Interprets the raw algorithm result and returns a ProteinFoldingResult object.
 
@@ -57,7 +60,12 @@ class ProteinFoldingProblem:
         Returns:
             A ProteinFoldingResult object that includes the interpreted result.
         """
-        best_turn_bitstring = raw_result.best_measurement["bitstring"]
+        try:
+            best_turn_bitstring = raw_result.best_measurement["bitstring"]
+        except AttributeError:
+            prob_dist = raw_result.quasi_dists[0].binary_probabilities()
+            # Find the most probable bitstring
+            best_turn_bitstring = max(prob_dist, key=prob_dist.get)
         return ProteinFoldingResult(
             peptide=self._peptide,
             unused_qubits=self._unused_qubits,
