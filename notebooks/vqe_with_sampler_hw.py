@@ -208,6 +208,8 @@ from qufold.protein_folding_result import ProteinFoldingResult
 
 # manually creating `ProteinFoldingResult` with the bitstring with lowest energy
 # it is the first bitstring in `sorted_bitstring_expval_all`
+# ideally you should check many candidate bitstrings instead of just one
+# this snippet is for example only
 # sorted_bitstring_expval_all: List[Tuple[str, float]] - 1st elem is the bitstring, 2nd elem is energy
 result = ProteinFoldingResult(
     unused_qubits=pf.unused_qubits,

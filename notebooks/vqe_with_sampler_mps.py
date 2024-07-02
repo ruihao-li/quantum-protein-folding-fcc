@@ -75,20 +75,6 @@ else:
 # add measure ops for Sampler job
 ansatz_with_meas = ansatz.measure_all(inplace=False)
 
-# transpilation for HW runs
-# pm = generate_preset_pass_manager(backend=backend, optimization_level=3)
-# isa_circuit = pm.run(ansatz)
-
-
-#####
-
-from qiskit.quantum_info import SparsePauliOp
-
-# applying layout to qubit_op for HW runs
-# isa_observables = [
-#     SparsePauliOp(obs.paulis).apply_layout(layout=isa_circuit.layout)
-#     for obs in qubit_op if obs.paulis[0].to_label() != "I" * len(obs.paulis[0].to_label())
-# ]
 
 #####
 import json
@@ -155,6 +141,8 @@ from scipy.optimize import minimize
 
 # Simulator runs does not require Session
 # for HW runs, move the optimization loop inside a Session
+# also simulator runs do not have notion of error suppression and mitigation
+# (e.g., dynamical decoupling, twirling, etc.). No need to set those options
 sampler = Sampler(mode=backend)
 sampler.options.default_shots = 10_000
 
@@ -209,6 +197,8 @@ from qufold.protein_folding_result import ProteinFoldingResult
 
 # manually creating `ProteinFoldingResult` with the bitstring with lowest energy
 # it is the first bitstring in `sorted_bitstring_expval_all`
+# ideally you should check many candidate bitstrings instead of just one
+# this snippet is for example only
 # sorted_bitstring_expval_all: List[Tuple[str, float]] - 1st elem is the bitstring, 2nd elem is energy
 result = ProteinFoldingResult(
     unused_qubits=pf.unused_qubits,

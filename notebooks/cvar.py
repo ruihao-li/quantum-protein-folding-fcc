@@ -3,6 +3,7 @@ from typing import Iterable
 from qiskit.quantum_info import SparsePauliOp
 from qiskit.result import Counts, sampled_expectation_value
 
+# following CVaR snippet was copied from `qiskit-algorithms`
 # measurements: Iterable[(bitstring probability, expval)]
 def get_cvar_energy(measurements: Iterable[tuple[float, float]], alpha: float = 0.1) -> float:
     # sort by values
@@ -23,8 +24,8 @@ import numpy as np
 import ray
 from itertools import chain
 
+# following snippet was copied from `qiskit-algorithms`
 _PARITY = np.array([-1 if bin(i).count("1") % 2 else 1 for i in range(256)], dtype=np.float64)
-
 def _evaluate_sparsepauli(state: str, observable: SparsePauliOp) -> float:
     state = int(state, 2)
     packed_uint8 = np.packbits(observable.paulis.z, axis=1, bitorder="little")
@@ -32,9 +33,9 @@ def _evaluate_sparsepauli(state: str, observable: SparsePauliOp) -> float:
     reduced = np.bitwise_xor.reduce(packed_uint8 & state_bytes, axis=1)
     return np.real(np.sum(observable.coeffs * _PARITY[reduced]))
 
-# Let's start Ray
+# uses ray to parallize bitstring processing
 ray.init(
-    num_cpus=8,
+    num_cpus=8, # my CPU had 8-cores. you may set it to a lower or higher number
     log_to_driver=False,
     ignore_reinit_error=True,
 )
