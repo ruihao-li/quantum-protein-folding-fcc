@@ -10,16 +10,11 @@ import os
 import time
 from datetime import datetime, timezone
 
-import execution_utils
 import matplotlib.pyplot as plt
 import numpy as np
 import psutil
+import qufold
 import ray
-from execution_utils.measurements import (
-    get_cvar_energy,
-    process_counts_parallel,
-    process_counts_serial,
-)
 from numpy.random import default_rng
 from qiskit import QuantumCircuit
 from qiskit.circuit.library import EfficientSU2, RealAmplitudes
@@ -35,8 +30,12 @@ from qufold import (
     Peptide,
     ProteinFoldingProblem,
 )
+from qufold.execution_utils.measurements import (
+    get_cvar_energy,
+    process_counts_parallel,
+    process_counts_serial,
+)
 from qufold.protein_folding_result import ProteinFoldingResult
-
 
 NUM_WORKERS = (
     psutil.cpu_count()
@@ -46,7 +45,7 @@ ray.init(
     log_to_driver=False,
     ignore_reinit_error=True,
     runtime_env={
-        "py_modules": [execution_utils],
+        "py_modules": [qufold],
     },
 )
 
@@ -119,11 +118,11 @@ ansatz_type = "ra"
 if ansatz_type == "ra":
     ansatz = RealAmplitudes(
         num_qubits=qubit_op.num_qubits, reps=2, entanglement="pairwise"
-    ).decompose() # `.decompose` is optional if you are transpiling
+    ).decompose()  # `.decompose` is optional if you are transpiling
 elif ansatz_type == "su2":
     ansatz = EfficientSU2(
         num_qubits=qubit_op.num_qubits, reps=2, entanglement="pairwise"
-    ).decompose() # `.decompose` is optional if you are transpiling
+    ).decompose()  # `.decompose` is optional if you are transpiling
 
 # add measure ops for Sampler job
 ansatz.measure_all()
@@ -144,6 +143,8 @@ init_parameter_values = rng.uniform(-pi, pi, size=isa_circuit.num_parameters)
 energies = []
 parameters = []
 bitstring_expval_all = {}
+
+
 def cost_func(
     params: np.array,
     ansatz: QuantumCircuit,
@@ -210,7 +211,6 @@ with Session(backend=backend) as session:
         # sampler.options.dynamical_decoupling.enable = True
         # sampler.options.dynamical_decoupling.sequence_type = "XX" # "XpXm" or "XY4"
 
-    
     # use exactly one of the three optimizer blocks below.
     # NFT (from `qiskit_algorithms`) and COBYLA (from `scipy`) are example only
     # use any optimizer of your choice from `qiskit_algorithms` or `scipy`
@@ -224,13 +224,14 @@ with Session(backend=backend) as session:
 
     """CMA optimizer (https://github.com/CMA-ES/pycma) (pip install cma)"""
     import cma
-    sigma0 = 0.5 # initial value for the variance for cma-es
+
+    sigma0 = 0.5  # initial value for the variance for cma-es
     optimized_param_values, es = cma.fmin2(
         cost_func,
         init_parameter_values,
         sigma0,
         args=(isa_circuit, qubit_op, sampler),
-        options={'maxiter': 100}
+        options={"maxiter": 100},
     )
 
     """SciPy optimizer"""
