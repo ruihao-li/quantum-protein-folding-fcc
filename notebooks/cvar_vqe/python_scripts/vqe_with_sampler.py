@@ -9,7 +9,6 @@ import json
 import os
 import time
 from datetime import datetime, timezone
-import warnings
 
 import matplotlib.pyplot as plt
 import numpy as np
