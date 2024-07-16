@@ -9,6 +9,7 @@ import json
 import os
 import time
 from datetime import datetime, timezone
+import warnings
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -21,7 +22,7 @@ from qiskit.circuit.library import EfficientSU2, RealAmplitudes
 from qiskit.quantum_info import SparsePauliOp
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 from qiskit_aer import AerSimulator
-from qiskit_ibm_runtime import QiskitRuntimeService
+from qiskit_ibm_runtime import QiskitRuntimeService, RuntimeEncoder
 from qiskit_ibm_runtime import SamplerV2 as Sampler
 from qiskit_ibm_runtime import Session
 from qufold import (
@@ -49,8 +50,10 @@ ray.init(
     },
 )
 
+metadata = {}
 TIMESTAMP = datetime.now(timezone.utc)
 
+metadata["timestamp"] = TIMESTAMP.isoformat()
 
 ## build and set parameters for protein folding problem
 def build_pf(main_seq: str):
@@ -80,6 +83,10 @@ def build_pf(main_seq: str):
 main_chain = "GSNQNNF"
 # main_chain = "YYDPETGTWY"
 # main_chain = "RGKWTYNGITYEGR"
+# main_chain = "VLAMWKVGFFKRNRP"
+
+# shots for circuit execution
+SHOTS = 100_000
 
 # max number of bitstrings to save. Set `None` to save all.
 MAX_NUM_SAVE_BITSTRING = 100_000
@@ -88,12 +95,24 @@ MAX_NUM_SAVE_BITSTRING = 100_000
 # will save `.xyz` file for N lowest energy bitstrings in the corresponding directory
 NUM_CHECK_LOWSEST_ENERGY_BITSRINGS = 50
 
+metadata["shots"] = SHOTS
+metadata["num_workers"] = NUM_WORKERS
+metadata["main_chain"] = main_chain
+metadata["max_num_save_bitstring"] = MAX_NUM_SAVE_BITSTRING
+metadata["num_check_lowest_energy_bitstrings"] = NUM_CHECK_LOWSEST_ENERGY_BITSRINGS
 
 """Define protein folding problem"""
 pf = build_pf(main_chain)  # creates the PF problem instance
-qubit_op = pf.qubit_op()  # creates the problem Hamiltonian
+qubit_op: SparsePauliOp = pf.qubit_op()  # creates the problem Hamiltonian
 print(f"Num qubits {qubit_op.num_qubits}")
 
+op_paulis = qubit_op.paulis.to_labels()
+op_coeffs = [str(coeff) for coeff in qubit_op.coeffs]
+
+metadata["qubit_op"] = {
+    "paulis": op_paulis,
+    "coeffs": op_coeffs
+}
 
 """Get backend"""
 # hardware backend
@@ -108,6 +127,7 @@ backend = AerSimulator(method="matrix_product_state")
 # backend = service.backend("ibm_cleveland")
 # backend = AerSimulator.from_backend(backend=backend)
 
+metadata["backend_name"] = backend.name
 
 """Define variational ansatz"""
 # currently, uses either RealAmplitudes or EfficientSU2
@@ -131,19 +151,25 @@ ansatz.measure_all()
 pm = generate_preset_pass_manager(backend=backend, optimization_level=3)
 isa_circuit = pm.run(ansatz)
 
+metadata["physical_circuit"] = RuntimeEncoder().encode(isa_circuit)
 
 """generate random initial parameter values for VQE loop"""
 rng = default_rng(seed=0)
 pi = np.pi
 init_parameter_values = rng.uniform(-pi, pi, size=isa_circuit.num_parameters)
 
+metadata["initial_param_values"] = init_parameter_values.tolist()
 
 """cost function"""
 # global variables to save intermediate data
 energies = []
 parameters = []
+job_ids = []
+func_eval_durations = []
+primitive_job_durations = []
+bs_processing_durations = []
 bitstring_expval_all = {}
-
+nfev = 0
 
 def cost_func(
     params: np.array,
@@ -162,34 +188,57 @@ def cost_func(
     Returns:
         float: Energy estimate
     """
+    global nfev
+    status = sampler.session.status()
+    print(f"Session status {status}")
+    # if Session is closed, it cannot accept any jobs. When Session is closed,
+    # the cost func will keep returning a high dummy value ('inf') so that
+    # the optimizer terminates normally after a few iterations.
+    if status in ['In progress, not accepting new jobs', 'Closed']:
+        return float("inf")
+    
     tic0 = time.time()
     pub = (ansatz, params)
 
-    tic1 = time.time()
-    primitive_result = sampler.run(pubs=[pub]).result()
+    tic1 = datetime.now(timezone.utc)
+    print(f"# cost function eval: {nfev+1:04}")
+    print(f"Submitting Sampler job at time {tic1.isoformat()}")
+    job = sampler.run(pubs=[pub])
+    job_id = job.job_id()
+    job_ids.append(job_id)
+    print(f"Job ID: {job_id}")
+    primitive_result = job.result()
     pub_result = primitive_result[0]
     counts = pub_result.data.meas.get_counts()
-    toc1 = time.time()
-    print(f" >> Sampler job took {toc1-tic1:.4f} seconds")
-
+    toc1 = datetime.now(timezone.utc)
+    job_duration = (toc1 - tic1).total_seconds()
+    
     tic2 = time.time()
     bitstring_wise_expval, prob_expval_list = process_counts_parallel(
         counts=counts, observable=hamiltonian, num_batches=NUM_WORKERS
     )
     bitstring_expval_all.update(bitstring_wise_expval)
-    toc2 = time.time()
-    print(
-        f" >> processing {len(prob_expval_list)} unique bitstrings took {toc2-tic2:.4f} seconds"
-    )
-
     energy = get_cvar_energy(measurements=prob_expval_list)
-    print(f"energy {energy:.4f}\n")
-
+    toc2 = time.time()
+    
     energies.append(energy)
     parameters.append(params)
     toc0 = time.time()
-    print(f"One iteration of optimizer took {toc0-tic0:.4f} seconds")
-
+    
+    fev_dur = toc0-tic0
+    bs_processing_dur = toc2-tic2
+    func_eval_durations.append(round(fev_dur, 4))
+    bs_processing_durations.append(round(bs_processing_dur, 4))
+    primitive_job_durations.append(round(job_duration, 4))
+    
+    print(f"One iteration of cost func took {fev_dur:.4f} seconds")
+    print(f" >> Sampler job took {job_duration:.4f} seconds")
+    print(
+        f" >> processing {len(prob_expval_list)}"
+        f" unique bitstrings took {bs_processing_dur:.4f} seconds"
+    )
+    print(f" >> energy {energy:.4f}\n")
+    nfev += 1
     return energy
 
 
@@ -197,13 +246,14 @@ def cost_func(
 runner = "simulator" if backend.configuration().simulator else "hardware"
 # Simulator runs does not require Session
 # for HW runs, the optimization loop must be inside a Session
-with Session(backend=backend) as session:
+with Session(backend=backend, max_time=90) as session:
+    metadata["session_id"] = session.session_id
     sampler = Sampler(mode=session)
-    sampler.options.default_shots = 10_000
+    sampler.options.default_shots = SHOTS
 
     if runner == "hardware":
         # recommended: for Sampler runs enable gates twirling and disable measure twirling
-        sampler.options.twirling.enable_gates = True
+        sampler.options.twirling.enable_gates = False
         sampler.options.twirling.enable_measure = False
 
         ## based on ansatz you may enable or disable dynamical decoupling (DD).
@@ -223,30 +273,38 @@ with Session(backend=backend) as session:
     # optimized_param_values = optimizer_result.x
 
     """CMA optimizer (https://github.com/CMA-ES/pycma) (pip install cma)"""
-    import cma
+    # import cma
 
-    sigma0 = 0.5  # initial value for the variance for cma-es
-    optimized_param_values, es = cma.fmin2(
-        cost_func,
-        init_parameter_values,
-        sigma0,
-        args=(isa_circuit, qubit_op, sampler),
-        options={"maxiter": 100},
-    )
+    # sigma0 = 0.5  # initial value for the variance for cma-es
+    # optimized_param_values, es = cma.fmin2(
+    #     cost_func,
+    #     init_parameter_values,
+    #     sigma0,
+    #     args=(isa_circuit, qubit_op, sampler),
+    #     options={"maxiter": 3},
+    # )
 
     """SciPy optimizer"""
-    # from scipy.optimize import minimize
-    # optimizer_result = minimize(
-    #     fun=cost_func,
-    #     x0=init_parameter_values,
-    #     method="cobyla",
-    #     args=(isa_circuit, qubit_op, sampler),
-    #     options={"maxiter": 5},
-    # )
-    # optimized_param_values = optimizer_result.x
+    from scipy.optimize import minimize
+    optimizer_result = minimize(
+        fun=cost_func,
+        x0=init_parameter_values,
+        method="cobyla",
+        args=(isa_circuit, qubit_op, sampler),
+        options={"maxiter": 10},
+    )
+    optimized_param_values = optimizer_result.x
 
-print(optimized_param_values)
+print(f"optimized parameter values: {optimized_param_values}")
 
+metadata["optimized_param_values"] = optimized_param_values.tolist()
+metadata["nfev"] = nfev
+metadata["job_ids"] = job_ids
+metadata["durations (sec)"] = {
+    "func_eval_durations": func_eval_durations,
+    "job_durations": primitive_job_durations,
+    "bitstring_processing_durations": bs_processing_durations,
+}
 
 """process and save results"""
 timestamp_str = TIMESTAMP.strftime("%Y_%m_%d_%H_%M_%S_%f")
@@ -257,6 +315,9 @@ plots_3d_dir = f"{parent_dir}/plots_3D_structure"
 os.mkdir(parent_dir)
 os.mkdir(xyz_files_dir)
 os.mkdir(plots_3d_dir)
+
+with open(f"{parent_dir}/metadata.json", "w") as jf:
+    json.dump(metadata, jf, indent=2, sort_keys=True)
 
 sorted_bitstring_expval_all = sorted(bitstring_expval_all.items(), key=lambda x: x[1])
 with open(f"{parent_dir}/sorted_bitstrings_{main_chain}_{ansatz_type}.json", "w") as jf:
