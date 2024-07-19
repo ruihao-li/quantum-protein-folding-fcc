@@ -188,13 +188,6 @@ def cost_func(
         float: Energy estimate
     """
     global nfev
-    status = sampler.session.status()
-    print(f"Session status {status}")
-    # if Session is closed, it cannot accept any jobs. When Session is closed,
-    # the cost func will keep returning a high dummy value ('inf') so that
-    # the optimizer terminates normally after a few iterations.
-    if status in ['In progress, not accepting new jobs', 'Closed']:
-        return float("inf")
     
     tic0 = time.time()
     pub = (ansatz, params)
@@ -202,15 +195,26 @@ def cost_func(
     tic1 = datetime.now(timezone.utc)
     print(f"# cost function eval: {nfev+1:04}")
     print(f"Submitting Sampler job at time {tic1.isoformat()}")
-    job = sampler.run(pubs=[pub])
-    job_id = job.job_id()
-    job_ids.append(job_id)
-    print(f"Job ID: {job_id}")
-    primitive_result = job.result()
+    # submitting sampler job in try-except block.
+    # If there is an error submitting the job (e.g., Session is closed)
+    # Exception block will capture it, and return 'inf'
+    try:
+        job = sampler.run(pubs=[pub])
+        job_id = job.job_id()
+        print(f"Job ID: {job_id}")
+        primitive_result = job.result()
+    except Exception as e:
+        print("Exception happened during Runtime Sampler job")
+        print(f"Session status {sampler.session.status()}")
+        print(repr(e))
+        print("\n")
+        return float("inf")
     pub_result = primitive_result[0]
     counts = pub_result.data.meas.get_counts()
     toc1 = datetime.now(timezone.utc)
     job_duration = (toc1 - tic1).total_seconds()
+
+    job_ids.append(job_id)
     
     tic2 = time.time()
     bitstring_wise_expval, prob_expval_list = process_counts_parallel(
