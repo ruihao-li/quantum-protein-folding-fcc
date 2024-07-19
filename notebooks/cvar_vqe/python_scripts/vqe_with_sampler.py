@@ -105,14 +105,6 @@ pf = build_pf(main_chain)  # creates the PF problem instance
 qubit_op: SparsePauliOp = pf.qubit_op()  # creates the problem Hamiltonian
 print(f"Num qubits {qubit_op.num_qubits}")
 
-op_paulis = qubit_op.paulis.to_labels()
-op_coeffs = [str(coeff) for coeff in qubit_op.coeffs]
-
-metadata["qubit_op"] = {
-    "paulis": op_paulis,
-    "coeffs": op_coeffs
-}
-
 """Get backend"""
 # hardware backend
 # service = QiskitRuntimeService()
