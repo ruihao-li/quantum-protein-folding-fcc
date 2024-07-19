@@ -241,7 +241,7 @@ def cost_func(
 runner = "simulator" if backend.configuration().simulator else "hardware"
 # Simulator runs does not require Session
 # for HW runs, the optimization loop must be inside a Session
-with Session(backend=backend, max_time=90) as session:
+with Session(backend=backend) as session:
     metadata["session_id"] = session.session_id
     sampler = Sampler(mode=session)
     sampler.options.default_shots = SHOTS
