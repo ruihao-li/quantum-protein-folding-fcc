@@ -48,6 +48,22 @@ class ProteinFoldingProblem:
         self._unused_qubits = unused_qubits
         return reduced_qubit_op
 
+    def olap_constr_ops(self) -> tuple[list[tuple[int, int]], list[SparsePauliOp]]:
+        """
+        Builds the overlap constraint operators for the protein folding problem on the FCC lattice that are used in the VQEC approach.
+
+        Returns:
+            A tuple of a list of bead pairs and a list of corresponding qubit operators for the overlap constraints.
+        """
+        olap_constr_ops_dict = self._qubit_op_builder.build_olap_constr_ops()
+        for pair in olap_constr_ops_dict:
+            olap_constr_ops_dict[pair], _ = remove_unused_qubits(
+                olap_constr_ops_dict[pair], self._unused_qubits
+            )
+        olap_constr_ops = list(olap_constr_ops_dict.values())
+        bead_pairs = list(olap_constr_ops_dict.keys())
+        return bead_pairs, olap_constr_ops
+
     def interpret(
         self, raw_result: SamplingVQEResult | SamplerResult
     ) -> ProteinFoldingResult:

@@ -57,6 +57,19 @@ class QubitOpBuilder:
         h_total = h_back + h_redun + h_olap + h_contact
         return h_total.simplify()
 
+    def build_olap_constr_ops(self) -> dict[tuple[int, int], SparsePauliOp]:
+        """
+        Builds qubit operators for the constraints that penalize overlapping beads, which are subsequently used in the VQEC approach based on Lagrange multipliers (arXiv:2311.08502).
+
+        Returns:
+            A dictionary containing the indices of bead pairs as keys and the corresponding qubit operators as values.
+        """
+        contact_id = build_full_identity(self._num_contact_qubits)
+        olap_constraints = self._create_olap_constraints()
+        for key in olap_constraints:
+            olap_constraints[key] = contact_id ^ olap_constraints[key]
+        return olap_constraints
+
     def _create_turn_operator(
         self, lower_bead_idx: int, upper_bead_idx: int
     ) -> SparsePauliOp:
@@ -162,6 +175,8 @@ class QubitOpBuilder:
             A qubit operator for the H_olap term.
         """
         penalty_olap = self._penalty_parameters.penalty_olap
+        if penalty_olap is None:
+            return 0
         full_id = build_full_identity(self._num_config_qubits)
         h_olap = 0
         for i in range(self._peptide_length - 3):
@@ -183,7 +198,7 @@ class QubitOpBuilder:
                 cheb_coeffs = cheb_fit.convert().coef
                 print(f"Highest degree of the polynomial for {i} and {j}: {degree}")
                 poly_coeffs = np.polynomial.chebyshev.cheb2poly(cheb_coeffs)
-                print(f"Penalty values: {np.polynomial.Polynomial(poly_coeffs)(x)}")
+                # print(f"Penalty values: {np.polynomial.Polynomial(poly_coeffs)(x)}")
                 # Create the qubit operator based on the polynomial coefficients
                 h_olap += poly_coeffs[0] * full_id
                 for k in range(1, len(poly_coeffs)):
@@ -207,3 +222,19 @@ class QubitOpBuilder:
                     self._distance_map.first_neighbor(i, j, self._pair_energies)
                 )
         return fix_qubits(h_contact)
+
+    def _create_olap_constraints(self) -> dict[tuple[int, int], SparsePauliOp]:
+        """
+        Creates qubit operators for the constraints that penalize overlapping beads, which are subsequently used in the VQEC approach based on Lagrange multipliers (arXiv:2311.08502). Note that the constraints are put in the form of :math:`F_{ij} \leq 0`, where :math:`F_{ij} = 2 - D_{ij}`.
+
+        Returns:
+            A dictionary containing the indices of bead pairs as keys and the corresponding qubit operators as values.
+        """
+        olap_constraints = {}
+        for i in range(self._peptide_length - 3):
+            for j in range(i + 3, self._peptide_length):
+                dist_op = self._distance_map[(i, j)]
+                olap_constraints[(i, j)] = (
+                    2 * build_full_identity(self._num_config_qubits) - dist_op
+                ).simplify()
+        return fix_qubits(olap_constraints)

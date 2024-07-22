@@ -163,17 +163,23 @@ def _compress_sparse_pauli_op(
     return operator_compressed
 
 
-def remove_unused_qubits(operator: SparsePauliOp) -> tuple[SparsePauliOp, list[int]]:
+def remove_unused_qubits(
+    operator: SparsePauliOp, unused_qubit_indices: list[int] = None
+) -> tuple[SparsePauliOp, list[int]]:
     """
     Removes qubits in a given operator that are equal to an identity operator across all terms, i.e., they are irrelevant for the problem. It makes the number of qubits required for encoding the problem smaller or equal.
 
     Args:
         operator: An operator whose unused qubits shall be removed, e.g., full Hamiltonian for the protein folding problem.
+        unused_qubit_indices: A list of indices of qubits that are not used in the optimization. If None, the function will find them.
 
     Returns:
         A tuple consisting of the operator compressed to an equivalent one and indices of qubits in the original operator that were unused as optimization variables.
     """
-    unused_qubits = _find_unused_qubits(operator)
+    if unused_qubit_indices is None:
+        unused_qubits = _find_unused_qubits(operator)
+    else:
+        unused_qubits = unused_qubit_indices
     if isinstance(operator, SparsePauliOp):
         operator_compressed = _compress_sparse_pauli_op(operator, unused_qubits)
         return operator_compressed, unused_qubits
