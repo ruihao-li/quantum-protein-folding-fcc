@@ -37,9 +37,7 @@ from qufold.execution_utils.measurements import (
 )
 from qufold.protein_folding_result import ProteinFoldingResult
 
-NUM_WORKERS = (
-    psutil.cpu_count()
-)  # allowing Ray to use all core. set as per your choice/need
+NUM_WORKERS = 10  # allowing Ray to use all core. set as per your choice/need
 ray.init(
     num_cpus=NUM_WORKERS,
     log_to_driver=False,
@@ -79,10 +77,14 @@ def build_pf(main_seq: str):
 
 """Define problem parameters"""
 # main chain
-main_chain = "GSNQNNF"
 # main_chain = "YYDPETGTWY"
 # main_chain = "RGKWTYNGITYEGR"
 # main_chain = "VLAMWKVGFFKRNRP"
+main_chain = "GGLRSLGRKILRAWKKYG" #PDB:2NDC, 18AA
+# main_chain = "IGLRGLGRKIALIHKKYG" #PDB:2NDE, 18AA
+# main_chain = "DAYAQWLKDGGPSSGRPPPS" #trp-cage, 20 AA
+# main_chain = "GNDYEDRYYRENMYRYPNQVYYRPVC" #PDB:1G04, 26AA
+# main_chain = "YYHFWHRGVTKRSLSPHRPRHSRLQR" #PDB:6A8Y, 26AA
 
 # shots for circuit execution
 SHOTS = 100_000
@@ -92,7 +94,7 @@ MAX_NUM_SAVE_BITSTRING = 100_000
 
 # check N lowest bitstrings.
 # will save `.xyz` file for N lowest energy bitstrings in the corresponding directory
-NUM_CHECK_LOWSEST_ENERGY_BITSRINGS = 50
+NUM_CHECK_LOWSEST_ENERGY_BITSRINGS = 20
 
 metadata["shots"] = SHOTS
 metadata["num_workers"] = NUM_WORKERS
