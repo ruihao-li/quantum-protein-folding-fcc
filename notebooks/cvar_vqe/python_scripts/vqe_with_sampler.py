@@ -87,6 +87,7 @@ main_chain = "VRRFDLLKRILK" #PDB: 2N5R, 12 AA
 # main_chain = "DAYAQWLKDGGPSSGRPPPS" #trp-cage, 20 AA
 # main_chain = "GNDYEDRYYRENMYRYPNQVYYRPVC" #PDB:1G04, 26AA
 # main_chain = "YYHFWHRGVTKRSLSPHRPRHSRLQR" #PDB:6A8Y, 26AA
+
 # shots for circuit execution
 SHOTS = 100_000
 
