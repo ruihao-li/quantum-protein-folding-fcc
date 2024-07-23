@@ -25,6 +25,16 @@ class VQEC:
     ):
         """
         Args:
+            qubit_op: The qubit operator for which the expectation value is minimized.
+            constr_ops: The constraint operators whose the expectation values are constrained.
+            ansatz: The quantum circuit that prepares the quantum state.
+            estimator: The estimator that computes the expectation values.
+            gradient: The gradient tool that computes the gradients of the expectation values.
+            initial_params: The initial parameters of the quantum circuit.
+            initial_dual_vars: The initial dual variables of the optimization.
+            primal_perturb_step: The perturbation step size for the primal variables.
+            dual_perturb_step: The perturbation step size for the dual variables.
+            max_iter: The maximum number of iterations of the optimization.
         """
         self._qubit_op = qubit_op
         self._constr_ops = constr_ops
@@ -136,6 +146,7 @@ class VQEC:
             )
 
             # Set up the update step sizes
+            # TODO: How to expose these parameters to the user?
             primal_var_update_step = 0.1 * 0.99**i
             dual_var_update_step = 0.1 * 0.99**i
 
