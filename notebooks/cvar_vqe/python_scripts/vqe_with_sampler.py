@@ -77,15 +77,16 @@ def build_pf(main_seq: str):
 
 """Define problem parameters"""
 # main chain
-# main_chain = "YYDPETGTWY"
-# main_chain = "RGKWTYNGITYEGR"
-# main_chain = "VLAMWKVGFFKRNRP"
-main_chain = "GGLRSLGRKILRAWKKYG" #PDB:2NDC, 18AA
+# main_chain = "YYDPETGTWY" #PDB: 5AWL chignolin, 10 AA
+# main_chain = "FATMRYPSDSDE" #PDB: 1IXU, 12 AA
+main_chain = "VRRFDLLKRILK" #PDB: 2N5R, 12 AA
+# main_chain = "RGKWTYNGITYEGR" #PDB:1K43
+# main_chain = "VLAMWKVGFFKRNRP" # Jun's 15 AA structure
+# main_chain = "GGLRSLGRKILRAWKKYG" #PDB:2NDC, 18AA
 # main_chain = "IGLRGLGRKIALIHKKYG" #PDB:2NDE, 18AA
 # main_chain = "DAYAQWLKDGGPSSGRPPPS" #trp-cage, 20 AA
 # main_chain = "GNDYEDRYYRENMYRYPNQVYYRPVC" #PDB:1G04, 26AA
 # main_chain = "YYHFWHRGVTKRSLSPHRPRHSRLQR" #PDB:6A8Y, 26AA
-
 # shots for circuit execution
 SHOTS = 100_000
 
