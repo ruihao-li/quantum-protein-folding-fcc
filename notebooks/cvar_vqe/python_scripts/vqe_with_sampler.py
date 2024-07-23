@@ -82,6 +82,8 @@ def build_pf(main_seq: str):
 main_chain = "VRRFDLLKRILK" #PDB: 2N5R, 12 AA
 # main_chain = "RGKWTYNGITYEGR" #PDB:1K43
 # main_chain = "VLAMWKVGFFKRNRP" # Jun's 15 AA structure
+# main_chain = "RHYYKFNSTGRHYHYY" #PDB:8T61, 16AA
+# main_chain = "WHMWNTVPNAKQVIAA" #PDB:8T63, 16AA
 # main_chain = "GGLRSLGRKILRAWKKYG" #PDB:2NDC, 18AA
 # main_chain = "IGLRGLGRKIALIHKKYG" #PDB:2NDE, 18AA
 # main_chain = "DAYAQWLKDGGPSSGRPPPS" #trp-cage, 20 AA
