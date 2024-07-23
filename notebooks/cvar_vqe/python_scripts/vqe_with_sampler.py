@@ -217,7 +217,7 @@ def cost_func(
         counts=counts, observable=hamiltonian, num_batches=NUM_WORKERS
     )
     bitstring_expval_all.update(bitstring_wise_expval)
-    energy = get_cvar_energy(measurements=prob_expval_list)
+    energy = get_cvar_energy(measurements=prob_expval_list, alpha=0.01)
     toc2 = time.time()
     
     energies.append(energy)
