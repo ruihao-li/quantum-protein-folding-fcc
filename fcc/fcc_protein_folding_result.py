@@ -90,7 +90,7 @@ class ProteinFoldingResult:
         if name is None:
             name = str(self._peptide.peptide_sequence)
         self.protein_shape_file_gen.save_xyz_file(
-            name=name, path=path, comment=comment, replace=replace
+            filename=name, path=path, comment=comment, replace=replace
         )
 
     def get_figure(

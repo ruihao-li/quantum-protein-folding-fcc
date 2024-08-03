@@ -22,6 +22,7 @@ class VQEC:
         primal_perturb_step: float = 0.05,
         dual_perturb_step: float = 0.05,
         max_iter: int = 100,
+        tol: float = 1e-5,
     ):
         """
         Args:
@@ -35,6 +36,7 @@ class VQEC:
             primal_perturb_step: The perturbation step size for the primal variables.
             dual_perturb_step: The perturbation step size for the dual variables.
             max_iter: The maximum number of iterations of the optimization.
+            tol: The tolerance for the convergence of the optimization.
         """
         self._qubit_op = qubit_op
         self._constr_ops = constr_ops
@@ -54,6 +56,7 @@ class VQEC:
         self._primal_perturb_step = primal_perturb_step
         self._dual_perturb_step = dual_perturb_step
         self._max_iter = max_iter
+        self._tol = tol
 
     def get_expectation(
         self, circuit: QuantumCircuit, observable: SparsePauliOp, params: np.ndarray
@@ -188,8 +191,7 @@ class VQEC:
             )
 
             # Check for convergence
-            tol = 1e-5
-            if np.abs(energies[-1] - energies[-2]) / np.abs(energies[-2]) < tol:
+            if np.abs(energies[-1] - energies[-2]) / np.abs(energies[-2]) < self._tol:
                 print(f"Converged after {i+1} iterations")
                 break
 
