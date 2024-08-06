@@ -131,7 +131,7 @@ def process_counts_parallel(
     assert num_unique_states == len(expvals)
 
     state_wise_expval: dict[str, float] = {
-        state: expval for state, expval in zip(states, expvals)
+        state: expval for state, expval in zip(states, expvals) if expval < 50
     }
     prob_expval_pairs: list[tuple[float, float]] = list(zip(state_probs, expvals))
 
