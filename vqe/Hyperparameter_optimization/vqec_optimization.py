@@ -90,7 +90,8 @@ class VQEC:
                 for constr_op in self._constr_ops
             ]
         ]
-        # Run the VQEC optimization loop
+        
+               
         for i in range(self._max_iter):
             # Compute gradients for the objective and constraint operators
             obj_grad = (
@@ -114,6 +115,9 @@ class VQEC:
                     for constr_op in self._constr_ops
                 ]
             )
+            
+            
+            
             # Compute the perturbed primal variables
             primal_var_perturbations = (
                 np.array(
@@ -145,19 +149,98 @@ class VQEC:
                 0,
             )
 
+            
+            
+            # Compute gradients for the objective and constraint operators for the perturbed values
+            pert_obj_grad = (
+                self._gradient.run(
+                    circuits=self._ansatz,
+                    observables=self._qubit_op,
+                    parameter_values=perturbed_primal_vars,
+                )
+                .result()
+                .gradients
+            )
+            
+            pert_constr_grads = np.array(
+                [
+                    self._gradient.run(
+                        circuits=self._ansatz,
+                        observables=constr_op,
+                        parameter_values=perturbed_primal_vars,
+                    )
+                    .result()
+                    .gradients
+                    for constr_op in self._constr_ops
+                ]
+            )
+            
+            
+            
+            
+            
             # Set up the update step sizes
             # TODO: How to expose these parameters to the user?
             # primal_var_update_step = 0.1 * 0.99**i
             # dual_var_update_step = 0.1 * 0.99**i
             initial_step_size = 1.0
-            # print("energies",energies)
-            # gradients with perturbed values 
-            # get expectation 
             
-            duality_gap = obj_grad - constr_grads
-            # duality_gap = np.abs(energies[-1] - energies[-2]) / np.abs(energies[-2])
-            combined_grad_norm = np.linalg.norm(obj_grad) + np.linalg.norm(constr_grads)
+            # Compute the perturbed primal variables
+            primal_var_perturbations = (
+                np.array(
+                    [
+                        unperturbed_dual_var * pert_constr_grads
+                        for unperturbed_dual_var, constr_grad in zip(
+                            unperturbed_dual_vars, constr_grads
+                        )
+                    ]
+                ).sum(axis=0)
+                + obj_grad
+            )
+            perturbed_primal_vars = (
+                unperturbed_primal_vars
+                - self._primal_perturb_step * primal_var_perturbations
+            )
+            # Compute the perturbed dual variables
+            dual_var_perturbations = np.array(
+                [
+                    self.get_expectation(
+                        self._ansatz, constr_op, unperturbed_primal_vars
+                    )
+                    for constr_op in self._constr_ops
+                ]
+            )
+            perturbed_dual_vars = np.maximum(
+                unperturbed_dual_vars
+                + self._dual_perturb_step * dual_var_perturbations,
+                0,
+            )
+            
+            
+            
+            d_x = obj_grad + perturbed_dual_vars * constr_grads
+            d_y = pert_obj_grad + unperturbed_dual_vars * pert_constr_grads
+            
+            
+            
+            L_x_k =  [self.get_expectation(self._ansatz, self._qubit_op, unperturbed_dual_vars)] + \
+                        dual_var_perturbations * \
+                        [self.get_expectation(self._ansatz, constr_op, perturbed_primal_vars)
+                        for constr_op in self._constr_ops]   
+        
+            L_y_k = [self.get_expectation(self._ansatz, self._qubit_op, unperturbed_primal_vars)]+ \
+                     dual_var_perturbations * \
+                     [self.get_expectation(self._ansatz, constr_op, unperturbed_primal_vars)
+                        for constr_op in self._constr_ops]
+            
+            
+            
+            duality_gap = L_x_k - L_y_k
+            
+            combined_grad_norm = np.linalg.norm(d_x) + np.linalg.norm(d_y)
             step_size = initial_step_size * duality_gap / (combined_grad_norm)
+            
+            
             
             # Compute the updated primal variables
             primal_var_updates = (
