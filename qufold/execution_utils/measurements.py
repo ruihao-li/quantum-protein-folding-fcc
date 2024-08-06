@@ -5,7 +5,8 @@ import math
 import multiprocessing as mp
 import numpy as np
 import psutil
-import ray
+
+# import ray
 from qiskit.quantum_info import SparsePauliOp
 from qiskit.result import Counts
 
@@ -66,7 +67,7 @@ def get_cvar_energy(
     return cvar / alpha
 
 
-#@ray.remote
+# @ray.remote
 def calc_expval(batched_states: list[str], observable: SparsePauliOp) -> list[float]:
     """Evaluates expectation values for many states.
 
@@ -131,8 +132,16 @@ def process_counts_parallel(
 
         for i in range(0, num_unique_states, batch_size):
             batched_states = states[i : i + batch_size]
-            jobs.append(pool.apply_async(calc_expval, args=(batched_states, observable,)))
-    
+            jobs.append(
+                pool.apply_async(
+                    calc_expval,
+                    args=(
+                        batched_states,
+                        observable,
+                    ),
+                )
+            )
+
         expvals = list(chain.from_iterable([job.get() for job in jobs]))
 
     # results = []
