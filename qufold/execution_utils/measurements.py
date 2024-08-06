@@ -1,6 +1,8 @@
 from itertools import chain
 from typing import Iterable
 
+import math
+import multiprocessing as mp
 import numpy as np
 import psutil
 import ray
@@ -64,7 +66,7 @@ def get_cvar_energy(
     return cvar / alpha
 
 
-@ray.remote
+#@ray.remote
 def calc_expval(batched_states: list[str], observable: SparsePauliOp) -> list[float]:
     """Evaluates expectation values for many states.
 
@@ -75,6 +77,8 @@ def calc_expval(batched_states: list[str], observable: SparsePauliOp) -> list[fl
     Returns:
         List of float: Expectation values for bitstrings.
     """
+
+    ## maybe we could parallelize this?
     return [
         _evaluate_sparsepauli(state, observable=observable) for state in batched_states
     ]
@@ -117,16 +121,27 @@ def process_counts_parallel(
     state_count = np.array(list(counts.values()))
     state_probs = state_count / total_shots
 
-    if num_batches is None:
+    if num_batches is None or num_batches > psutil.cpu_count():
         num_batches = psutil.cpu_count()
 
     batch_size = num_unique_states // num_batches
-    results = []
-    for i in range(0, num_unique_states, batch_size):
-        batched_states = states[i : i + batch_size]
-        results.append(calc_expval.remote(batched_states, observable))
 
-    expvals = list(chain.from_iterable(ray.get(results)))
+    with mp.Pool(processes=num_batches) as pool:
+        jobs = list()
+
+        for i in range(0, num_unique_states, batch_size):
+            batched_states = states[i : i + batch_size]
+            jobs.append(pool.apply_async(calc_expval, args=(batched_states, observable,)))
+    
+        expvals = list(chain.from_iterable([job.get() for job in jobs]))
+
+    # results = []
+
+    # for i in range(0, num_unique_states, batch_size):
+    #     batched_states = states[i : i + batch_size]
+    #     results.append(calc_expval.remote(batched_states, observable))
+
+    # expvals = list(chain.from_iterable(ray.get(results)))
 
     assert num_unique_states == len(expvals)
 
