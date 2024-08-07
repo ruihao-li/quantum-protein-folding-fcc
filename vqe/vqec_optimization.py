@@ -98,7 +98,7 @@ class VQECOpt:
                 for constr_op in self._constr_ops
             ]
         ]
-        duality_gap_trajectory = []
+        lagrangian_gap_trajectory = []
         for i in range(self._max_iter):
             # Compute gradients for the objective and constraint operators
             obj_grad = (
@@ -164,9 +164,9 @@ class VQECOpt:
                 self.get_expectation(self._ansatz, constr_op, perturbed_primal_vars)
                 for constr_op in self._constr_ops
             ]
-            gap = lagrangian_perturbed_dual - lagrangian_perturbed_primal
-            duality_gap_trajectory.append(gap)
-            if gap < 1e-10:
+            lagrangian_gap = lagrangian_perturbed_dual - lagrangian_perturbed_primal
+            lagrangian_gap_trajectory.append(lagrangian_gap)
+            if lagrangian_gap < 1e-10:
                 print(f"Gap closed after {i+1} iterations; VQEC converged.")
                 break
             # d_\theta = -\nabla_\theta L(\theta, \tilde{\lambda})
@@ -181,7 +181,7 @@ class VQECOpt:
             # Update step size given by: \gamma * gap / ||d_\theta||^2 + ||d_\lambda||^2
             step_size = (
                 self._gamma
-                * gap
+                * lagrangian_gap
                 / (np.linalg.norm(grad_primal) ** 2 + np.linalg.norm(grad_dual) ** 2)
             )
 
@@ -214,18 +214,12 @@ class VQECOpt:
             unperturbed_primal_vars = updated_primal_vars
             unperturbed_dual_vars = updated_dual_vars
 
-    
-    
-        
-        
-    
         return self._build_vqec_result(
             energies=energies,
             constraints=constraints,
             primal_vars=unperturbed_primal_vars,
             dual_vars=unperturbed_dual_vars,
-            dual_gap = duality_gap_trajectory
-            
+            lagrangian_gaps=lagrangian_gap_trajectory,
         )
 
     def _build_vqec_result(
@@ -234,7 +228,7 @@ class VQECOpt:
         constraints: list[list[float]],
         primal_vars: np.ndarray,
         dual_vars: np.ndarray,
-        dual_gap: np.ndarray
+        lagrangian_gaps: np.ndarray,
     ) -> VQECResult:
         """
         Builds a VQEC result.
@@ -255,7 +249,7 @@ class VQECOpt:
         result.optimal_primal_vars = primal_vars[0]
         result.optimal_dual_vars = dual_vars
         result.vqec_iterations = len(energies) - 1
-        result.duality_gap_trajectory = np.array(dual_gap)
+        result.lagrangian_gap_trajectory = np.array(lagrangian_gaps)
         return result
 
 
