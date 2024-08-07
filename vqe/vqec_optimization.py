@@ -1,4 +1,8 @@
-"""Variational Quantum Eigensolver with Constraints (VQEC) module. Based on arXiv:2311.08502. This version contains an automatic selection of the update step size based on the method proposed in: M. Kallio and A. Ruszczynski, Perturbation methods for saddle point computation, Tech. Rep. (International Institute for Applied Systems Analysis, Laxenburg, Austria: WP-94-038, 1994)."""
+"""Variational Quantum Eigensolver with Constraints (VQEC) module. Based on
+arXiv:2311.08502. This version contains an automatic selection of the update
+step size based on the method proposed in: M. Kallio and A. Ruszczynski,
+Perturbation methods for saddle point computation, Tech. Rep. (International
+Institute for Applied Systems Analysis, Laxenburg, Austria: WP-94-038, 1994)."""
 
 from __future__ import annotations
 from .vqec import VQECResult
@@ -141,7 +145,10 @@ class VQECOpt:
                 0,
             )
 
-            ## To determine the update step sizes, we follow the method proposed in: M. Kallio and A. Ruszczynski, Perturbation methods for saddle point computation, Tech. Rep. (International Institute for Applied Systems Analysis, Laxenburg, Austria: WP-94-038, 1994).
+            # To determine the update step sizes, we follow the method proposed
+            # in: M. Kallio and A. Ruszczynski, Perturbation methods for saddle
+            # point computation, Tech. Rep. (International Institute for Applied
+            # Systems Analysis, Laxenburg, Austria: WP-94-038, 1994).
 
             # Compute the Lagrangian at perturbed dual variables
             lagrangian_perturbed_dual = self.get_expectation(
