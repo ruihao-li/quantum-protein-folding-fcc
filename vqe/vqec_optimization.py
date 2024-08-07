@@ -27,7 +27,7 @@ class VQECOpt:
         primal_perturb_step: float = 0.05,
         dual_perturb_step: float = 0.05,
         gamma: float = 1.0,
-        max_iter: int = 100,
+        max_iter: int = 200,
     ):
         """
         Args:
@@ -98,7 +98,7 @@ class VQECOpt:
                 for constr_op in self._constr_ops
             ]
         ]
-
+        duality_gap_trajectory = []
         for i in range(self._max_iter):
             # Compute gradients for the objective and constraint operators
             obj_grad = (
@@ -165,6 +165,7 @@ class VQECOpt:
                 for constr_op in self._constr_ops
             ]
             gap = lagrangian_perturbed_dual - lagrangian_perturbed_primal
+            duality_gap_trajectory.append(gap)
             if gap < 1e-10:
                 print(f"Gap closed after {i+1} iterations; VQEC converged.")
                 break
@@ -213,11 +214,18 @@ class VQECOpt:
             unperturbed_primal_vars = updated_primal_vars
             unperturbed_dual_vars = updated_dual_vars
 
+    
+    
+        
+        
+    
         return self._build_vqec_result(
             energies=energies,
             constraints=constraints,
             primal_vars=unperturbed_primal_vars,
             dual_vars=unperturbed_dual_vars,
+            dual_gap = duality_gap_trajectory
+            
         )
 
     def _build_vqec_result(
@@ -226,6 +234,7 @@ class VQECOpt:
         constraints: list[list[float]],
         primal_vars: np.ndarray,
         dual_vars: np.ndarray,
+        dual_gap: np.ndarray
     ) -> VQECResult:
         """
         Builds a VQEC result.
@@ -246,6 +255,7 @@ class VQECOpt:
         result.optimal_primal_vars = primal_vars[0]
         result.optimal_dual_vars = dual_vars
         result.vqec_iterations = len(energies) - 1
+        result.duality_gap_trajectory = np.array(dual_gap)
         return result
 
 
