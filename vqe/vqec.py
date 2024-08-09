@@ -244,6 +244,7 @@ class VQECResult:
         optimal_primal_vars: np.ndarray | None = None,
         optimal_dual_vars: np.ndarray | None = None,
         vqec_iterations: int | None = None,
+        lagrangian_gap_trajectory: np.ndarray | None = None,
     ):
         """
         Args:
@@ -260,6 +261,7 @@ class VQECResult:
         self._optimal_primal_vars = optimal_primal_vars
         self._optimal_dual_vars = optimal_dual_vars
         self._vqec_iterations = vqec_iterations
+        self._lagrangian_gap_trajectory = lagrangian_gap_trajectory
 
     @property
     def ansatz(self) -> QuantumCircuit:
@@ -320,3 +322,13 @@ class VQECResult:
     def vqec_iterations(self, vqec_iterations: int):
         """Sets the number of iterations of the optimization."""
         self._vqec_iterations = vqec_iterations
+
+    @property
+    def lagrangian_gap_trajectory(self) -> np.ndarray:
+        """Returns the trajectory of the Lagrangian gap."""
+        return self._lagrangian_gap_trajectory
+
+    @lagrangian_gap_trajectory.setter
+    def lagrangian_gap_trajectory(self, lagrangian_gap_trajectory: np.ndarray):
+        """Sets the trajectory of the Lagrangian gap."""
+        self._lagrangian_gap_trajectory = lagrangian_gap_trajectory

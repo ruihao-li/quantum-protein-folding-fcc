@@ -130,7 +130,7 @@ class ProteinShapeFileGen:
         self._turn_sequence = turn_sequence
         if None in self._turn_sequence:
             raise ValueError(
-                "This is an unphysical solution. Please rerun the optimization."
+                "This turn sequence contains one or more turns that are not one of the 12 allowed turns on the FCC lattice. Please rerun the optimization."
             )
         # Check length of turn sequence
         if len(self._turn_sequence) != self._peptide_length - 1:
