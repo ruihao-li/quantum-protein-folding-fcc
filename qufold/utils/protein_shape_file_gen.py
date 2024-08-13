@@ -22,7 +22,7 @@ class ProteinShapeFileGen:
     """
 
     # Coordinates of the 4 edges of a tetrahedron centered at 0. The vectors are normalized.
-    COORDINATES = (1.0 / np.sqrt(3)) * np.array(
+    COORDINATES = 3.8 * (1.0 / np.sqrt(3)) * np.array(
         [[-1, 1, 1], [1, 1, -1], [-1, -1, -1], [1, -1, 1]]
     )
 
