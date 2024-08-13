@@ -87,6 +87,30 @@ class ProteinFoldingProblem:
             unused_qubits=self._unused_qubits,
             solution_bitstring=best_turn_bitstring,
         )
+    
+    def interpret_new(
+        self, raw_result: SamplingVQEResult | SamplerResult
+    ) -> ProteinFoldingResult:
+        """
+        Interprets the raw algorithm result and returns a ProteinFoldingResult object.
+
+        Args:
+            raw_result: A raw result of the protein folding problem.
+
+        Returns:
+            A ProteinFoldingResult object that includes the interpreted result.
+        """
+        try:
+            best_turn_bitstring = raw_result.best_measurement["bitstring"]
+        except AttributeError:
+            prob_dist = raw_result[0].data.meas.get_counts()
+            # Find the most probable bitstring
+            best_turn_bitstring = max(prob_dist, key=prob_dist.get)
+        return ProteinFoldingResult(
+            peptide=self._peptide,
+            unused_qubits=self._unused_qubits,
+            solution_bitstring=best_turn_bitstring,
+        )
 
     @property
     def unused_qubits(self) -> list[int]:
