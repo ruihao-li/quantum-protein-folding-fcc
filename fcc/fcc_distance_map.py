@@ -216,7 +216,7 @@ class DistanceMap:
         lower_bead_idx: int,
         upper_bead_idx: int,
         pair_energies: np.ndarray,
-        pair_energies_multiplier: float = 1,
+        pair_energies_multiplier: float = 1.0,
     ) -> SparsePauliOp:
         """
         Creates the first nearest neighbor interaction between two beads on the FCC lattice if they are at squared distance of 2 units from each other.
