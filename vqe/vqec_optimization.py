@@ -11,6 +11,7 @@ from qiskit.quantum_info import SparsePauliOp
 from qiskit.primitives import BaseEstimator
 from qiskit_algorithms.gradients import BaseEstimatorGradient
 import numpy as np
+from tqdm import tqdm
 
 
 class VQECOpt:
@@ -86,7 +87,7 @@ class VQECOpt:
         Returns:
             The result of the optimization.
         """
-        unperturbed_primal_vars = [self._initial_params]
+        unperturbed_primal_vars = np.array([self._initial_params])
         unperturbed_dual_vars = self._initial_dual_vars
 
         energies = [
@@ -99,16 +100,18 @@ class VQECOpt:
             ]
         ]
         lagrangian_gap_trajectory = []
-        for i in range(self._max_iter):
+        for i in tqdm(range(self._max_iter)):
             # Compute gradients for the objective and constraint operators
-            obj_grad = (
-                self._gradient.run(
-                    circuits=self._ansatz,
-                    observables=self._qubit_op,
-                    parameter_values=unperturbed_primal_vars,
+            obj_grad = np.array(
+                (
+                    self._gradient.run(
+                        circuits=self._ansatz,
+                        observables=self._qubit_op,
+                        parameter_values=unperturbed_primal_vars,
+                    )
+                    .result()
+                    .gradients
                 )
-                .result()
-                .gradients
             )
             constr_grads = np.array(
                 [
@@ -124,7 +127,12 @@ class VQECOpt:
             )
 
             # Compute the perturbed primal variables
-            primal_var_perturbations = unperturbed_dual_vars @ constr_grads + obj_grad
+            # unperturbed_dual_vars dim: (n_constraints,)
+            # constr_grads dim: (n_constraints, 1, n_parameters)
+            # obj_grad dim: (1, n_parameters)
+            primal_var_perturbations = (unperturbed_dual_vars * constr_grads.T).T.sum(
+                axis=0
+            ) + obj_grad
             perturbed_primal_vars = (
                 unperturbed_primal_vars
                 - self._primal_perturb_step * primal_var_perturbations
@@ -170,7 +178,9 @@ class VQECOpt:
                 print(f"Gap closed after {i+1} iterations; VQEC converged.")
                 break
             # d_\theta = -\nabla_\theta L(\theta, \tilde{\lambda})
-            grad_primal = -(obj_grad + perturbed_dual_vars @ constr_grads)
+            grad_primal = -(
+                obj_grad + (perturbed_dual_vars * constr_grads.T).T.sum(axis=0)
+            )
             # d_\lambda = \nabla_\lambda L(\tilde{\theta}, \lambda)
             grad_dual = np.array(
                 [
