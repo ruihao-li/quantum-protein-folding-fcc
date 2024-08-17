@@ -139,14 +139,7 @@ class VQECOpt:
             )
 
             # Compute the perturbed dual variables
-            dual_var_perturbations = np.array(
-                [
-                    self.get_expectation(
-                        self._ansatz, constr_op, unperturbed_primal_vars
-                    )
-                    for constr_op in self._constr_ops
-                ]
-            )
+            dual_var_perturbations = np.array(constraints[-1])
             perturbed_dual_vars = np.maximum(
                 unperturbed_dual_vars
                 + self._dual_perturb_step * dual_var_perturbations,
@@ -159,19 +152,25 @@ class VQECOpt:
             # Systems Analysis, Laxenburg, Austria: WP-94-038, 1994).
 
             # Compute the Lagrangian at perturbed dual variables
-            lagrangian_perturbed_dual = self.get_expectation(
-                self._ansatz, self._qubit_op, unperturbed_primal_vars
-            ) + perturbed_dual_vars @ [
-                self.get_expectation(self._ansatz, constr_op, unperturbed_primal_vars)
-                for constr_op in self._constr_ops
-            ]
+            lagrangian_perturbed_dual = (
+                energies[-1] + perturbed_dual_vars @ dual_var_perturbations
+            )
             # Compute the Lagrangian at perturbed primal variables
-            lagrangian_perturbed_primal = self.get_expectation(
+            # First compute the expectation of the objective and constraint operators with the perturbed primal variables
+            obj_exp_perturbed_primal = self.get_expectation(
                 self._ansatz, self._qubit_op, perturbed_primal_vars
-            ) + unperturbed_dual_vars @ [
-                self.get_expectation(self._ansatz, constr_op, perturbed_primal_vars)
-                for constr_op in self._constr_ops
-            ]
+            )
+            constr_exp_perturbed_primal = np.array(
+                [
+                    self.get_expectation(self._ansatz, constr_op, perturbed_primal_vars)
+                    for constr_op in self._constr_ops
+                ]
+            )
+            lagrangian_perturbed_primal = (
+                obj_exp_perturbed_primal
+                + unperturbed_dual_vars @ constr_exp_perturbed_primal
+            )
+            # Compute the gap function
             lagrangian_gap = lagrangian_perturbed_dual - lagrangian_perturbed_primal
             lagrangian_gap_trajectory.append(lagrangian_gap)
             if lagrangian_gap < 1e-10:
@@ -182,12 +181,7 @@ class VQECOpt:
                 obj_grad + (perturbed_dual_vars * constr_grads.T).T.sum(axis=0)
             )
             # d_\lambda = \nabla_\lambda L(\tilde{\theta}, \lambda)
-            grad_dual = np.array(
-                [
-                    self.get_expectation(self._ansatz, constr_op, perturbed_primal_vars)
-                    for constr_op in self._constr_ops
-                ]
-            )
+            grad_dual = constr_exp_perturbed_primal
             # Update step size given by: \gamma * gap / ||d_\theta||^2 + ||d_\lambda||^2
             step_size = (
                 self._gamma
