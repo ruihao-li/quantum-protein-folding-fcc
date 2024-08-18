@@ -32,15 +32,20 @@ class VQECOpt:
     ):
         """
         Args:
-            qubit_op: The qubit operator for which the expectation value is minimized.
-            constr_ops: The constraint operators whose the expectation values are constrained.
+            qubit_op: The qubit operator for which the expectation value is
+            minimized.
+            constr_ops: The constraint operators whose the expectation values
+            are constrained.
             ansatz: The quantum circuit that prepares the quantum state.
             estimator: The estimator that computes the expectation values.
-            gradient: The gradient tool that computes the gradients of the expectation values.
+            gradient: The gradient tool that computes the gradients of the
+            expectation values.
             initial_params: The initial parameters of the quantum circuit.
             initial_dual_vars: The initial dual variables of the optimization.
-            primal_perturb_step: The perturbation step size for the primal variables.
-            dual_perturb_step: The perturbation step size for the dual variables.
+            primal_perturb_step: The perturbation step size for the primal
+            variables.
+            dual_perturb_step: The perturbation step size for the dual
+            variables.
             gamma: The step size parameter used for the primal-dual update.
             max_iter: The maximum number of iterations of the optimization.
         """
@@ -68,12 +73,13 @@ class VQECOpt:
         self, circuit: QuantumCircuit, observable: SparsePauliOp, params: np.ndarray
     ) -> float:
         """
-        Computes the expectation value of an observable with respect to a quantum state.
+        Computes the expectation value of an observable with respect to a
+        quantum state.
 
         Args:
             circuit: The quantum circuit that prepares the quantum state.
-            observable: The observable for which the expectation value is computed.
-            params: The parameters of the quantum circuit.
+            observable: The observable for which the expectation value is
+            computed. params: The parameters of the quantum circuit.
 
         Returns:
             The expectation value of the observable.
@@ -137,6 +143,14 @@ class VQECOpt:
                 unperturbed_primal_vars
                 - self._primal_perturb_step * primal_var_perturbations
             )
+            # Perform the projection of the perturbed primal variables onto the feasible set [0, 4\pi] due to periodicity
+            perturbed_primal_vars = np.mod(perturbed_primal_vars, 4 * np.pi)
+
+            # # Orthogonal projection onto [0, 2\pi]
+            # if np.any(perturbed_primal_vars < 0):
+            #     perturbed_primal_vars = np.maximum(perturbed_primal_vars, 0)
+            # if np.any(perturbed_primal_vars > 2 * np.pi):
+            #     perturbed_primal_vars = np.minimum(perturbed_primal_vars, 2 * np.pi)
 
             # Compute the perturbed dual variables
             dual_var_perturbations = np.array(constraints[-1])
@@ -191,6 +205,15 @@ class VQECOpt:
 
             # Compute the updated primal variables
             updated_primal_vars = unperturbed_primal_vars + step_size * grad_primal
+            updated_primal_vars = np.mod(
+                updated_primal_vars, 4 * np.pi
+            )  # Projection onto the feasible set [0, 4\pi] due to periodicity
+
+            # # Orthogonal projection onto [0, 2\pi]
+            # if np.any(updated_primal_vars < 0):
+            #     updated_primal_vars = np.maximum(updated_primal_vars, 0)
+            # if np.any(updated_primal_vars > 2 * np.pi):
+            #     updated_primal_vars = np.minimum(updated_primal_vars, 2 * np.pi)
 
             # Compute the updated dual variables
             updated_dual_vars = np.maximum(
@@ -255,90 +278,3 @@ class VQECOpt:
         result.vqec_iterations = len(energies) - 1
         result.lagrangian_gap_trajectory = np.array(lagrangian_gaps)
         return result
-
-
-# class VQECResult:
-#     def __init__(
-#         self,
-#         ansatz: QuantumCircuit | None = None,
-#         energies: np.ndarray | None = None,
-#         constraints: np.ndarray | None = None,
-#         optimal_primal_vars: np.ndarray | None = None,
-#         optimal_dual_vars: np.ndarray | None = None,
-#         vqec_iterations: int | None = None,
-#     ):
-#         """
-#         Args:
-#             ansatz: The quantum circuit that prepares the quantum state.
-#             energies: The energies of the optimization.
-#             constraints: The constraints of the optimization.
-#             optimal_primal_vars: The optimal primal variables of the optimization.
-#             optimal_dual_vars: The optimal dual variables of the optimization.
-#             vqec_iterations: The number of iterations of the optimization.
-#         """
-#         self._ansatz = ansatz
-#         self._energies = energies
-#         self._constraints = constraints
-#         self._optimal_primal_vars = optimal_primal_vars
-#         self._optimal_dual_vars = optimal_dual_vars
-#         self._vqec_iterations = vqec_iterations
-
-#     @property
-#     def ansatz(self) -> QuantumCircuit:
-#         """Returns the quantum circuit that prepares the quantum state."""
-#         return self._ansatz
-
-#     @ansatz.setter
-#     def ansatz(self, ansatz: QuantumCircuit):
-#         """Sets the quantum circuit that prepares the quantum state."""
-#         self._ansatz = ansatz
-
-#     @property
-#     def energies(self) -> np.ndarray:
-#         """Returns the energies of the optimization."""
-#         return self._energies
-
-#     @energies.setter
-#     def energies(self, energies: np.ndarray):
-#         """Sets the energies of the optimization."""
-#         self._energies = energies
-
-#     @property
-#     def constraints(self) -> np.ndarray:
-#         """Returns the constraints of the optimization."""
-#         return self._constraints
-
-#     @constraints.setter
-#     def constraints(self, constraints: np.ndarray):
-#         """Sets the constraints of the optimization. Note that the shape of the list is (number of iterations, number of constraints)."""
-#         self._constraints = constraints
-
-#     @property
-#     def optimal_primal_vars(self) -> np.ndarray:
-#         """Returns the optimal primal variables of the optimization."""
-#         return self._optimal_primal_vars
-
-#     @optimal_primal_vars.setter
-#     def optimal_primal_vars(self, optimal_primal_vars: np.ndarray):
-#         """Sets the optimal primal variables of the optimization."""
-#         self._optimal_primal_vars = optimal_primal_vars
-
-#     @property
-#     def optimal_dual_vars(self) -> np.ndarray:
-#         """Returns the optimal dual variables of the optimization."""
-#         return self._optimal_dual_vars
-
-#     @optimal_dual_vars.setter
-#     def optimal_dual_vars(self, optimal_dual_vars: np.ndarray):
-#         """Sets the optimal dual variables of the optimization."""
-#         self._optimal_dual_vars = optimal_dual_vars
-
-#     @property
-#     def vqec_iterations(self) -> int:
-#         """Returns the number of iterations of the optimization."""
-#         return self._vqec_iterations
-
-#     @vqec_iterations.setter
-#     def vqec_iterations(self, vqec_iterations: int):
-#         """Sets the number of iterations of the optimization."""
-#         self._vqec_iterations = vqec_iterations
