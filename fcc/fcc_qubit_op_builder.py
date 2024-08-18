@@ -218,6 +218,9 @@ class QubitOpBuilder:
         h_contact = 0
         for i in range(self._peptide_length - 2):
             for j in range(i + 2, self._peptide_length):
+                # contact_map contains operators that act only on the
+                # interaction qubits; distance_map.first_neighbor returns the
+                # qubit operator that acts on the configuration qubits
                 h_contact += (self._contact_map.contact_map[i][j]) ^ (
                     self._distance_map.first_neighbor(i, j, self._pair_energies)
                 )

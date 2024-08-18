@@ -60,11 +60,11 @@ def fix_qubits(operator: SparsePauliOp | int) -> SparsePauliOp | int:
     operator = operator.simplify()
     new_tables_x = []
     new_tables_z = []
-    main_bead_indices = [0, 1, 2, 3, 6, 7]
+    qubit_indices = [0, 1, 2, 3, 6, 7]
     for term in operator:
         table_z = np.copy(term.paulis.z[0])
         table_x = np.copy(term.paulis.x[0])
-        for index in main_bead_indices:
+        for index in qubit_indices:
             try:
                 # Set Z_i to identity operator means setting table_z[i] to False in the symplectic representation
                 table_z[index] = np.bool_(False)

@@ -17,7 +17,6 @@ class ContactMap:
         self._peptide_length = peptide.peptide_length
         # Only pairs of beads that are at least 2 positions apart can have contacts on the FCC lattice
         self._num_qubits = (self._peptide_length**2 - 3 * self._peptide_length + 2) // 2
-        self._num_qubits = pow(self._peptide_length - 1, 2)
         (self._contact_map, self._num_contacts) = self._build_contact_map()
 
     @property
@@ -51,13 +50,11 @@ class ContactMap:
         contact_map = defaultdict(dict)
         for lower_bead_idx in range(self._peptide_length - 2):
             for upper_bead_idx in range(lower_bead_idx + 2, self._peptide_length):
-                # The z-op index is reversed: the first pair corresponds the last interaction qubit and so on (remember that the bitstring (config + interaction) is read from right to left)
+                # pauli_z_ops: I...IZ, I...IZI, ..., ZI...I; the last qubit is the first qubit in the interaction qubit string
                 contact_op = (
                     (
                         build_full_identity(self._num_qubits)
-                        - build_pauli_z_op(
-                            self._num_qubits, {self._num_qubits - num_contacts - 1}
-                        )
+                        - build_pauli_z_op(self._num_qubits, {num_contacts})
                     )
                     / 2
                 ).simplify()
