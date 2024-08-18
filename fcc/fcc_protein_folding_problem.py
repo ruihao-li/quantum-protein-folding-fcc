@@ -21,9 +21,12 @@ class ProteinFoldingProblem:
     ):
         """
         Args:
-            peptide: A Peptide object that includes all information about a protein.
-            interaction: A Miyazawa-Jernigan interaction object that defines the energy matrix.
-            penalty_parameters: Parameters that define the strength of constraints enforcing in the problem.
+            peptide: A Peptide object that includes all information about a
+            protein.
+            interaction: A Miyazawa-Jernigan interaction object that defines the
+            energy matrix.
+            penalty_parameters: Parameters that define the strength of
+            constraints enforcing in the problem.
         """
         self._peptide = peptide
         self._interaction = interaction
@@ -38,10 +41,12 @@ class ProteinFoldingProblem:
 
     def qubit_op(self) -> SparsePauliOp:
         """
-        Builds the total qubit operator for the full Hamiltonian encoding a protein folding problem on the FCC lattice.
+        Builds the total qubit operator for the full Hamiltonian encoding a
+        protein folding problem on the FCC lattice.
 
         Returns:
-            A qubit operator for the full Hamiltonian encoding a protein folding problem.
+            A qubit operator for the full Hamiltonian encoding a protein folding
+            problem.
         """
         qubit_op = self._qubit_op_builder.build_qubit_op()
         reduced_qubit_op, unused_qubits = remove_unused_qubits(qubit_op)
@@ -50,10 +55,12 @@ class ProteinFoldingProblem:
 
     def olap_constr_ops(self) -> tuple[list[tuple[int, int]], list[SparsePauliOp]]:
         """
-        Builds the overlap constraint operators for the protein folding problem on the FCC lattice that are used in the VQEC approach.
+        Builds the overlap constraint operators for the protein folding problem
+        on the FCC lattice that are used in the VQEC approach.
 
         Returns:
-            A tuple of a list of bead pairs and a list of corresponding qubit operators for the overlap constraints.
+            A tuple of a list of bead pairs and a list of corresponding qubit
+            operators for the overlap constraints.
         """
         olap_constr_ops_dict = self._qubit_op_builder.build_olap_constr_ops()
         for pair in olap_constr_ops_dict:
@@ -68,7 +75,8 @@ class ProteinFoldingProblem:
         self, raw_result: SamplingVQEResult | SamplerResult
     ) -> ProteinFoldingResult:
         """
-        Interprets the raw algorithm result and returns a ProteinFoldingResult object.
+        Interprets the raw algorithm result and returns a ProteinFoldingResult
+        object.
 
         Args:
             raw_result: A raw result of the protein folding problem.
@@ -87,37 +95,15 @@ class ProteinFoldingProblem:
             unused_qubits=self._unused_qubits,
             solution_bitstring=best_turn_bitstring,
         )
-    
-    def interpret_new(
-        self, raw_result: SamplingVQEResult | SamplerResult
-    ) -> ProteinFoldingResult:
-        """
-        Interprets the raw algorithm result and returns a ProteinFoldingResult object.
-
-        Args:
-            raw_result: A raw result of the protein folding problem.
-
-        Returns:
-            A ProteinFoldingResult object that includes the interpreted result.
-        """
-        try:
-            best_turn_bitstring = raw_result.best_measurement["bitstring"]
-        except AttributeError:
-            prob_dist = raw_result[0].data.meas.get_counts()
-            # Find the most probable bitstring
-            best_turn_bitstring = max(prob_dist, key=prob_dist.get)
-        return ProteinFoldingResult(
-            peptide=self._peptide,
-            unused_qubits=self._unused_qubits,
-            solution_bitstring=best_turn_bitstring,
-        )
 
     @property
     def unused_qubits(self) -> list[int]:
-        """Returns the list of indices for qubits in the original problem formulation that were removed during compression."""
+        """Returns the list of indices for qubits in the original problem
+        formulation that were removed during compression."""
         return self._unused_qubits
 
     @property
     def peptide(self) -> Peptide:
-        """Returns the peptide defining the protein subject to the folding problem."""
+        """Returns the peptide defining the protein subject to the folding
+        problem."""
         return self._peptide

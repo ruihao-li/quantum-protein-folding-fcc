@@ -38,10 +38,20 @@ class ContactMap:
         self,
     ) -> tuple[defaultdict[int, dict[int, SparsePauliOp]], int]:
         """
-        Builds a contact map for a given peptide -- a list of Pauli operators that represent nearest neighbor interactions. A nearest neighbor interaction between 2 beads is encoded using 1 qubit. Since only pairs of beads that are at least 2 positions apart can have contacts on the FCC lattice, the number of possible contacts on the main chain is :math:`(N^2 - 3N + 2) / 2`, where :math:`N` is the number of beads in the main chain. We build the contact operators based on the following indexing: the first pair corresponds to the last interaction qubit, the second pair corresponds to the second-to-last interaction qubit, and so on.
+        Builds a contact map for a given peptide -- a list of Pauli operators
+        that represent nearest neighbor interactions. A nearest neighbor
+        interaction between 2 beads is encoded using 1 qubit. Since only pairs
+        of beads that are at least 2 positions apart can have contacts on the
+        FCC lattice, the number of possible contacts on the main chain is
+        :math:`(N^2 - 3N + 2) / 2`, where :math:`N` is the number of beads in
+        the main chain. We build the contact operators based on the following
+        indexing: the first pair corresponds to the last interaction qubit, the
+        second pair corresponds to the second-to-last interaction qubit, and so
+        on.
 
         Args:
-            peptide: A Peptide object that includes all information about a protein.
+            peptide: A Peptide object that includes all information about a
+            protein.
 
         Returns:
             A tuple of a contact map and the number of contacts calculated.

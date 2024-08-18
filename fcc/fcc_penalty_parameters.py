@@ -11,9 +11,14 @@ class PenaltyParameters:
     ):
         """
         Args:
-            penalty_back: A penalty parameter used to penalize consecutive turns that are in the opposite directions.
-            penalty_redun: A penalty parameter used to penalize redundant bitstring configurations that do not correspond to any physical turns.
-            penalty_olap: A penalty parameter used to penalize long-range overlaps using higher-order polynomials if finite. If None, such penalties are applied through Lagrange multipliers.
+            penalty_back: A penalty parameter used to penalize consecutive turns
+            that are in the opposite directions.
+            penalty_redun: A penalty parameter used to penalize redundant
+            bitstring configurations that do not correspond to any physical
+            turns.
+            penalty_olap: A penalty parameter used to penalize long-range
+            overlaps using higher-order polynomials if finite. If None, such
+            penalties are applied through the Lagrangian duality formalism.
         """
 
         self._penalty_back = penalty_back
@@ -22,15 +27,18 @@ class PenaltyParameters:
 
     @property
     def penalty_back(self) -> float:
-        """Returns a penalty parameter used to penalize consecutive turns that are in the opposite directions."""
+        """Returns a penalty parameter used to penalize consecutive turns that
+        are in the opposite directions."""
         return self._penalty_back
 
     @property
     def penalty_redun(self) -> float:
-        """Returns a penalty parameter used to penalize redundant bitstring configurations that do not correspond to any physical turns."""
+        """Returns a penalty parameter used to penalize redundant bitstring
+        configurations that do not correspond to any physical turns."""
         return self._penalty_redun
 
     @property
     def penalty_olap(self) -> float:
-        """Returns a penalty parameter used to penalize long-range overlaps using higher-order polynomials."""
+        """Returns a penalty parameter used to penalize long-range overlaps
+        using higher-order polynomials."""
         return self._penalty_olap

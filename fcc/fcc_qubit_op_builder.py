@@ -38,10 +38,13 @@ class QubitOpBuilder:
 
     def build_qubit_op(self) -> SparsePauliOp:
         """
-        Builds the total qubit operator for the full Hamiltonian encoding a protein folding problem. H_total = H_back + H_redun + H_olap + H_contact.
+        Builds the total qubit operator for the full Hamiltonian encoding a
+        protein folding problem. H_total = H_back + H_redun + H_olap +
+        H_contact.
 
         Returns:
-            A qubit operator for the full Hamiltonian encoding a protein folding problem.
+            A qubit operator for the full Hamiltonian encoding a protein folding
+            problem.
         """
         contact_id = build_full_identity(self._num_contact_qubits)
         h_back = self._create_h_back()
@@ -59,10 +62,13 @@ class QubitOpBuilder:
 
     def build_olap_constr_ops(self) -> dict[tuple[int, int], SparsePauliOp]:
         """
-        Builds qubit operators for the constraints that penalize overlapping beads, which are subsequently used in the VQEC approach based on Lagrange multipliers (arXiv:2311.08502).
+        Builds qubit operators for the constraints that penalize overlapping
+        beads, which are subsequently used in the VQEC approach based on the
+        Lagrangian dual method (arXiv:2311.08502).
 
         Returns:
-            A dictionary containing the indices of bead pairs as keys and the corresponding qubit operators as values.
+            A dictionary containing the indices of bead pairs as keys and the
+            corresponding qubit operators as values.
         """
         contact_id = build_full_identity(self._num_contact_qubits)
         olap_constraints = self._create_olap_constraints()
@@ -131,7 +137,10 @@ class QubitOpBuilder:
 
     def _create_h_back(self) -> SparsePauliOp:
         """
-        Creates qubit operators for the H_back term, which penalizes consecutive turns in opposite directions. Note that the first bead (index 0) is omitted because the two turns following it cannot be in opposite directions by construction.
+        Creates qubit operators for the H_back term, which penalizes consecutive
+        turns in opposite directions. Note that the first bead (index 0) is
+        omitted because the two turns following it cannot be in opposite
+        directions by construction.
 
         Returns:
             A qubit operator for the H_back term.
@@ -144,7 +153,9 @@ class QubitOpBuilder:
 
     def _create_h_redun(self) -> SparsePauliOp:
         """
-        Creates qubit operators for the H_redun term, which penalizes redundant turns that do not correspond to any physical turns. Note that the first two turns are omitted because they are always physical by construction.
+        Creates qubit operators for the H_redun term, which penalizes redundant
+        turns that do not correspond to any physical turns. Note that the first
+        two turns are omitted because they are always physical by construction.
 
         Returns:
             A qubit operator for the H_redun term.
@@ -168,8 +179,21 @@ class QubitOpBuilder:
 
     def _create_h_olap(self) -> SparsePauliOp:
         r"""
-        Creates qubit operators for the H_olap term, which penalizes overlapping beads. To ensure the non-overlapping condition, we impose constraints on the distance function that encodes the squared distance between beads, that is, for any two beads :math:`i` and :math:`j`, we require :math:`2 \leq D_{ij} leq 2(i-j)^2`.
-        For each pair of beads, we define :math:`h_{ij} = D_{ij} - 2`. Ideally, the penalty function would have a large positive value (set by `penalty_olap`) when :math:`h_{ij} = -2` (corresponding to the case when the beads overlap) and zero otherwise. Practically, we cannot enforce this constraint directly, so we use polynomials to approximate the penalty function. Note that the degree of the polynomial required to achieve an accuracy threshold :math:`R^2_{ij}` depends on the domain of the function, which is :math:`[-2, 2(i-j)^2 - 2]`. The further the pair of beads are from each other, the higher the degree of the polynomial required to approximate the penalty function.
+        Creates qubit operators for the H_olap term, which penalizes overlapping
+        beads. To ensure the non-overlapping condition, we impose constraints on
+        the distance function that encodes the squared distance between beads,
+        that is, for any two beads :math:`i` and :math:`j`, we require :math:`2
+        \leq D_{ij} leq 2(i-j)^2`. For each pair of beads, we define
+        :math:`h_{ij} = D_{ij} - 2`. Ideally, the penalty function would have a
+        large positive value (set by `penalty_olap`) when :math:`h_{ij} = -2`
+        (corresponding to the case when the beads overlap) and zero otherwise.
+        Practically, we cannot enforce this constraint directly, so we use
+        polynomials to approximate the penalty function. Note that the degree of
+        the polynomial required to achieve an accuracy threshold
+        :math:`R^2_{ij}` depends on the domain of the function, which is
+        :math:`[-2, 2(i-j)^2 - 2]`. The further the pair of beads are from each
+        other, the higher the degree of the polynomial required to approximate
+        the penalty function.
 
         Returns:
             A qubit operator for the H_olap term.
@@ -210,7 +234,8 @@ class QubitOpBuilder:
 
     def _create_h_contact(self) -> SparsePauliOp:
         """
-        Creates qubit operators for the H_contact term for first nearest neighbor interactions.
+        Creates qubit operators for the H_contact term for first nearest
+        neighbor interactions.
 
         Returns:
             A qubit operator for the H_contact term.
@@ -228,10 +253,15 @@ class QubitOpBuilder:
 
     def _create_olap_constraints(self) -> dict[tuple[int, int], SparsePauliOp]:
         """
-        Creates qubit operators for the constraints that penalize overlapping beads, which are subsequently used in the VQEC approach based on Lagrange multipliers (arXiv:2311.08502). Note that the constraints are put in the form of :math:`F_{ij} \leq 0`, where :math:`F_{ij} = 2 - D_{ij}`.
+        Creates qubit operators for the constraints that penalize overlapping
+        beads, which are subsequently used in the VQEC approach based on
+        Lagrange multipliers (arXiv:2311.08502). Note that the constraints are
+        put in the form of :math:`F_{ij} \leq 0`, where :math:`F_{ij} = 2 -
+        D_{ij}`.
 
         Returns:
-            A dictionary containing the indices of bead pairs as keys and the corresponding qubit operators as values.
+            A dictionary containing the indices of bead pairs as keys and the
+            corresponding qubit operators as values.
         """
         olap_constraints = {}
         for i in range(self._peptide_length - 3):

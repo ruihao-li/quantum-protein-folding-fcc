@@ -10,7 +10,9 @@ class Peptide:
     def __init__(self, peptide_sequence: str):
         """
         Args:
-            peptide_sequence: String of characters that define residues for the main chain of a peptide. Valid residue types are [A, C, D, E, F, G, H, I, K, L, M, N, P, Q, R, S, T, V, W, Y].
+            peptide_sequence: String of characters that define residues for the
+            main chain of a peptide. Valid residue types are [A, C, D, E, F, G,
+            H, I, K, L, M, N, P, Q, R, S, T, V, W, Y].
         """
         self._peptide_sequence = peptide_sequence
         self._beads_list = self._build_main_chain(peptide_sequence)
@@ -35,7 +37,8 @@ class Peptide:
         Creates a main chain for a given peptide sequence.
 
         Args:
-            peptide_sequence: String of characters that define residues for the main chain of a peptide.
+            peptide_sequence: String of characters that define residues for the
+            main chain of a peptide.
 
         Returns:
             A list of MainBead instances.
@@ -72,14 +75,18 @@ class Peptide:
     @staticmethod
     def _build_turn_qubit(chain_len: int, pauli_z_index: int) -> SparsePauliOp:
         """
-        Builds a SparsePauliOp of length 4 * (chain_len - 1) (number of qubits necessary to encode all turns for the chain of length chain_len on an FCC lattice) with a Pauli Z operator at a given index: :math:`q_i = (I - Z_i)/2`.
+        Builds a SparsePauliOp of length 4 * (chain_len - 1) (number of qubits
+        necessary to encode all turns for the chain of length chain_len on an
+        FCC lattice) with a Pauli Z operator at a given index: :math:`q_i = (I -
+        Z_i)/2`.
 
         Args:
             chain_len: Length of the chain.
             pauli_z_index: Index of a Pauli Z operator in a turn operator.
 
         Returns:
-            A Pauli operator that encodes the turn following from a given bead index.
+            A Pauli operator that encodes the turn following from a given bead
+            index.
         """
         num_turn_qubits = 4 * (chain_len - 1)
         norm_factor = 0.5

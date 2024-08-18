@@ -7,7 +7,8 @@ from .fcc_peptide import Peptide
 
 class ProteinShapeDecoder:
     """
-    This class handles the decoding of the compact solution (bitstring) into the turns of the main chain of a protein on the FCC lattice.
+    This class handles the decoding of the compact solution (bitstring) into the
+    turns of the main chain of a protein on the FCC lattice.
     """
 
     def __init__(self, peptide: Peptide, solution_bitstring: str):
@@ -27,7 +28,8 @@ class ProteinShapeDecoder:
 
     def _bitstring_to_turns(self, bitstring: str) -> list:
         """
-        Takes a bitstring encoding the turns of a chain and returns the turns as a list of integers. Turn indexing is:
+        Takes a bitstring encoding the turns of a chain and returns the turns as
+        a list of integers. Turn indexing is:
         {
             0: (1, 1, 0)
             1: (-1, -1, 0)
@@ -77,7 +79,8 @@ class ProteinShapeDecoder:
         """Returns the turns of the main chain.
 
         Returns:
-            A list of integers representing the sequence of turns of the peptide.
+            A list of integers representing the sequence of turns of the
+            peptide.
         """
         # Split the solution bitstring into configuration (4N - 10) and interaction qubits
         config_bitstring = self._solution_bitstring[-(4 * self._peptide_length - 10) :]
@@ -91,7 +94,8 @@ class ProteinShapeDecoder:
 
 class ProteinShapeFileGen:
     """
-    This class generates the Cartesian coordinates of the main chain of a protein given the turn sequence.
+    This class generates the Cartesian coordinates of the main chain of a
+    protein given the turn sequence.
     """
 
     COORDINATES = (
@@ -119,11 +123,13 @@ class ProteinShapeFileGen:
         """
         Args:
             peptide: The peptide we are getting the positions for.
-            turn_sequence: A list of integers encoding the turns of the main chain.
+            turn_sequence: A list of integers encoding the turns of the main
+            chain.
 
         Raises:
             ValueError: If the turn sequence contains None values.
-            ValueError: If the length of the turn sequence does not match the length of the peptide.
+            ValueError: If the length of the turn sequence does not match the
+            length of the peptide.
         """
         self._peptide = peptide
         self._peptide_length = peptide.peptide_length
@@ -182,7 +188,8 @@ class ProteinShapeFileGen:
         Args:
             filename: The name of the file to save the data to.
             path: The path to save the file to.
-            comment: A comment to add to the second line of the file. By default, the line will be left blank.
+            comment: A comment to add to the second line of the file. By
+            default, the line will be left blank.
             replace: Whether to replace the file if it already exists.
 
         Raises:

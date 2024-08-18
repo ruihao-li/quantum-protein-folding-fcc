@@ -15,8 +15,11 @@ class Bead:
         """
         Args:
             main_index: Index of the bead on the main chain in a peptide.
-            residue_type: A character representing the type of a residue for the bead.
-            turn_qubits: A tuple of four Pauli operators that encodes the turn following from a given bead index. Note that four qubits are needed to encode each turn in the FCC lattice.
+            residue_type: A character representing the type of a residue for the
+            bead.
+            turn_qubits: A tuple of four Pauli operators that encodes the turn
+            following from a given bead index. Note that four qubits are needed
+            to encode each turn in the FCC lattice.
         """
         self._main_index = main_index
         self._residue_type = residue_type

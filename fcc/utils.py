@@ -9,7 +9,8 @@ def build_full_identity(num_qubits: int) -> SparsePauliOp:
     Builds a full identity operator of a given size.
 
     Args:
-        num_qubits: Number of qubits on which a full identity operator will be created.
+        num_qubits: Number of qubits on which a full identity operator will be
+        created.
 
     Returns:
         A full identity operator of a given size.
@@ -47,7 +48,11 @@ def build_pauli_z_op(num_qubits: int, pauli_z_indices: set[int]) -> SparsePauliO
 
 def fix_qubits(operator: SparsePauliOp | int) -> SparsePauliOp | int:
     """
-    Assigns predefined values for turn qubits on positions 0, 1, 2, 3, 6, 7 in the FCC chain without the loss of generality. Qubits on these positions are considered fixed and not subject to optimization. Note that qubits at these positions are fixed to 0, which is equivalent to setting Z_i to identity operator.
+    Assigns predefined values for turn qubits on positions 0, 1, 2, 3, 6, 7 in
+    the FCC chain without the loss of generality. Qubits on these positions are
+    considered fixed and not subject to optimization. Note that qubits at these
+    positions are fixed to 0, which is equivalent to setting Z_i to identity
+    operator.
 
     Args:
         operator: An operator whose qubits shall be fixed.
@@ -81,13 +86,16 @@ def fix_qubits(operator: SparsePauliOp | int) -> SparsePauliOp | int:
 
 def _find_unused_qubits(operator: SparsePauliOp) -> list[int]:
     """
-    Finds indices of qubits in a given operator that are equal to an identity operator across all terms, i.e., they are irrelevant for the problem.
+    Finds indices of qubits in a given operator that are equal to an identity
+    operator across all terms, i.e., they are irrelevant for the problem.
 
     Args:
-        operator: An operator whose unused qubits shall be removed, e.g., full Hamiltonian for the protein folding problem.
+        operator: An operator whose unused qubits shall be removed, e.g., full
+        Hamiltonian for the protein folding problem.
 
     Returns:
-        Indices of qubits in the original Hamiltonian that were unused as optimization variables.
+        Indices of qubits in the original Hamiltonian that were unused as
+        optimization variables.
     """
     used_map: dict[int, bool] = {}
     unused_qubits = []
@@ -109,16 +117,21 @@ def _calc_reduced_pauli_tables(
     num_qubits: int, table_x: np.ndarray, table_z: np.ndarray, unused_qubits: list[int]
 ) -> tuple[list[bool], list[bool]]:
     """
-    Calculates reduced Pauli tables by removing qubits that are not used in the optimization.
+    Calculates reduced Pauli tables by removing qubits that are not used in the
+    optimization.
 
     Args:
         num_qubits: Number of qubits in the original operator.
-        table_x: The x array for the symplectic representation of the original operator.
-        table_z: The z array for the symplectic representation of the original operator.
-        unused_qubits: List of indices of qubits that are not used in the optimization.
+        table_x: The x array for the symplectic representation of the original
+        operator.
+        table_z: The z array for the symplectic representation of the original
+        operator.
+        unused_qubits: List of indices of qubits that are not used in the
+        optimization.
 
     Returns:
-        Reduced z and x arrays for the symplectic representation of the operator.
+        Reduced z and x arrays for the symplectic representation of the
+        operator.
     """
     new_table_z = []
     new_table_x = []
@@ -138,7 +151,8 @@ def _compress_sparse_pauli_op(
 
     Args:
         operator: A SparsePauliOp to be compressed.
-        unused_qubits: List of indices of qubits that are not used in the optimization.
+        unused_qubits: List of indices of qubits that are not used in the
+        optimization.
 
     Returns:
         A compressed SparsePauliOp.
@@ -167,14 +181,20 @@ def remove_unused_qubits(
     operator: SparsePauliOp, unused_qubit_indices: list[int] = None
 ) -> tuple[SparsePauliOp, list[int]]:
     """
-    Removes qubits in a given operator that are equal to an identity operator across all terms, i.e., they are irrelevant for the problem. It makes the number of qubits required for encoding the problem smaller or equal.
+    Removes qubits in a given operator that are equal to an identity operator
+    across all terms, i.e., they are irrelevant for the problem. It makes the
+    number of qubits required for encoding the problem smaller or equal.
 
     Args:
-        operator: An operator whose unused qubits shall be removed, e.g., full Hamiltonian for the protein folding problem.
-        unused_qubit_indices: A list of indices of qubits that are not used in the optimization. If None, the function will find them.
+        operator: An operator whose unused qubits shall be removed, e.g., full
+        Hamiltonian for the protein folding problem.
+        unused_qubit_indices: A list of indices of qubits that are not used in
+        the optimization. If None, the function will find them.
 
     Returns:
-        A tuple consisting of the operator compressed to an equivalent one and indices of qubits in the original operator that were unused as optimization variables.
+        A tuple consisting of the operator compressed to an equivalent one and
+        indices of qubits in the original operator that were unused as
+        optimization variables.
     """
     if unused_qubit_indices is None:
         unused_qubits = _find_unused_qubits(operator)

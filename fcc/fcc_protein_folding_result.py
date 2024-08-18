@@ -13,9 +13,12 @@ class ProteinFoldingResult:
     ):
         """
         Args:
-            peptide: The peptide defining the protein subject to the folding problem.
-            unused_qubits: The list of indices for qubits in the original problem formulation that were removed during compression.
-            solution_bitstring: The compact bitstring representing both the configuration and interaction qubits.
+            peptide: The peptide defining the protein subject to the folding
+            problem.
+            unused_qubits: The list of indices for qubits in the original
+            problem formulation that were removed during compression.
+            solution_bitstring: The compact bitstring representing both the
+            configuration and interaction qubits.
         """
         self._solution_bitstring = solution_bitstring
         self._unused_qubits = unused_qubits
@@ -33,9 +36,9 @@ class ProteinFoldingResult:
 
     @property
     def protein_shape_decoder(self) -> ProteinShapeDecoder:
-        """Returns the :class:`ProteinShapeDecoder` of the result.
-        This class will interpret the result bitstring and return the encoded information.
-        """
+        """Returns the :class:`ProteinShapeDecoder` of the result. This class
+        will interpret the result bitstring and return the encoded
+        information."""
         return self._protein_shape_decoder
 
     @property
@@ -54,7 +57,8 @@ class ProteinFoldingResult:
         return self.protein_shape_decoder.turn_sequence
 
     def get_result_binary_vector(self) -> str:
-        """Returns the bitstring that encodes the solution of a protein folding problem."""
+        """Returns the bitstring that encodes the solution of a protein folding
+        problem."""
         unused_qubits = self._unused_qubits
         result = []
         offset = 0
@@ -79,13 +83,20 @@ class ProteinFoldingResult:
         Generates and saves a .xyz file.
 
         Args:
-            name: Name of the file to be generated. If the name is ``None`` the name of the file will be the letters of the amino acids on the peptide chain. If a file of the same name already exists then the action taken is dependent on the `replace` arg.
-            path: Path where the file will be generated. If left empty the file will be saved in the working directory.
-            comment: Comment to be added to the second line of the file. By default, the line will be left blank.
-            replace: If ``True``, the file will be overwritten if it already exists.
+            name: Name of the file to be generated. If the name is ``None`` the
+            name of the file will be the letters of the amino acids on the
+            peptide chain. If a file of the same name already exists then the
+            action taken is dependent on the `replace` arg.
+            path: Path where the file will be generated. If left empty the file
+            will be saved in the working directory.
+            comment: Comment to be added to the second line of the file. By
+            default, the line will be left blank.
+            replace: If ``True``, the file will be overwritten if it already
+            exists.
 
         Raises:
-            FileExistsError: If the file already exists and replace is ``False``.
+            FileExistsError: If the file already exists and replace is
+            ``False``.
         """
         if name is None:
             name = str(self._peptide.peptide_sequence)

@@ -43,7 +43,8 @@ def _validate_residue_sequence(residue_sequence: str):
     Checks if the provided residue sequence contains allowed characters.
 
     Args:
-        residue_sequence: A list or a string that contains characters defining residues for a chain of proteins.
+        residue_sequence: A list or a string that contains characters defining
+        residues for a chain of proteins.
 
     Throws:
         InvalidResidueException: If an illegal residue character is discovered.
@@ -54,7 +55,8 @@ def _validate_residue_sequence(residue_sequence: str):
 
 def _validate_residue_symbol(residue_symbol: str):
     """
-    Checks if the provided residue character is legal. If not, an InvalidResidueException is thrown.
+    Checks if the provided residue character is legal. If not, an
+    InvalidResidueException is thrown.
 
     Args:
         residue_symbol: symbol of a residue.
@@ -92,21 +94,26 @@ def _validate_residue_symbol(residue_symbol: str):
 
 
 class MiyazawaJerniganInteraction:
-    """A class defining a Miyazawa-Jernigan interaction between beads of a peptide. Details of this model can be found in Miyazawa, S. and Jernigan, R. L. J. Mol. Biol.256, 623–644 (1996), Table 3."""
+    """A class defining a Miyazawa-Jernigan interaction between beads of a
+    peptide. Details of this model can be found in Miyazawa, S. and Jernigan, R.
+    L. J. Mol. Biol.256, 623–644 (1996), Table 3."""
 
     def __init__(self, energy_matrix_file: str = "mj_matrix"):
         """
         Args:
-            energy_matrix_file: Name of the file containing the Miyazawa-Jernigan potential.
+            energy_matrix_file: Name of the file containing the
+            Miyazawa-Jernigan potential.
         """
         self.energy_matrix_file = energy_matrix_file
 
     def calculate_energy_matrix(self, residue_sequence: str) -> np.ndarray:
         """
-        Calculates an energy matrix for a Miyazawa-Jernigan interaction based on the Miyazawa-Jernigan potential file.
+        Calculates an energy matrix for a Miyazawa-Jernigan interaction based on
+        the Miyazawa-Jernigan potential file.
 
         Args:
-            residue_sequence: A string that contains characters defining residues for a chain of proteins.
+            residue_sequence: A string that contains characters defining
+            residues for a chain of proteins.
 
         Returns:
             Numpy array of pair energies for amino acids.

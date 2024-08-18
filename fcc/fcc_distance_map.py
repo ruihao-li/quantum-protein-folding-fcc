@@ -42,10 +42,12 @@ class DistanceMap:
         self,
     ) -> tuple[defaultdict[str, dict[str, SparsePauliOp]], int]:
         """
-        Builds a distance map for a given peptide, which contains the squared distances between all pairs of beads on the main chain.
+        Builds a distance map for a given peptide, which contains the squared
+        distances between all pairs of beads on the main chain.
 
         Args:
-            peptide: A Peptide object that includes all information about a protein.
+            peptide: A Peptide object that includes all information about a
+            protein.
 
         Returns:
             A tuple of a distance map and the number of distances calculated.
@@ -193,11 +195,14 @@ class DistanceMap:
         Computes the distance squared between any two beads on the FCC lattice.
 
         Args:
-            lower_bead_idx: Index of the lower bead in the peptide (assumed to be smaller than the upper bead index).
-            upper_bead_idx: Index of the upper bead in the peptide (assumed to be greater than the lower bead index).
+            lower_bead_idx: Index of the lower bead in the peptide (assumed to
+            be smaller than the upper bead index).
+            upper_bead_idx: Index of the upper bead in the peptide (assumed to
+            be greater than the lower bead index).
 
         Returns:
-            A Pauli operator that encodes the distance squared between two beads.
+            A Pauli operator that encodes the distance squared between two
+            beads.
         """
         x_lower = self._compute_x_coordinate(lower_bead_idx)
         y_lower = self._compute_y_coordinate(lower_bead_idx)
@@ -219,16 +224,20 @@ class DistanceMap:
         pair_energies_multiplier: float = 1.0,
     ) -> SparsePauliOp:
         """
-        Creates the first nearest neighbor interaction between two beads on the FCC lattice if they are at squared distance of 2 units from each other.
+        Creates the first nearest neighbor interaction between two beads on the
+        FCC lattice if they are at squared distance of 2 units from each other.
 
         Args:
             lower_bead_idx: Index of the lower bead in the peptide.
             upper_bead_idx: Index of the upper bead in the peptide.
-            pair_energies: Numpy array of pair energies for amino acids; these pair energies are negative.
-            pair_energies_multiplier: A constant that multiplies pair energy contributions.
+            pair_energies: Numpy array of pair energies for amino acids; these
+            pair energies are negative.
+            pair_energies_multiplier: A constant that multiplies pair energy
+            contributions.
 
         Returns:
-            Contribution to an energetic Hamiltonian (without interaction qubits).
+            Contribution to an energetic Hamiltonian (without interaction
+            qubits).
         """
         energy = pair_energies[lower_bead_idx][upper_bead_idx]
         distance_op = self.distance_map[str(lower_bead_idx)][str(upper_bead_idx)]
