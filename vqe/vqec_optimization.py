@@ -62,7 +62,8 @@ class VQECOpt:
         self._initial_dual_vars = (
             initial_dual_vars
             if initial_dual_vars is not None
-            else np.array([0.1] * len(constr_ops))
+            # else np.array([0.1] * len(constr_ops))
+            else np.random.uniform(0, 1, len(constr_ops))
         )
         self._primal_perturb_step = primal_perturb_step
         self._dual_perturb_step = dual_perturb_step
@@ -144,7 +145,7 @@ class VQECOpt:
                 - self._primal_perturb_step * primal_var_perturbations
             )
             # Perform the projection of the perturbed primal variables onto the feasible set [0, 4\pi] due to periodicity
-            perturbed_primal_vars = np.mod(perturbed_primal_vars, 4 * np.pi)
+            # perturbed_primal_vars = np.mod(perturbed_primal_vars, 4 * np.pi)
 
             # # Orthogonal projection onto [0, 2\pi]
             # if np.any(perturbed_primal_vars < 0):
@@ -187,7 +188,7 @@ class VQECOpt:
             # Compute the gap function
             lagrangian_gap = lagrangian_perturbed_dual - lagrangian_perturbed_primal
             lagrangian_gap_trajectory.append(lagrangian_gap)
-            if lagrangian_gap < 1e-10:
+            if np.abs(lagrangian_gap) < 1e-10:
                 print(f"Gap closed after {i+1} iterations; VQEC converged.")
                 break
             # d_\theta = -\nabla_\theta L(\theta, \tilde{\lambda})
@@ -205,9 +206,8 @@ class VQECOpt:
 
             # Compute the updated primal variables
             updated_primal_vars = unperturbed_primal_vars + step_size * grad_primal
-            updated_primal_vars = np.mod(
-                updated_primal_vars, 4 * np.pi
-            )  # Projection onto the feasible set [0, 4\pi] due to periodicity
+            # Projection onto the feasible set [0, 4\pi] due to periodicity
+            # updated_primal_vars = np.mod(updated_primal_vars, 4 * np.pi)
 
             # # Orthogonal projection onto [0, 2\pi]
             # if np.any(updated_primal_vars < 0):
@@ -277,4 +277,166 @@ class VQECOpt:
         result.optimal_dual_vars = dual_vars
         result.vqec_iterations = len(energies) - 1
         result.lagrangian_gap_trajectory = np.array(lagrangian_gaps)
+        return result
+
+
+class VQECSciPyOpt:
+
+    def __init__(
+        self,
+        qubit_op: SparsePauliOp,
+        constr_ops: list[SparsePauliOp],
+        ansatz: QuantumCircuit,
+        estimator: BaseEstimator,
+        optimizer: str,
+        initial_params: np.ndarray | None = None,
+        initial_dual_vars: np.ndarray | None = None,
+        max_iter: int = 200,
+    ):
+        """
+        Args:
+            qubit_op: The qubit operator for which the expectation value is
+            minimized.
+            constr_ops: The constraint operators whose the expectation values
+            are constrained.
+            ansatz: The quantum circuit that prepares the quantum state.
+            estimator: The estimator that computes the expectation values.
+            optimizer: The optimizer used for the optimization.
+            initial_params: The initial parameters of the quantum circuit.
+            initial_dual_vars: The initial dual variables of the optimization.
+            max_iter: The maximum number of iterations of the optimization.
+        """
+        self._qubit_op = qubit_op
+        self._constr_ops = constr_ops
+        self._ansatz = ansatz
+        self._estimator = estimator
+        self._optimizer = optimizer
+        self._initial_primal_vars = (
+            initial_params
+            if initial_params is not None
+            else np.random.uniform(0, 2 * np.pi, ansatz.num_parameters)
+        )
+        self._initial_dual_vars = (
+            initial_dual_vars
+            if initial_dual_vars is not None
+            else np.array([0.1] * len(constr_ops))
+        )
+        self._max_iter = max_iter
+        self.energy_trajectory = [
+            self._get_expectation(
+                self._ansatz, self._qubit_op, self._initial_primal_vars
+            )
+        ]
+        self.constraints_trajectory = [
+            [
+                self._get_expectation(
+                    self._ansatz, constr_op, self._initial_primal_vars
+                )
+                for constr_op in self._constr_ops
+            ]
+        ]
+
+    def _get_expectation(
+        self, circuit: QuantumCircuit, observable: SparsePauliOp, params: np.ndarray
+    ) -> float:
+        """
+        Computes the expectation value of an observable with respect to a
+        quantum state.
+
+        Args:
+            circuit: The quantum circuit that prepares the quantum state.
+            observable: The observable for which the expectation value is
+            computed. params: The parameters of the quantum circuit.
+
+        Returns:
+            The expectation value of the observable.
+        """
+        return self._estimator.run(circuit, observable, params).result().values[0]
+
+    def cost_function(self, primal_vars: np.ndarray, dual_vars: np.ndarray) -> float:
+        """
+        Computes the cost function of the VQEC.
+
+        Args:
+            primal_vars: The primal variables of the optimization.
+            dual_vars: The dual variables of the optimization.
+
+        Returns:
+            The cost function value.
+        """
+        energy = self._get_expectation(self._ansatz, self._qubit_op, primal_vars)
+        constraints = [
+            self._get_expectation(self._ansatz, constr_op, primal_vars)
+            for constr_op in self._constr_ops
+        ]
+        return energy + dual_vars @ constraints
+
+    def optimize_primal_dual(self) -> VQECResult:
+        """
+        Optimizes the primal and dual problems of the VQEC.
+
+        Returns:
+            The result of the optimization.
+        """
+        from scipy.optimize import minimize
+
+        self.primal_vars = self._initial_primal_vars
+        self.dual_vars = self._initial_dual_vars
+
+        for i in tqdm(range(self._max_iter)):
+            # One iteration of minimization of the Lagrangian w.r.t. primal variables
+            min_result = minimize(
+                fun=self.cost_function,
+                x0=self.primal_vars,
+                args=(self.dual_vars),
+                method=self._optimizer,
+                options={"maxiter": 10},
+            )
+            self.primal_vars = min_result.x
+
+            # One iteration of maximization of the Lagrangian w.r.t. dual variables
+            max_result = minimize(
+                fun=lambda x: -self.cost_function(self.primal_vars, x),
+                x0=self.dual_vars,
+                method=self._optimizer,
+                options={"maxiter": 10},
+            )
+
+            self.dual_vars = np.maximum(max_result.x, 0)
+            self.energy_trajectory.append(
+                self._get_expectation(self._ansatz, self._qubit_op, self.primal_vars)
+            )
+            self.constraints_trajectory.append(
+                [
+                    self._get_expectation(self._ansatz, constr_op, self.primal_vars)
+                    for constr_op in self._constr_ops
+                ]
+            )
+
+            # Check for convergence
+            tol = 1e-5
+            if (
+                np.abs(self.energy_trajectory[-1] - self.energy_trajectory[-2])
+                / np.abs(self.energy_trajectory[-2])
+                < tol
+            ):
+                print(f"Converged after {i+1} iterations")
+                break
+
+        return self._build_vqec_result()
+
+    def _build_vqec_result(self) -> VQECResult:
+        """
+        Builds a VQEC result.
+
+        Returns:
+            A VQEC result.
+        """
+        result = VQECResult()
+        result.ansatz = self._ansatz.copy()
+        result.energies = np.array(self.energy_trajectory)
+        result.constraints = np.array(self.constraints_trajectory)
+        result.optimal_primal_vars = self.primal_vars
+        result.optimal_dual_vars = self.dual_vars
+        result.vqec_iterations = len(self.energy_trajectory) - 1
         return result
