@@ -14,7 +14,10 @@ import numpy as np
 from tqdm import tqdm
 
 
-class VQECOpt:
+class PerturbedPrimalDualOpt:
+    """
+    Class implementing the perturbed primal-dual (PPD) optimization method for the VQEC.
+    """
 
     def __init__(
         self,
@@ -145,13 +148,13 @@ class VQECOpt:
                 - self._primal_perturb_step * primal_var_perturbations
             )
             # Perform the projection of the perturbed primal variables onto the feasible set [0, 4\pi] due to periodicity
-            # perturbed_primal_vars = np.mod(perturbed_primal_vars, 4 * np.pi)
+            perturbed_primal_vars = np.mod(perturbed_primal_vars, 4 * np.pi)
 
-            # # Orthogonal projection onto [0, 2\pi]
+            # Orthogonal projection onto [0, 4*\pi]
             # if np.any(perturbed_primal_vars < 0):
             #     perturbed_primal_vars = np.maximum(perturbed_primal_vars, 0)
-            # if np.any(perturbed_primal_vars > 2 * np.pi):
-            #     perturbed_primal_vars = np.minimum(perturbed_primal_vars, 2 * np.pi)
+            # if np.any(perturbed_primal_vars > 4 * np.pi):
+            #     perturbed_primal_vars = np.minimum(perturbed_primal_vars, 4 * np.pi)
 
             # Compute the perturbed dual variables
             dual_var_perturbations = np.array(constraints[-1])
@@ -207,13 +210,13 @@ class VQECOpt:
             # Compute the updated primal variables
             updated_primal_vars = unperturbed_primal_vars + step_size * grad_primal
             # Projection onto the feasible set [0, 4\pi] due to periodicity
-            # updated_primal_vars = np.mod(updated_primal_vars, 4 * np.pi)
+            updated_primal_vars = np.mod(updated_primal_vars, 4 * np.pi)
 
-            # # Orthogonal projection onto [0, 2\pi]
+            # Orthogonal projection onto [0, 4*\pi]
             # if np.any(updated_primal_vars < 0):
             #     updated_primal_vars = np.maximum(updated_primal_vars, 0)
-            # if np.any(updated_primal_vars > 2 * np.pi):
-            #     updated_primal_vars = np.minimum(updated_primal_vars, 2 * np.pi)
+            # if np.any(updated_primal_vars > 4 * np.pi):
+            #     updated_primal_vars = np.minimum(updated_primal_vars, 4 * np.pi)
 
             # Compute the updated dual variables
             updated_dual_vars = np.maximum(
@@ -280,7 +283,10 @@ class VQECOpt:
         return result
 
 
-class VQECSciPyOpt:
+class DualDecompOpt:
+    """
+    Class implementing the dual decomposition optimization method for the VQEC.
+    """
 
     def __init__(
         self,
@@ -291,6 +297,7 @@ class VQECSciPyOpt:
         optimizer: str,
         initial_params: np.ndarray | None = None,
         initial_dual_vars: np.ndarray | None = None,
+        dual_update_step: float = 0.1,
         max_iter: int = 200,
     ):
         """
@@ -301,9 +308,10 @@ class VQECSciPyOpt:
             are constrained.
             ansatz: The quantum circuit that prepares the quantum state.
             estimator: The estimator that computes the expectation values.
-            optimizer: The optimizer used for the optimization.
+            optimizer: The SciPy optimizer used for the optimization.
             initial_params: The initial parameters of the quantum circuit.
             initial_dual_vars: The initial dual variables of the optimization.
+            dual_update_step: The step size for the dual variables update.
             max_iter: The maximum number of iterations of the optimization.
         """
         self._qubit_op = qubit_op
@@ -321,6 +329,7 @@ class VQECSciPyOpt:
             if initial_dual_vars is not None
             else np.array([0.1] * len(constr_ops))
         )
+        self._dual_update_step = dual_update_step
         self._max_iter = max_iter
         self.energy_trajectory = [
             self._get_expectation(
@@ -371,9 +380,12 @@ class VQECSciPyOpt:
         ]
         return energy + dual_vars @ constraints
 
-    def optimize_primal_dual(self) -> VQECResult:
+    def optimize_primal_dual(self, opt_options: dict) -> VQECResult:
         """
         Optimizes the primal and dual problems of the VQEC.
+
+        Args:
+            opt_options: The options for the SciPy optimizer
 
         Returns:
             The result of the optimization.
@@ -382,36 +394,40 @@ class VQECSciPyOpt:
 
         self.primal_vars = self._initial_primal_vars
         self.dual_vars = self._initial_dual_vars
+        self.dual_vars_history = [self.dual_vars]
+
+        if opt_options is None:
+            opt_options = {}
 
         for i in tqdm(range(self._max_iter)):
-            # One iteration of minimization of the Lagrangian w.r.t. primal variables
-            min_result = minimize(
+            # Full minimization of the Lagrangian w.r.t. primal variables
+            primal_result = minimize(
                 fun=self.cost_function,
                 x0=self.primal_vars,
                 args=(self.dual_vars),
                 method=self._optimizer,
-                options={"maxiter": 10},
+                options=opt_options,
             )
-            self.primal_vars = min_result.x
+            self.primal_vars = primal_result.x
 
-            # One iteration of maximization of the Lagrangian w.r.t. dual variables
-            max_result = minimize(
-                fun=lambda x: -self.cost_function(self.primal_vars, x),
-                x0=self.dual_vars,
-                method=self._optimizer,
-                options={"maxiter": 10},
-            )
-
-            self.dual_vars = np.maximum(max_result.x, 0)
-            self.energy_trajectory.append(
-                self._get_expectation(self._ansatz, self._qubit_op, self.primal_vars)
-            )
-            self.constraints_trajectory.append(
+            # Update the dual variables
+            dual_update_step = self._dual_update_step / (i + 1)
+            constraints = np.array(
                 [
                     self._get_expectation(self._ansatz, constr_op, self.primal_vars)
                     for constr_op in self._constr_ops
                 ]
             )
+            updated_dual_vars = np.maximum(
+                self.dual_vars + dual_update_step * constraints, 0
+            )
+            self.dual_vars = updated_dual_vars
+
+            self.energy_trajectory.append(
+                self._get_expectation(self._ansatz, self._qubit_op, self.primal_vars)
+            )
+            self.constraints_trajectory.append(constraints)
+            self.dual_vars_history.append(updated_dual_vars)
 
             # Check for convergence
             tol = 1e-5
@@ -436,6 +452,7 @@ class VQECSciPyOpt:
         result.ansatz = self._ansatz.copy()
         result.energies = np.array(self.energy_trajectory)
         result.constraints = np.array(self.constraints_trajectory)
+        result.dual_vars_history = np.array(self.dual_vars_history)
         result.optimal_primal_vars = self.primal_vars
         result.optimal_dual_vars = self.dual_vars
         result.vqec_iterations = len(self.energy_trajectory) - 1

@@ -241,6 +241,7 @@ class VQECResult:
         ansatz: QuantumCircuit | None = None,
         energies: np.ndarray | None = None,
         constraints: np.ndarray | None = None,
+        dual_vars_history: np.ndarray | None = None,
         optimal_primal_vars: np.ndarray | None = None,
         optimal_dual_vars: np.ndarray | None = None,
         vqec_iterations: int | None = None,
@@ -258,6 +259,7 @@ class VQECResult:
         self._ansatz = ansatz
         self._energies = energies
         self._constraints = constraints
+        self._dual_vars_history = dual_vars_history
         self._optimal_primal_vars = optimal_primal_vars
         self._optimal_dual_vars = optimal_dual_vars
         self._vqec_iterations = vqec_iterations
@@ -292,6 +294,16 @@ class VQECResult:
     def constraints(self, constraints: np.ndarray):
         """Sets the constraints of the optimization. Note that the shape of the list is (number of iterations, number of constraints)."""
         self._constraints = constraints
+
+    @property
+    def dual_vars_history(self) -> np.ndarray:
+        """Returns the history of the dual variables of the optimization."""
+        return self._dual_vars_history
+
+    @dual_vars_history.setter
+    def dual_vars_history(self, dual_vars_history: np.ndarray):
+        """Sets the history of the dual variables of the optimization."""
+        self._dual_vars_history = dual_vars_history
 
     @property
     def optimal_primal_vars(self) -> np.ndarray:
