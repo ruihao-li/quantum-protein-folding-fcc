@@ -35,20 +35,26 @@ class ProteinFoldingProblem:
             peptide.peptide_sequence
         )
         self._qubit_op_builder = QubitOpBuilder(
-            self._peptide, self._pair_energies, self._penalty_parameters
+            self._peptide,
+            self._pair_energies,
+            self._penalty_parameters,
         )
         self._unused_qubits = []
 
-    def qubit_op(self) -> SparsePauliOp:
+    def qubit_op(self, r2_threshold: float = 0.99) -> SparsePauliOp:
         """
         Builds the total qubit operator for the full Hamiltonian encoding a
         protein folding problem on the FCC lattice.
+
+        Args:
+            r2_threshold: The threshold for the R^2 score of the Chebyshev fit
+            when building the non-overlapping constraint.
 
         Returns:
             A qubit operator for the full Hamiltonian encoding a protein folding
             problem.
         """
-        qubit_op = self._qubit_op_builder.build_qubit_op()
+        qubit_op = self._qubit_op_builder.build_qubit_op(r2_threshold)
         reduced_qubit_op, unused_qubits = remove_unused_qubits(qubit_op)
         self._unused_qubits = unused_qubits
         return reduced_qubit_op

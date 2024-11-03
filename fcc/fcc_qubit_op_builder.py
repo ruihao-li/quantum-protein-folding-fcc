@@ -36,11 +36,15 @@ class QubitOpBuilder:
         self._num_config_qubits = self._distance_map._num_qubits
         self._num_contact_qubits = self._contact_map._num_qubits
 
-    def build_qubit_op(self) -> SparsePauliOp:
+    def build_qubit_op(self, r2_threshold: float) -> SparsePauliOp:
         """
         Builds the total qubit operator for the full Hamiltonian encoding a
         protein folding problem. H_total = H_back + H_redun + H_olap +
         H_contact.
+
+        Args:
+            r2_threshold: The threshold for the R^2 score of the Chebyshev fit
+            when building the non-overlapping constraint.
 
         Returns:
             A qubit operator for the full Hamiltonian encoding a protein folding
@@ -53,7 +57,7 @@ class QubitOpBuilder:
         h_redun = self._create_h_redun()
         if h_redun != 0:
             h_redun = contact_id ^ h_redun
-        h_olap = self._create_h_olap()
+        h_olap = self._create_h_olap(r2_threshold)
         if h_olap != 0:
             h_olap = contact_id ^ h_olap
         h_contact = self._create_h_contact()
@@ -177,7 +181,7 @@ class QubitOpBuilder:
             )
         return fix_qubits(h_redun)
 
-    def _create_h_olap(self) -> SparsePauliOp:
+    def _create_h_olap(self, r2_threshold: float) -> SparsePauliOp:
         r"""
         Creates qubit operators for the H_olap term, which penalizes overlapping
         beads. To ensure the non-overlapping condition, we impose constraints on
@@ -214,7 +218,7 @@ class QubitOpBuilder:
                 # Initialize the max degree of the polynomial to 6
                 degree = 4
                 r2 = r2_score(y, np.polynomial.Chebyshev.fit(x, y, degree)(x))
-                while r2 < 0.999:
+                while r2 < r2_threshold:
                     degree += 1
                     cheb_fit = np.polynomial.Chebyshev.fit(x, y, degree)
                     r2 = r2_score(y, cheb_fit(x))
