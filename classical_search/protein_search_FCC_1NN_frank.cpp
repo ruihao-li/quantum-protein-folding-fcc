@@ -15,6 +15,8 @@
 
 // define peptide sequence:
 // 
+#define AMINOACIDS	4
+#define PEPTIDE "LFLF"	// toy example
 //#define AMINOACIDS	7
 //#define PEPTIDE "APRLRFY"	// from IBM paper
 //#define AMINOACIDS	10
@@ -26,9 +28,9 @@
 //#define PEPTIDE		"VRRFDLLKRILK"	// 2N5R calmodulin binding peptide - helix + loop
 //#define AMINOACIDS	13
 //#define PEPTIDE		"IFGAIAGFIKNIW"	// 2L24 antimicrobial peptide - helix
-#define AMINOACIDS	14
+// #define AMINOACIDS	14
 //#define PEPTIDE		"RGKWTYNGITYEGR"	// mbh12 ph=5, T=283, beta sheet
-#define PEPTIDE		"IFGAIAGFIKNIWX"	// 2L24 antimicrobial peptide - helix
+// #define PEPTIDE		"IFGAIAGFIKNIWX"	// 2L24 antimicrobial peptide - helix
 //#define AMINOACIDS	15
 //#define PEPTIDE		"INWLKLGKKIIASLX"	// synoeca peptide
 //#define PEPTIDE		"VLAMWKVGFFKRNRP"	// Jun's integrin fragment
@@ -45,7 +47,7 @@
 //#define PEPTIDE		"GNDYEDRYYRENMYRYPNQVYYRPVC"	// 26AA 1G04 sheep prion
 
 
-#define TOP	100
+#define TOP	50
 
 //#define THREADS		8
 #define MAXTHREADS		64
@@ -469,15 +471,15 @@ int main()
 		fprintf(f, "\n");
 
 		// output the coordinates to a file
-		sprintf(filename, "top_%d_e%.3f_coord.xyz", i, objtop_all[i]);
-		g = fopen(filename, "w");
+		// sprintf(filename, "top_%d_e%.3f_coord.xyz", i, objtop_all[i]);
+		// g = fopen(filename, "w");
 		fprintf(f, "%d\n\n", AMINOACIDS);
-		fprintf(g, "%d\n\n", AMINOACIDS);
+		// fprintf(g, "%d\n\n", AMINOACIDS);
 
 		// print out the coordinates
 		xx = yy = zz = 0.;
 		fprintf(f, "%c %f %f %f\n", aa_string[0], xx, yy, zz);
-		fprintf(g, "%c %f %f %f\n", aa_string[0], xx, yy, zz);
+		// fprintf(g, "%c %f %f %f\n", aa_string[0], xx, yy, zz);
 		for (k = 0; k < (AMINOACIDS-1); k++)
 		{
 			xx += (double)step_lookup[turnseq_abs_top_all[k][i] * 3 + 0] / sqrt(2.);
@@ -485,11 +487,11 @@ int main()
 			zz += (double)step_lookup[turnseq_abs_top_all[k][i] * 3 + 2] / sqrt(2.);
 
 			fprintf(f, "%c %f %f %f\n", aa_string[k + 1], xx* aa_scale, yy* aa_scale, zz* aa_scale);
-			fprintf(g, "%c %f %f %f\n", aa_string[k + 1], xx* aa_scale, yy* aa_scale, zz* aa_scale);
+			// fprintf(g, "%c %f %f %f\n", aa_string[k + 1], xx* aa_scale, yy* aa_scale, zz* aa_scale);
 		}
 		fprintf(f, "\n\n");
 
-		fclose(g);
+		// fclose(g);
 
 	}
 	fclose(f);

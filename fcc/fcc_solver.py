@@ -91,6 +91,7 @@ class ProteinSolver:
         maxiter: int,
         num_batches: int | None = None,
         init_params: np.ndarray | None = None,
+        num_saved_states: int = 50,
         verbose: bool = False,
     ) -> dict:
         """
@@ -103,6 +104,7 @@ class ProteinSolver:
             Defaults to None. If None, it will be set to the number of CPU
             cores.
             init_params: The initial parameters for the ansatz. Defaults to None.
+            num_saved_states: The number of top states to save. Defaults to 50.
             verbose: Whether to print the duration of the job and processing.
 
         Returns:
@@ -122,11 +124,13 @@ class ProteinSolver:
         )
         final_cost = optim_result.fun
         opt_params = optim_result.x
-        # Sort and save the top 100 solutions from global_bitstring_energies
+        # Sort and save the top N solutions from global_bitstring_energies
         sorted_solutions = sorted(
             self.global_bitstring_energies.items(), key=lambda x: x[1]
         )
-        top_solutions = sorted_solutions[:100]
+        if num_saved_states > len(sorted_solutions):
+            num_saved_states = len(sorted_solutions)
+        top_solutions = sorted_solutions[:num_saved_states]
 
         final_results = {
             "final_cost": final_cost,

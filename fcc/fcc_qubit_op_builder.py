@@ -215,16 +215,17 @@ class QubitOpBuilder:
                 # Perform Chebyshev fit to approximate the penalty function
                 x = np.arange(-2, 2 * (j - i) ** 2, 2)
                 y = [penalty_olap] + [0] * (len(x) - 1)
-                # Initialize the max degree of the polynomial to 6
-                degree = 4
-                r2 = r2_score(y, np.polynomial.Chebyshev.fit(x, y, degree)(x))
+                # Initialize the max degree of the polynomial
+                degree = 3
+                cheb_fit = np.polynomial.Chebyshev.fit(x, y, degree)(x)
+                r2 = r2_score(y, cheb_fit)
                 while r2 < r2_threshold:
                     degree += 1
                     cheb_fit = np.polynomial.Chebyshev.fit(x, y, degree)
                     r2 = r2_score(y, cheb_fit(x))
                 # Convert the Chebyshev fit coefficients to polynomial coefficients
                 cheb_coeffs = cheb_fit.convert().coef
-                print(f"Highest degree of the polynomial for {i} and {j}: {degree}")
+                # print(f"Highest degree of the polynomial for {i} and {j}: {degree}")
                 poly_coeffs = np.polynomial.chebyshev.cheb2poly(cheb_coeffs)
                 # print(f"Penalty values: {np.polynomial.Polynomial(poly_coeffs)(x)}")
                 # Create the qubit operator based on the polynomial coefficients
