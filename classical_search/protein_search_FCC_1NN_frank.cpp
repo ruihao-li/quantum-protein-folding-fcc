@@ -14,15 +14,18 @@
 
 
 // define peptide sequence:
-// 
+// #define AMINOACIDS	5
+// #define PEPTIDE "GNLVS"	// 4QXX
+#define AMINOACIDS	6
+#define PEPTIDE "SNQNNF" // 2OL9
 //#define AMINOACIDS	7
 //#define PEPTIDE "GSNQNNF"	// linear 7 AA peptide
 //#define AMINOACIDS	7
 //#define PEPTIDE "APRLRFY"	// from IBM paper
 //#define AMINOACIDS	8
 //#define PEPTIDE "GCVLYPWC"	// 2M6C from PDB
-#define AMINOACIDS	9
-#define PEPTIDE "DIRALKTLV"	// 1LVR from PDB
+// #define AMINOACIDS	9
+// #define PEPTIDE "DIRALKTLV"	// 1LVR from PDB
 //#define AMINOACIDS	10
 //#define PEPTIDE		"YYDPETGTWY"	// chignolin
 //#define PEPTIDE		"DRVYVHPFHL"	// incorrect angiotensin sequence from Robert et al paper
