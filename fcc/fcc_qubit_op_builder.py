@@ -213,10 +213,10 @@ class QubitOpBuilder:
             ):  # overlap cannot happen within 3 beads
                 dist_op = self._distance_map[(i, j)]
                 # Perform Chebyshev fit to approximate the penalty function
-                x = np.arange(-2, 2 * (j - i) ** 2, 2)
+                x = np.arange(0, 2 * (j - i) ** 2 + 1, 2)  # x = D_{ij}
                 y = [penalty_olap] + [0] * (len(x) - 1)
                 # Initialize the max degree of the polynomial
-                degree = 3
+                degree = 2
                 cheb_fit = np.polynomial.Chebyshev.fit(x, y, degree)(x)
                 r2 = r2_score(y, cheb_fit)
                 while r2 < r2_threshold:
@@ -227,13 +227,14 @@ class QubitOpBuilder:
                 cheb_coeffs = cheb_fit.convert().coef
                 # print(f"Highest degree of the polynomial for {i} and {j}: {degree}")
                 poly_coeffs = np.polynomial.chebyshev.cheb2poly(cheb_coeffs)
+                # print(f"Polynomial coefficients: {poly_coeffs}")
                 # print(f"Penalty values: {np.polynomial.Polynomial(poly_coeffs)(x)}")
                 # Create the qubit operator based on the polynomial coefficients
                 h_olap += poly_coeffs[0] * full_id
                 for k in range(1, len(poly_coeffs)):
-                    h_op = (dist_op - 2 * full_id).simplify()
+                    h_op = dist_op
                     for _ in range(k - 1):
-                        h_op = (h_op @ (dist_op - 2 * full_id)).simplify()
+                        h_op = (h_op @ dist_op).simplify()
                     h_olap += (poly_coeffs[k] * h_op).simplify()
         return fix_qubits(h_olap)
 
