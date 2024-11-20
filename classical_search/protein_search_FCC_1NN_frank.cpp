@@ -18,8 +18,8 @@
 // #define PEPTIDE "GNLVS"	// 4QXX
 // #define AMINOACIDS	6
 // #define PEPTIDE "SNQNNF" // 2OL9
-//#define AMINOACIDS	7
-//#define PEPTIDE "GSNQNNF"	// linear 7 AA peptide
+#define AMINOACIDS	7
+#define PEPTIDE "GSNQNNF"	// linear 7 AA peptide
 //#define AMINOACIDS	7
 //#define PEPTIDE "APRLRFY"	// from IBM paper
 //#define AMINOACIDS	8
@@ -33,8 +33,8 @@
 // #define AMINOACIDS	12
 // #define PEPTIDE		"FATMRYPSDSDE"	// 1IXU protease inhibitor - loop
 //#define PEPTIDE		"VRRFDLLKRILK"	// 2N5R calmodulin binding peptide - helix + loop
-#define AMINOACIDS	13
-#define PEPTIDE		"IFGAIAGFIKNIW"	// 2L24 antimicrobial peptide - helix
+// #define AMINOACIDS	13
+// #define PEPTIDE		"IFGAIAGFIKNIW"	// 2L24 antimicrobial peptide - helix
 // #define AMINOACIDS	14
 //#define PEPTIDE		"RGKWTYNGITYEGR"	// mbh12 ph=5, T=283, beta sheet
 // #define PEPTIDE		"IFGAIAGFIKNIWX"	// 2L24 antimicrobial peptide - helix

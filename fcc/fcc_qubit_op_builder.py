@@ -230,6 +230,7 @@ class QubitOpBuilder:
                 # print(f"Polynomial coefficients: {poly_coeffs}")
                 # print(f"Penalty values: {np.polynomial.Polynomial(poly_coeffs)(x)}")
                 # Create the qubit operator based on the polynomial coefficients
+                # TODO: Can we speed this up?
                 h_olap += poly_coeffs[0] * full_id
                 for k in range(1, len(poly_coeffs)):
                     h_op = dist_op
