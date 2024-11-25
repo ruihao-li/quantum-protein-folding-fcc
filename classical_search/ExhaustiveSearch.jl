@@ -126,7 +126,7 @@ function generate_final_qubit_seq(full_config_seq::BitVector)
 end
 
 # Full program
-coeffs, op_arrs = parse_Hamiltonian("hamiltonian_7AA_zika.txt");
+coeffs, op_arrs = parse_Hamiltonian("hamiltonian_7AA_GSNQNNF.txt");
 N = 7; # length of the amino acid sequence
 # generate all possible 3-turn encoding {0, 1, 2} of length N - 3
 all_rel_turns = generate_all_rel_turns(N)
@@ -144,8 +144,8 @@ results = ThreadSafeDict{BitVector,Float64}()
 end
 
 # write the results to a text file
-f = open(joinpath(@__DIR__, "res/", "results_7AA_zika.txt"), "w+")
-for (config, energy) in sort(collect(results), by=x -> x[2])[1:50]
+f = open(joinpath(@__DIR__, "res/", "results_7AA_GSNQNNF.txt"), "w+")
+for (config, energy) in sort(collect(results), by=x -> x[2])[1:10]
     config_str = join(string.(Int.(config)), "")
     write(f, "$config_str $energy\n")
 end

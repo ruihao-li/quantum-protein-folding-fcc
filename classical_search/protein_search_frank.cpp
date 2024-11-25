@@ -17,7 +17,7 @@
 //#define QBITS	22
 #define QBITS	69
 #define MAXTERMS	16384
-#define TOP	100
+#define TOP	10
 
 //#define THREADS		8
 #define MAXTHREADS		64
