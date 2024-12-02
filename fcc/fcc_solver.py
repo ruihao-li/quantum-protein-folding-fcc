@@ -111,7 +111,7 @@ class ProteinSolver:
             dict: A dictionary containing the necessary results.
         """
         init_params = (
-            np.random.uniform(0, 4 * np.pi, self.ansatz.num_parameters)
+            np.random.uniform(0, 2 * np.pi, self.ansatz.num_parameters)
             if init_params is None
             else init_params
         )
