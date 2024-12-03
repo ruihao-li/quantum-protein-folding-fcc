@@ -19,6 +19,7 @@ import ray
 import psutil
 import json
 from time import time
+import numpy as np
 from datetime import datetime, timezone
 import os
 
@@ -84,13 +85,13 @@ pf_problem = build_pf(MAIN_SEQ)
 time_start = time()
 qubit_op = pf_problem.qubit_op(r2_threshold=R2_THRESHOLD)
 time_end = time()
-print(f"Time to generate the Hamiltonian operator: {time_end - time_start:.2f}s")
 print(f"Number of qubits: {qubit_op.num_qubits}")
 print(f"Number of Hamiltonian terms: {len(qubit_op)}")
+print(f"Time to generate the Hamiltonian operator: {time_end - time_start:.2f}s")
 
 metadata["num_qubits"] = qubit_op.num_qubits
 metadata["num_ham_terms"] = len(qubit_op)
-metadata["ham_gen_time (s)"] = (time_end - time_start).round(2)
+metadata["ham_gen_time (s)"] = np.round(time_end - time_start, 2)
 
 
 ansatz = RealAmplitudes(qubit_op.num_qubits, reps=1).decompose()
@@ -105,7 +106,7 @@ pass_manager = generate_preset_pass_manager(backend=backend, optimization_level=
 isa_circ = pass_manager.run(ansatz)
 time_end = time()
 print(f"Time to prepare the circuit: {time_end - time_start:.2f}s")
-metadata["circ_preparation_time (s)"] = (time_end - time_start).round(2)
+metadata["circ_preparation_time (s)"] = np.round(time_end - time_start, 2)
 
 with Session(backend=backend) as session:
     metadata["session_id"] = session.session_id
