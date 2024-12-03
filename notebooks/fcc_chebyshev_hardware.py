@@ -11,8 +11,8 @@ from fcc import (
 import fcc
 from qiskit.circuit.library import RealAmplitudes
 
-# from qiskit_aer.primitives import SamplerV2 as Sampler
 from qiskit_ibm_runtime import SamplerV2 as Sampler
+from qiskit_ibm_runtime.fake_provider import FakeSherbrooke  # for local testing mode
 from qiskit_ibm_runtime import QiskitRuntimeService, Session
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 import ray
@@ -95,10 +95,13 @@ metadata["ham_gen_time (s)"] = np.round(time_end - time_start, 2)
 
 
 ansatz = RealAmplitudes(qubit_op.num_qubits, reps=1).decompose()
+# Add measurements
+ansatz.measure_all()
 # Get backend
 time_start = time()
 service = QiskitRuntimeService()
-backend = service.get_backend("ibm_cleveland")
+backend = service.backend("ibm_cleveland")
+# backend = FakeSherbrooke()
 print(f"QPU backend: {backend.name}")
 metadata["backend"] = backend.name
 # Transpilation for hardware runs

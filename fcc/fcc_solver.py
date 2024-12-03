@@ -24,7 +24,8 @@ class ProteinSolver:
         Initialize the solver.
 
         Args:
-            ansatz: The ansatz circuit to use.
+            ansatz: The ansatz circuit to use (ansatz circuit must contain
+            measurements).
             hamiltonian: The Hamiltonian to use.
             sampler: The sampler to use.
         """
@@ -52,8 +53,6 @@ class ProteinSolver:
         """
         # 1. Run the sampler job
         tic0 = time.time()
-        if self.ansatz.num_clbits == 0:
-            self.ansatz.measure_all()
         pub = (self.ansatz, params)
         job = self.sampler.run(pubs=[pub])
         primitive_result = job.result()

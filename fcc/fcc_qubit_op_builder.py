@@ -236,7 +236,7 @@ class QubitOpBuilder:
                     h_op = dist_op
                     for _ in range(k - 1):
                         h_op = (h_op @ dist_op).simplify()
-                    h_olap += (poly_coeffs[k] * h_op).simplify()
+                    h_olap += poly_coeffs[k] * h_op
         return fix_qubits(h_olap)
 
     def _create_h_contact(self) -> SparsePauliOp:
