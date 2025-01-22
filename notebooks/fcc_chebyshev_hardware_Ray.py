@@ -1,4 +1,4 @@
-import sys
+iimport sys
 
 sys.path.append("../")
 from fcc import (
@@ -15,6 +15,7 @@ from qiskit_ibm_runtime import SamplerV2 as Sampler
 from qiskit_ibm_runtime.fake_provider import FakeSherbrooke  # for local testing mode
 from qiskit_ibm_runtime import QiskitRuntimeService, Session
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
+import ray
 import psutil
 import json
 from time import time
@@ -27,8 +28,7 @@ metadata = {}
 
 # Define parameters
 MAIN_SEQ = "GNLVS"
-# MAIN_SEQ = "YQFWKNFQ" # these are the middle 8 AAs of PDB: 2MZX
-NUM_WORKERS = 28
+NUM_WORKERS = None
 R2_THRESHOLD = 0.99
 SHOTS = 10_000
 OPTIMIZER = "COBYLA"
@@ -50,6 +50,15 @@ num_workers = (
 )
 print(f"Number of workers: {num_workers}")
 metadata["num_workers"] = num_workers
+ray.init(
+    num_cpus=num_workers,
+    ignore_reinit_error=True,
+    log_to_driver=False,
+    runtime_env={
+        "py_modules": [fcc],
+    },
+)
+
 
 def build_pf(main_seq: str, energy_matrix_file: str = "mj_matrix"):
     """Builds the protein folding problem for the given sequence."""
@@ -71,9 +80,9 @@ def build_pf(main_seq: str, energy_matrix_file: str = "mj_matrix"):
 
     return protein_folding_problem
 
+
 pf_problem = build_pf(MAIN_SEQ)
 time_start = time()
-print("Started to generate the Hamiltonian at {} (build_pf function is now running)".format(time_start))
 qubit_op = pf_problem.qubit_op(r2_threshold=R2_THRESHOLD)
 time_end = time()
 print(f"Number of qubits: {qubit_op.num_qubits}")
@@ -137,4 +146,4 @@ with open(f"{parent_dir}/opt_results.json", "w") as jf:
 
 print("Results saved.")
 
-
+ray.shutdown()

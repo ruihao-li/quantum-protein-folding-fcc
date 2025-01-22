@@ -156,10 +156,14 @@ def process_counts(
         for i in range(0, num_unique_states, batch_size):
             batched_states = states[i : i + batch_size]
             doubled_batch_refs.append(pool.apply_async(calculate_batch_energy, args=(batched_states, observable,)))
-
-            unique_energies = list(chain.from_iterable([job.get() for job in doubled_batch_refs]))
-
-    assert num_unique_states == len(unique_energies)
+        unique_energies = list(chain.from_iterable([job.get() for job in doubled_batch_refs]))
+            # unique_energies = list(chain.from_iterable([job.get() for job in doubled_batch_refs]))
+        print("The number of unique states is", num_unique_states)
+        print("The batch size is", batch_size)
+        print("the number of batches is", num_batches)
+        print("The number of unique energies is", len(unique_energies))
+        assert num_unique_states == len(unique_energies)
+    # assert num_unique_states == len(unique_energies)
 
     state_wise_energies: dict[str, float] = {
         state: energy for state, energy in zip(unique_states, unique_energies)

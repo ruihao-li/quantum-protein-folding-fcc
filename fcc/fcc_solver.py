@@ -5,7 +5,8 @@ from qiskit.primitives import BaseSamplerV2 as BaseSampler
 from qiskit import QuantumCircuit
 from qiskit.quantum_info import SparsePauliOp
 from scipy.optimize import minimize
-# from .measurement_utils_ray import get_cvar_energy, process_counts
+# if you plan on using Ray, uncomment line 9 below, and comment out line 10
+# from .measurement_utils import get_cvar_energy, process_counts
 from .measurement_utils_multiprocessing import get_cvar_energy, process_counts
 
 
