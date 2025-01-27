@@ -154,7 +154,7 @@ def process_counts(
     with mp.Pool(processes=num_batches) as pool:
         doubled_batch_refs = [] 
         for i in range(0, num_unique_states, batch_size):
-            batched_states = states[i : i + batch_size]
+            batched_states = unique_states[i : i + batch_size]
             doubled_batch_refs.append(pool.apply_async(calculate_batch_energy, args=(batched_states, observable,)))
         unique_energies = list(chain.from_iterable([job.get() for job in doubled_batch_refs]))
             # unique_energies = list(chain.from_iterable([job.get() for job in doubled_batch_refs]))
