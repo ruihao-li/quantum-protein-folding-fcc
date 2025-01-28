@@ -12,6 +12,7 @@ from .utils import (
     fix_qubits,
     compose_IZ_ops,
 )
+import time
 
 
 class QubitOpBuilder:
@@ -37,7 +38,7 @@ class QubitOpBuilder:
         self._num_config_qubits = self._distance_map._num_qubits
         self._num_contact_qubits = self._contact_map._num_qubits
 
-    def build_qubit_op(self, r2_threshold: float) -> SparsePauliOp:
+    def build_qubit_op(self, r2_threshold: float, chunk: int = 20) -> SparsePauliOp:
         """
         Builds the total qubit operator for the full Hamiltonian encoding a
         protein folding problem. H_total = H_back + H_redun + H_olap +
@@ -46,6 +47,7 @@ class QubitOpBuilder:
         Args:
             r2_threshold: The threshold for the R^2 score of the Chebyshev fit
             when building the non-overlapping constraint.
+            chunk: Size of the chunks to split the qubit operator into.
 
         Returns:
             A qubit operator for the full Hamiltonian encoding a protein folding
@@ -58,7 +60,7 @@ class QubitOpBuilder:
         h_redun = self._create_h_redun()
         if h_redun != 0:
             h_redun = contact_id ^ h_redun
-        h_olap = self._create_h_olap(r2_threshold)
+        h_olap = self._create_h_olap(r2_threshold, chunk)
         if h_olap != 0:
             h_olap = contact_id ^ h_olap
         h_contact = self._create_h_contact()
@@ -182,7 +184,30 @@ class QubitOpBuilder:
             )
         return fix_qubits(h_redun)
 
-    def _create_h_olap(self, r2_threshold: float) -> SparsePauliOp:
+    def _compose_in_chunks(
+        self, op1: SparsePauliOp, op2: SparsePauliOp, chunk: int = 20
+    ) -> SparsePauliOp:
+        """
+        Composes two qubit operators by splitting the second operator into chunks (to avoid memory errors).
+
+        Args:
+            op1: The first qubit operator.
+            op2: The second qubit operator.
+            chunk: Size of the chunks to split the second operator into.
+
+        Returns:
+            The composed qubit operator.
+        """
+        final_op = 0
+
+        for i in range(0, op2.size, chunk):
+            terms = op2[i : i + chunk]
+            final_op += compose_IZ_ops(op1, terms)
+            final_op = final_op.simplify()
+
+        return final_op
+
+    def _create_h_olap(self, r2_threshold: float, chunk: int = 20) -> SparsePauliOp:
         r"""
         Creates qubit operators for the H_olap term, which penalizes overlapping
         beads. To ensure the non-overlapping condition, we impose constraints on
@@ -200,6 +225,11 @@ class QubitOpBuilder:
         other, the higher the degree of the polynomial required to approximate
         the penalty function.
 
+        Args:
+            r2_threshold: The threshold for the R^2 score of the Chebyshev fit
+            when building the non-overlapping constraint.
+            chunk: Size of the chunks to split the second operator into.
+
         Returns:
             A qubit operator for the H_olap term.
         """
@@ -213,6 +243,7 @@ class QubitOpBuilder:
                 i + 3, self._peptide_length
             ):  # overlap cannot happen within 3 beads
                 dist_op = self._distance_map[(i, j)]
+                print(f"Beads {i} and {j} -- dist_op size: {dist_op.size}")
                 # Perform Chebyshev fit to approximate the penalty function
                 x = np.arange(0, 2 * (j - i) ** 2 + 1, 2)  # x = D_{ij}
                 y = [penalty_olap] + [0] * (len(x) - 1)
@@ -244,7 +275,11 @@ class QubitOpBuilder:
                     if k == 1:
                         h_op = dist_op.simplify()
                     else:
-                        h_op = compose_IZ_ops(h_op, dist_op)
+                        tic = time.time()
+                        h_op = self._compose_in_chunks(h_op, dist_op, chunk)
+                        toc = time.time()
+                        print(f"Time taken to do composition @ k = {k}: {toc - tic}")
+                    print(f"h_op size @ k = {k}: {h_op.size}")
                     h_olap = SparsePauliOp.sum(
                         [h_olap, poly_coeffs[k] * h_op]
                     ).simplify()
