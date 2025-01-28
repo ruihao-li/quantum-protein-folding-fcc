@@ -10,6 +10,7 @@ from .fcc_penalty_parameters import PenaltyParameters
 from .utils import (
     build_full_identity,
     fix_qubits,
+    compose_IZ_ops,
 )
 
 
@@ -230,13 +231,23 @@ class QubitOpBuilder:
                 # print(f"Polynomial coefficients: {poly_coeffs}")
                 # print(f"Penalty values: {np.polynomial.Polynomial(poly_coeffs)(x)}")
                 # Create the qubit operator based on the polynomial coefficients
-                # TODO: Can we speed this up?
                 h_olap += poly_coeffs[0] * full_id
+                # # Old implementation
+                # for k in range(1, len(poly_coeffs)):
+                #     h_op = dist_op
+                #     for _ in range(k - 1):
+                #         h_op = (h_op @ dist_op).simplify()
+                #     h_olap += poly_coeffs[k] * h_op
+
+                # New implementation
                 for k in range(1, len(poly_coeffs)):
-                    h_op = dist_op
-                    for _ in range(k - 1):
-                        h_op = (h_op @ dist_op).simplify()
-                    h_olap += poly_coeffs[k] * h_op
+                    if k == 1:
+                        h_op = dist_op.simplify()
+                    else:
+                        h_op = compose_IZ_ops(h_op, dist_op)
+                    h_olap = SparsePauliOp.sum(
+                        [h_olap, poly_coeffs[k] * h_op]
+                    ).simplify()
         return fix_qubits(h_olap)
 
     def _create_h_contact(self) -> SparsePauliOp:

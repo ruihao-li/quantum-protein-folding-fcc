@@ -1,6 +1,7 @@
 """Builds Pauli operators of a given size."""
 
 from qiskit.quantum_info import SparsePauliOp, PauliList
+from qiskit._accelerate.sparse_pauli_op import unordered_unique
 import numpy as np
 
 
@@ -205,3 +206,56 @@ def remove_unused_qubits(
         return operator_compressed, unused_qubits
     else:
         return None, None
+
+
+def compose_IZ_ops(op_1: SparsePauliOp, op_2: SparsePauliOp) -> SparsePauliOp:
+    """
+    Compose two SparsePauliOps containing only I and Z terms.
+
+    Args:
+        op_1: SparsePauliOp containing only I and Z terms.
+        op_2: SparsePauliOp containing only I and Z terms.
+
+    Returns:
+        SparsePauliOp representing the composed operator.
+    """
+    assert op_1.num_qubits == op_2.num_qubits, "Mismatched number of qubits"
+    num_qubits = op_1.num_qubits
+
+    # Combine Z terms: XOR for Z locations, AND for phase calculation (not needed)
+    z1, z2 = op_1.paulis.z, op_2.paulis.z
+
+    # XOR to determine Z locations in the product
+    z_combined = np.logical_xor(z1[:, np.newaxis], z2).reshape((-1, num_qubits))
+    # Multiply out coefficients
+    coeffs = np.multiply.outer(op_1.coeffs, op_2.coeffs).ravel()
+
+    # Simplify the pauli op here
+    array = np.packbits(z_combined, axis=1).astype(np.uint16)
+    # Find unique Pauli terms
+    indices, inverses = unordered_unique(array)
+
+    if indices.shape[0] == array.shape[0]:
+        # No duplicate operator
+        pauli_list = PauliList.from_symplectic(z_combined, np.zeros_like(z_combined))
+        return SparsePauliOp(pauli_list, coeffs, copy=False)
+
+    coeffs_combined = np.zeros(indices.shape[0], dtype=coeffs.dtype)
+    # Combine coefficients of duplicated Pauli terms
+    np.add.at(coeffs_combined, inverses, coeffs)
+    is_zero = np.isclose(coeffs_combined, 0, atol=1e-8, rtol=1e-5)
+    # Check the edge case that we deleted all Paulis
+    # In this case we return an identity Pauli with a zero coefficient
+    if np.all(is_zero):
+        z = np.zeros((1, num_qubits), dtype=bool)
+        coeffs = np.array([0j], dtype=coeffs.dtype)
+    else:
+        non_zero = np.logical_not(is_zero)
+        nz_indices = indices[non_zero]
+        z = z_combined[nz_indices]
+        coeffs = coeffs_combined[non_zero]
+
+    # Create new Pauli list with combined Z locations and phases
+    pauli_list = PauliList.from_symplectic(z, np.zeros_like(z))
+
+    return SparsePauliOp(pauli_list, coeffs, ignore_pauli_phase=True, copy=False)
