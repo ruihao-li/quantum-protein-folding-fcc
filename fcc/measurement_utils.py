@@ -1,11 +1,9 @@
 from itertools import chain
 from typing import Iterable
-
-# import multiprocessing as mp
 import numpy as np
 import psutil
-
 import ray
+import multiprocessing as mp
 from qiskit.quantum_info import SparsePauliOp
 from qiskit.result import Counts
 
@@ -43,11 +41,11 @@ def get_cvar_energy(
     """Computes Conditional-Value-at-Risk (CVaR) energy.
 
     Args:
-        measurements (Iterable[tuple[float, float]]): An iterable of 2-tuples, where
-            tuple contains probability and expectation value of a bitstring without
-            explicitly containing the bitstring. The first element of the tuple is the
-            probability of the bitstring. The second element of the tuple is the
-            expectation value for that bitstring.
+        measurements (Iterable[tuple[float, float]]): An iterable of 2-tuples,
+        where tuple contains probability and expectation value of a bitstring
+        without explicitly containing the bitstring. The first element of the
+        tuple is the probability of the bitstring. The second element of the
+        tuple is the expectation value for that bitstring.
         alpha (float): CVaR aggregation.
 
     Returns:
@@ -67,7 +65,27 @@ def get_cvar_energy(
 
 
 @ray.remote
-def calculate_batch_energy(
+def calculate_batch_energy_ray(
+    conf_bitstring_list: list[str],
+    observable: SparsePauliOp,
+) -> list[float]:
+    """
+    Calculate the energy of a batch of bitstrings.
+
+    Args:
+        conf_bitstring_list (list[str]): List of conformation bitstrings.
+        observable (SparsePauliOp): The observable to evaluate the energy.
+
+    Returns:
+        list[float]: List of energies of the batch of bitstrings.
+    """
+    return [
+        _evaluate_sparsepauli(bitstring, observable)
+        for bitstring in conf_bitstring_list
+    ]
+
+
+def calculate_batch_energy_mp(
     conf_bitstring_list: list[str],
     observable: SparsePauliOp,
 ) -> list[float]:
@@ -92,13 +110,14 @@ def process_counts(
     observable: SparsePauliOp,
     num_batches: int | None = None,
     global_bitstring_energies: dict[str, float] = {},
+    parallelizer: str = "ray",
 ) -> tuple[dict[str, float], list[tuple[float, float]]]:
     """
-    Process a Counts distribution in parallel batches. First, it splits all
-    unique states (bitstrings) in the Counts distribution into specified number
-    of batches. Then, for each batch of states, it computes the energy per
-    unique state. It also converts integer count of a state to probability
-    (float) by dividing the count by total number of shots.
+    Process a Counts distribution in parallel batches using Ray. First, it
+    splits all unique states (bitstrings) in the Counts distribution into
+    specified number of batches. Then, for each batch of states, it computes the
+    energy per unique state. It also converts integer count of a state to
+    probability (float) by dividing the count by total number of shots.
 
     Args:
         counts (Counts): The counts of a quantum circuit run.
@@ -109,6 +128,8 @@ def process_counts(
         dictionary that keeps track of all bitstrings ever measured. Bitstrings
         that are already in this dictionary will not be processed. Defaults to
         empty dictionary.
+        parallelizer (str, optional): The parallelizer to use. Defaults to
+        "ray". Options: "ray", "python-mp".
 
     Returns:
         state_wise_energies (dict[str, float]): Dictionary where keys are unique
@@ -141,16 +162,34 @@ def process_counts(
         num_batches = num_unique_states
     batch_size = num_unique_states // num_batches
 
-    observable_id = ray.put(observable)
-    doubled_batch_refs = []
-    for i in range(0, num_unique_states, batch_size):
-        batch_states = unique_states[i : i + batch_size]
-        doubled_batch_refs.append(
-            calculate_batch_energy.remote(batch_states, observable_id)
-        )
-    unique_energies = list(chain(*ray.get(doubled_batch_refs)))
-
-    assert num_unique_states == len(unique_energies)
+    if parallelizer == "ray":
+        observable_id = ray.put(observable)
+        doubled_batch_refs = []
+        for i in range(0, num_unique_states, batch_size):
+            batch_states = unique_states[i : i + batch_size]
+            doubled_batch_refs.append(
+                calculate_batch_energy_ray.remote(batch_states, observable_id)
+            )
+        unique_energies = list(chain(*ray.get(doubled_batch_refs)))
+        assert num_unique_states == len(unique_energies)
+    elif parallelizer == "python-mp":
+        with mp.Pool(processes=num_batches) as pool:
+            doubled_batch_refs = []
+            for i in range(0, num_unique_states, batch_size):
+                batched_states = unique_states[i : i + batch_size]
+                doubled_batch_refs.append(
+                    pool.apply_async(
+                        calculate_batch_energy_mp,
+                        args=(
+                            batched_states,
+                            observable,
+                        ),
+                    )
+                )
+            unique_energies = list(
+                chain.from_iterable([job.get() for job in doubled_batch_refs])
+            )
+            assert num_unique_states == len(unique_energies)
 
     state_wise_energies: dict[str, float] = {
         state: energy for state, energy in zip(unique_states, unique_energies)

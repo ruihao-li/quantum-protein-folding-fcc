@@ -5,9 +5,7 @@ from qiskit.primitives import BaseSamplerV2 as BaseSampler
 from qiskit import QuantumCircuit
 from qiskit.quantum_info import SparsePauliOp
 from scipy.optimize import minimize
-# if you plan on using Ray, uncomment line 9 below, and comment out line 10
-# from .measurement_utils import get_cvar_energy, process_counts
-from .measurement_utils_multiprocessing import get_cvar_energy, process_counts
+from .measurement_utils import get_cvar_energy, process_counts
 
 
 class ProteinSolver:
@@ -21,6 +19,7 @@ class ProteinSolver:
         ansatz: QuantumCircuit,
         hamiltonian: SparsePauliOp,
         sampler: BaseSampler,
+        parallelizer: str = "ray",
     ):
         """
         Initialize the solver.
@@ -30,15 +29,21 @@ class ProteinSolver:
             measurements).
             hamiltonian: The Hamiltonian to use.
             sampler: The sampler to use.
+            parallelizer: The parallelizer to use. Defaults to "ray". Options:
+            "ray", "python-mp".
         """
         self.ansatz = ansatz
         self.hamiltonian = hamiltonian
         self.sampler = sampler
+        self.parallelizer = parallelizer
         self.cost_trajectory: list[float] = []
         self.global_bitstring_energies: dict[str, float] = {}
 
     def cost_function(
-        self, params: np.ndarray, num_batches: int | None = None, verbose: bool = False
+        self,
+        params: np.ndarray,
+        num_batches: int | None = None,
+        verbose: bool = False,
     ) -> float:
         """
         Compute the cost function for the given parameters.
@@ -65,12 +70,12 @@ class ProteinSolver:
 
         # 2. Process the counts, calculating the energy of unique bitstrings that have not been processed before
         tic2 = time.time()
-
         state_wise_energies, prob_energy_pairs = process_counts(
             counts,
             observable=self.hamiltonian,
             num_batches=num_batches,
             global_bitstring_energies=self.global_bitstring_energies,
+            parallelizer=self.parallelizer,
         )
 
         # 3. Calculate the cost of the measurements
@@ -135,7 +140,7 @@ class ProteinSolver:
 
         final_results = {
             "final_cost": final_cost,
-            "opt_params": opt_params,
+            "opt_params": opt_params.tolist(),
             "cost_trajectory": self.cost_trajectory,
             "top_solutions": top_solutions,
         }
