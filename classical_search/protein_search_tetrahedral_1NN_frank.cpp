@@ -18,7 +18,8 @@
 //#define AMINOACIDS	7
 //#define PEPTIDE "APRLRFY"	// from IBM paper
 #define AMINOACIDS	10
-#define PEPTIDE		"YYDPETGTWY"	// chignolin
+//#define PEPTIDE		"YYDPETGTWY"	// chignolin
+#define PEPTIDE			"QYQFWKNFQT"	// 2MZX
 //#define PEPTIDE		"DRVYVHPFHL"	// incorrect angiotensin sequence from Robert et al paper
 //#define PEPTIDE		"DRVYIHPFHL"	// correct angiotensin sequence
 //#define AMINOACIDS	16
@@ -34,7 +35,7 @@
 //#define PEPTIDE		"GNDYEDRYYRENMYRYPNQVYYRPVC"	// 26AA 1G04 sheep prion
 
 
-#define TOP	50
+#define TOP	100
 
 //#define THREADS		8
 #define MAXTHREADS		64
