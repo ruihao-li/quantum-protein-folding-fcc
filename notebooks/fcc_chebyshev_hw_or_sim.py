@@ -28,11 +28,14 @@ import os
 metadata = {}
 # ============================
 # Define parameters
+# MAIN_SEQ = "YQFWKNFQ"
 MAIN_SEQ = "GNLVS"
 NUM_WORKERS = None
 R2_THRESHOLD = 0.999
 CHUNK = 20
-RUNNER = "aer"  # "aer" or "hardware"
+ANSATZ_REPS = 1
+INIT_PARAMS_FILE = None  # "GNLVS_2025-02-03-21-10-57_aer_simulator_statevector"
+RUNNER = "aer-sv"  # "aer-sv", "aer-mps", "hardware"
 PARALLELIZER = "ray"  # "ray" or "python-mp"
 SHOTS = 50_000
 OPTIMIZER = "COBYLA"
@@ -43,7 +46,9 @@ TIMESTAMP = datetime.now(timezone.utc)
 
 metadata["main_seq"] = MAIN_SEQ
 metadata["r2_threshold"] = R2_THRESHOLD
-metadata["chunk size"] = CHUNK
+metadata["chunk_size"] = CHUNK
+metadata["ansatz_reps"] = ANSATZ_REPS
+metadata["init_params_file"] = INIT_PARAMS_FILE
 metadata["runner"] = RUNNER
 metadata["parallelizer"] = PARALLELIZER
 metadata["shots"] = SHOTS
@@ -72,6 +77,29 @@ def build_pf(main_seq: str, energy_matrix_file: str = "mj_matrix"):
     )
 
     return protein_folding_problem
+
+
+def load_init_params(init_params_file: str | None) -> np.ndarray | None:
+    """
+    Load initial parameters from the `opt_results` file (typically from an MPS
+    run).
+
+    Args:
+        init_params_file (str): Path to the `opt_results` file.
+
+    Returns:
+        list: Initial parameters to be used in the VQE optimization.
+    """
+    if init_params_file is None:
+        return None
+    init_params_file_path = f"../res/fcc_hw/{init_params_file}/opt_results.json"
+    if not os.path.exists(init_params_file_path):
+        raise FileNotFoundError(f"File not found: {init_params_file_path}")
+    with open(init_params_file_path, "r") as f:
+        data = json.load(f)
+    init_params = data.get("opt_params", None)
+    init_params = np.array(init_params) if init_params is not None else None
+    return init_params
 
 
 if __name__ == "__main__":
@@ -142,16 +170,15 @@ if __name__ == "__main__":
     metadata["num_qubits"] = qubit_op.num_qubits
     metadata["num_ham_terms"] = len(qubit_op)
 
-    ansatz = RealAmplitudes(qubit_op.num_qubits, reps=1).decompose()
+    ansatz = RealAmplitudes(qubit_op.num_qubits, reps=ANSATZ_REPS).decompose()
     # Add measurements
     ansatz.measure_all()
     # Get backend
     time_start = time()
-
-    if RUNNER == "aer":
-        backend = AerSimulator(
-            method="matrix_product_state"
-        )  # MPS by default (manually change it to "statevector" for smaller problems)
+    if RUNNER == "aer-sv":
+        backend = AerSimulator(method="statevector")
+    elif RUNNER == "aer-mps":
+        backend = AerSimulator(method="matrix_product_state")
     elif RUNNER == "hardware":
         service = QiskitRuntimeService()
         backend = service.backend("ibm_cleveland")
@@ -166,7 +193,6 @@ if __name__ == "__main__":
     metadata["circ_preparation_time (s)"] = np.round(time_end - time_start, 2)
 
     # Run the VQE
-
     with Session(backend=backend) as session:
         metadata["session_id"] = session.session_id
         sampler = Sampler(mode=session)
@@ -186,13 +212,14 @@ if __name__ == "__main__":
             optimizer=OPTIMIZER,
             maxiter=MAX_ITER,
             num_batches=num_workers,
+            init_params=load_init_params(INIT_PARAMS_FILE),
             num_saved_states=MAX_NUM_SAVED_STATES,
             verbose=True,
         )
     print("VQE finished.")
 
     # Save results and metadata
-    timestamp_str = TIMESTAMP.strftime("%Y-%m-%d")
+    timestamp_str = TIMESTAMP.strftime("%Y-%m-%d-%H-%M-%S")  # UTC time
     parent_dir = f"../res/fcc_hw/{MAIN_SEQ}_{timestamp_str}_{backend.name}"
     try:
         os.makedirs(parent_dir)

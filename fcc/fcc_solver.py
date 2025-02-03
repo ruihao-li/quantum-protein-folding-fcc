@@ -129,6 +129,7 @@ class ProteinSolver:
             args=(num_batches, verbose),
         )
         final_cost = optim_result.fun
+        self.cost_trajectory.append(final_cost)
         opt_params = optim_result.x
         # Sort and save the top N solutions from global_bitstring_energies
         sorted_solutions = sorted(
