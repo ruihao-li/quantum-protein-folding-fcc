@@ -1,0 +1,19 @@
+{
+  "backend": "aer_simulator_matrix_product_state",
+  "chunk size": 20,
+  "circ_preparation_time (s)": 0.03,
+  "hamiltonian_gen_time (min)": 0.0,
+  "main_seq": "GNLV",
+  "max_iter": 10,
+  "max_num_saved_states": 1000,
+  "num_ham_terms": 131,
+  "num_qubits": 9,
+  "num_workers": 12,
+  "optimizer": "COBYLA",
+  "parallelizer": "ray",
+  "r2_threshold": 0.999,
+  "runner": "aer",
+  "session_id": null,
+  "shots": 50000,
+  "timestamp": "2025-01-31T02:53:37.153184+00:00"
+}

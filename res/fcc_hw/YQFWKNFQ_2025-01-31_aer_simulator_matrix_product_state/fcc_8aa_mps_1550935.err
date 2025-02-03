@@ -1,0 +1,4 @@
+2025-01-30 23:23:49,249	INFO worker.py:1832 -- Started a local Ray instance. View the dashboard at [1m[32mhttp://127.0.0.1:8265 [39m[22m
+2025-01-30 23:23:49,289	INFO packaging.py:574 -- Creating a file package for local module '/mnt/beegfs/lir9/protein-folding-qc/notebooks/../fcc'.
+2025-01-30 23:23:49,324	INFO packaging.py:366 -- Pushing file package 'gcs://_ray_pkg_c9b2593d9c6b1c01.zip' (0.19MiB) to Ray cluster...
+2025-01-30 23:23:49,325	INFO packaging.py:379 -- Successfully pushed file package 'gcs://_ray_pkg_c9b2593d9c6b1c01.zip'.
