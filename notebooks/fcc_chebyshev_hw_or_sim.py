@@ -28,18 +28,18 @@ import os
 metadata = {}
 # ============================
 # Define parameters
-# MAIN_SEQ = "YQFWKNFQ"
-MAIN_SEQ = "GNLVS"
+MAIN_SEQ = "YQFWKNFQ"
+# MAIN_SEQ = "GNLVS"
 NUM_WORKERS = None
-R2_THRESHOLD = 0.999
-CHUNK = 20
-ANSATZ_REPS = 1
+R2_THRESHOLD = 0.995
+CHUNK = 40
+ANSATZ_REPS = 2
 INIT_PARAMS_FILE = None  # "GNLVS_2025-02-03-21-10-57_aer_simulator_statevector"
-RUNNER = "aer-sv"  # "aer-sv", "aer-mps", "hardware"
+RUNNER = "aer-mps"  # "aer-sv", "aer-mps", "hardware"
 PARALLELIZER = "ray"  # "ray" or "python-mp"
-SHOTS = 50_000
+SHOTS = 100_000
 OPTIMIZER = "COBYLA"
-MAX_ITER = 10
+MAX_ITER = 500
 MAX_NUM_SAVED_STATES = 1000
 TIMESTAMP = datetime.now(timezone.utc)
 # ============================
@@ -122,15 +122,16 @@ if __name__ == "__main__":
         )
 
     ham_dir = "fcc_hamilts"
+    file_name = f"{MAIN_SEQ}_{len(MAIN_SEQ)}AAs_R2_{int(R2_THRESHOLD * 1000)}_1e-3.json"
     try:
         os.makedirs(ham_dir)
     except FileExistsError:
         pass
     # Check if the Hamiltonian operator is already generated
-    if os.path.exists(f"{ham_dir}/{MAIN_SEQ}_{len(MAIN_SEQ)}AAs.json"):
+    if os.path.exists(f"{ham_dir}/{file_name}"):
         print("Hamiltonian operator found.")
         tic = time()
-        with open(f"{ham_dir}/{MAIN_SEQ}_{len(MAIN_SEQ)}AAs.json", "r") as f:
+        with open(f"{ham_dir}/{file_name}", "r") as f:
             data = json.load(f)
             num_qubits = data["num_qubits"]
             sparse_op_list = [
@@ -144,7 +145,7 @@ if __name__ == "__main__":
         print(f"Hamiltonian loaded in {ham_load_time / 60:.2f} min")
         metadata["hamiltonian_load_time (min)"] = np.round(ham_load_time / 60, 2)
     else:
-        print("Hamiltonian operator not found. Generating...")
+        print(f"Hamiltonian operator not found. Generating with R2 = {R2_THRESHOLD}...")
         tic = time()
         pf_problem = build_pf(MAIN_SEQ)
         qubit_op = pf_problem.qubit_op(r2_threshold=R2_THRESHOLD, chunk=CHUNK)
@@ -153,7 +154,7 @@ if __name__ == "__main__":
         print(f"Hamiltonian generated in {ham_gen_time / 60:.2f} min")
         metadata["hamiltonian_gen_time (min)"] = np.round(ham_gen_time / 60, 2)
         # Save the Hamiltonian operator to a file
-        with open(f"fcc_hamilts/{MAIN_SEQ}_{len(MAIN_SEQ)}AAs.json", "w") as f:
+        with open(f"{ham_dir}/{file_name}", "w") as f:
             # Convert complex coefficients to real numbers
             qubit_op_real = qubit_op.copy()
             qubit_op_real.coeffs.dtype = np.float64
@@ -201,7 +202,7 @@ if __name__ == "__main__":
             # recommended: for Sampler runs enable gates twirling and disable measure twirling
             sampler.options.twirling.enable_gates = False
             sampler.options.twirling.enable_measure = False
-        print("Starting VQE with parallelizer:", PARALLELIZER)
+        print(f"Starting VQE with parallelizer: {PARALLELIZER}, shot count: {SHOTS}")
         protein_solver = ProteinSolver(
             ansatz=isa_circ,
             hamiltonian=qubit_op,
