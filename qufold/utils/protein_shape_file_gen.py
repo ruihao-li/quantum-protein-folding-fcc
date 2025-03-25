@@ -8,7 +8,7 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 """An auxiliary class that gets the coordinates of aminoacids of a molecule
- in ProteinFoldingResult."""
+in ProteinFoldingResult."""
 import os
 from typing import Union, List, Optional
 import numpy as np
