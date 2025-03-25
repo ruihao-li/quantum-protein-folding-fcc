@@ -1,0 +1,13 @@
+COMPND    My Protein Sequence                                                   
+AUTHOR    Galaxy User                                                          
+ATOM      1  CA  TYR     1       0.000   0.000   0.000  1.00  0.00           Y  
+ATOM      2  CA  TYR     2       2.687   2.687   0.000  1.00  0.00           Y  
+ATOM      3  CA  ASP     3       0.000   2.687  -2.687  1.00  0.00           D  
+ATOM      4  CA  PRO     4       0.000   5.374   0.000  1.00  0.00           P  
+ATOM      5  CA  GLU     5      -2.687   2.687   0.000  1.00  0.00           E  
+ATOM      6  CA  THR     6      -2.687   0.000   2.687  1.00  0.00           T  
+ATOM      7  CA  GLY     7       0.000  -2.687   2.687  1.00  0.00           G  
+ATOM      8  CA  THR     8       0.000   0.000   5.374  1.00  0.00           T  
+ATOM      9  CA  TRP     9       0.000   2.687   2.687  1.00  0.00           W  
+ATOM     10  CA  TYR    10       2.687   0.000   2.687  1.00  0.00           Y  
+END
