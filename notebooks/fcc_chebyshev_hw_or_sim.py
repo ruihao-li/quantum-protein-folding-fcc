@@ -30,11 +30,11 @@ metadata = {}
 # Define parameters
 MAIN_SEQ = "YQFWKNFQ"
 # MAIN_SEQ = "GNLVS"
-NUM_WORKERS = None
+NUM_WORKERS = 96
 R2_THRESHOLD = 0.995
 CHUNK = 40
 ANSATZ_REPS = 2
-INIT_PARAMS_FILE = None  # "GNLVS_2025-02-03-21-10-57_aer_simulator_statevector"
+INIT_PARAMS_FILE = "YQFWKNFQ_2025-02-07-20-14-40_aer_simulator_matrix_product_state"  # "GNLVS_2025-02-03-21-10-57_aer_simulator_statevector", None
 RUNNER = "aer-mps"  # "aer-sv", "aer-mps", "hardware"
 PARALLELIZER = "ray"  # "ray" or "python-mp"
 SHOTS = 100_000
@@ -202,7 +202,7 @@ if __name__ == "__main__":
             # recommended: for Sampler runs enable gates twirling and disable measure twirling
             sampler.options.twirling.enable_gates = False
             sampler.options.twirling.enable_measure = False
-        print(f"Starting VQE with parallelizer: {PARALLELIZER}, shot count: {SHOTS}")
+        print("Starting VQE with parallelizer:", PARALLELIZER)
         protein_solver = ProteinSolver(
             ansatz=isa_circ,
             hamiltonian=qubit_op,
@@ -235,4 +235,4 @@ if __name__ == "__main__":
 
     print("Results saved.")
 
-# ray.shutdown()
+    ray.shutdown()
