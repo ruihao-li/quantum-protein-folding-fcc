@@ -26,10 +26,10 @@ import vqe
 # ============================
 # Define parameters
 MAIN_SEQ = "KLVFFA"
-NUM_WORKERS = 8  # 48
+NUM_WORKERS = 40  # 48
 ANSATZ_REPS = 2
-MAX_ITER = 3  # 500
-NUM_OPT_REPS = 4  # 20
+MAX_ITER = 500  # 500
+NUM_OPT_REPS = 20  # 20
 PRIMAL_PERTURB_STEP = 0.05
 DUAL_PERTURB_STEP = 0.05
 PRIMAL_DUAL_UPDATE_STEP = 0.5
