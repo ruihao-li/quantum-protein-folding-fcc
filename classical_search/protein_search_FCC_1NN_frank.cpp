@@ -3,7 +3,8 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <cstdint> // include this header for uint64_t and int64_t
+// #include <cstdint> // include this header for uint64_t and int64_t
+#include <stdint.h>
 #include <math.h>
 
 
@@ -18,14 +19,16 @@
 // #define PEPTIDE "GNLVS"	// 4QXX
 // #define AMINOACIDS	6
 // #define PEPTIDE "SNQNNF" // 2OL9
+#define AMINOACIDS	6
+#define PEPTIDE "KLVFFA"
 // #define AMINOACIDS	7
 // #define PEPTIDE "GSNQNNF"	// linear 7 AA peptide
 //#define AMINOACIDS	7
 //#define PEPTIDE "APRLRFY"	// from IBM paper
 //#define AMINOACIDS	8
 //#define PEPTIDE "GCVLYPWC"	// 2M6C from PDB
-#define AMINOACIDS	8
-#define PEPTIDE "YQFWKNFQ"   // middle 8 AAs from 2MZX
+// #define AMINOACIDS	8
+// #define PEPTIDE "YQFWKNFQ"   // middle 8 AAs from 2MZX
 // #define AMINOACIDS	9
 // #define PEPTIDE "DIRALKTLV"	// 1LVR from PDB
 //#define AMINOACIDS	10

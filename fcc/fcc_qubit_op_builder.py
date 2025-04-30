@@ -213,7 +213,7 @@ class QubitOpBuilder:
         beads. To ensure the non-overlapping condition, we impose constraints on
         the distance function that encodes the squared distance between beads,
         that is, for any two beads :math:`i` and :math:`j`, we require :math:`2
-        \leq D_{ij} leq 2(i-j)^2`. For each pair of beads, we define
+        \leq D_{ij} \leq 2(i-j)^2`. For each pair of beads, we define
         :math:`h_{ij} = D_{ij} - 2`. Ideally, the penalty function would have a
         large positive value (set by `penalty_olap`) when :math:`h_{ij} = -2`
         (corresponding to the case when the beads overlap) and zero otherwise.
@@ -300,12 +300,14 @@ class QubitOpBuilder:
                 # interaction qubits; distance_map.first_neighbor returns the
                 # qubit operator that acts on the configuration qubits
                 h_contact += (self._contact_map.contact_map[i][j]) ^ (
-                    self._distance_map.first_neighbor(i, j, self._pair_energies)
+                    self._distance_map.first_neighbor(
+                        i, j, self._pair_energies, pair_energies_multiplier=0.1
+                    )
                 )
         return fix_qubits(h_contact)
 
     def _create_olap_constraints(self) -> dict[tuple[int, int], SparsePauliOp]:
-        """
+        r"""
         Creates qubit operators for the constraints that penalize overlapping
         beads, which are subsequently used in the VQEC approach based on
         Lagrange multipliers (arXiv:2311.08502). Note that the constraints are

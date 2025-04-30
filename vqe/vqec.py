@@ -6,6 +6,8 @@ from qiskit.quantum_info import SparsePauliOp
 from qiskit.primitives import BaseEstimator
 from qiskit_algorithms.gradients import BaseEstimatorGradient
 import numpy as np
+import json
+import os
 
 
 class VQEC:
@@ -344,3 +346,42 @@ class VQECResult:
     def lagrangian_gap_trajectory(self, lagrangian_gap_trajectory: np.ndarray):
         """Sets the trajectory of the Lagrangian gap."""
         self._lagrangian_gap_trajectory = lagrangian_gap_trajectory
+
+    def write_to_json(self, file_name: str) -> None:
+        """Writes the VQEC result to a JSON file."""
+        data = {
+            "energies": self._energies.tolist() if self._energies is not None else None,
+            "constraints": (
+                self._constraints.tolist() if self._constraints is not None else None
+            ),
+            "dual_vars_history": (
+                self._dual_vars_history.tolist()
+                if self._dual_vars_history is not None
+                else None
+            ),
+            "lagrangian_gap_trajectory": (
+                self._lagrangian_gap_trajectory.tolist()
+                if self._lagrangian_gap_trajectory is not None
+                else None
+            ),
+            "optimal_primal_vars": (
+                self._optimal_primal_vars.tolist()
+                if self._optimal_primal_vars is not None
+                else None
+            ),
+            "optimal_dual_vars": (
+                self._optimal_dual_vars.tolist()
+                if self._optimal_dual_vars is not None
+                else None
+            ),
+            "vqec_iterations": (
+                self._vqec_iterations if self._vqec_iterations is not None else None
+            ),
+        }
+        dir = "vqec_results"
+        try:
+            os.makedirs(dir)
+        except FileExistsError:
+            pass
+        with open(f"{dir}/{file_name}", "w") as f:
+            json.dump(data, f, indent=4)
