@@ -156,7 +156,7 @@ class ProteinShapeFileGen:
         """Returns the amino acid list."""
         return self._amino_acid_list
 
-    def generate_amino_acid_positions(self) -> list:
+    def generate_amino_acid_positions(self) -> np.ndarray:
         """
         Generates the positions of the amino acids in the main chain.
 
@@ -169,12 +169,15 @@ class ProteinShapeFileGen:
             positions[i + 1] = positions[i] + self.COORDINATES[self._turn_sequence[i]]
         return positions
 
-    def get_xyz_data(self) -> str:
+    def get_xyz_data(self) -> np.ndarray:
         """
         Returns the xyz data for the amino acids in the main chain.
 
         Returns:
-            A string with the xyz data for the amino acids in the main chain.
+            An array containing the amino acid letters and the corresponding xyz
+            coordinates. The first column contains the amino acid letters, and
+            the next three columns contain the x, y, and z coordinates of the
+            amino acids in the main chain.
         """
         xyz_data = np.column_stack([self.amino_acid_list, self.amino_acid_positions])
         return xyz_data

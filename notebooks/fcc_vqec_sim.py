@@ -28,11 +28,12 @@ import vqe
 MAIN_SEQ = "KLVFFA"
 NUM_WORKERS = 40  # 48
 ANSATZ_REPS = 2
-MAX_ITER = 500  # 500
-NUM_OPT_REPS = 20  # 20
+MAX_ITER = 1000  # 500
+# NUM_OPT_REPS = 20  # 20
 PRIMAL_PERTURB_STEP = 0.05
 DUAL_PERTURB_STEP = 0.05
-PRIMAL_DUAL_UPDATE_STEP = 0.5
+# PRIMAL_DUAL_UPDATE_STEP = 0.5
+UPDATE_STEPS_LIST = [0.2, 0.4, 0.6, 0.8, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0]
 # ============================
 
 
@@ -66,12 +67,18 @@ def _optimize_ray(
     ppd_opt: PerturbedPrimalDualOpt,
     init_params: np.ndarray | None = None,
     init_dual_vars: np.ndarray | None = None,
+    primal_perturb_step: float = 0.05,
+    dual_perturb_step: float = 0.05,
+    primal_dual_update_step: float = 1,
     max_iter: int = 300,
 ) -> VQECResult:
     """Optimize the given problem using the Perturbed Primal Dual method."""
     return ppd_opt.optimize_primal_dual(
         initial_params=init_params,
         initial_dual_vars=init_dual_vars,
+        primal_perturb_step=primal_perturb_step,
+        dual_perturb_step=dual_perturb_step,
+        gamma=primal_dual_update_step,
         max_iter=max_iter,
     )
 
@@ -118,9 +125,6 @@ vqec = PerturbedPrimalDualOpt(
     ansatz=ansatz,
     estimator=estimator,
     gradient=gradient,
-    primal_perturb_step=PRIMAL_PERTURB_STEP,
-    dual_perturb_step=DUAL_PERTURB_STEP,
-    gamma=PRIMAL_DUAL_UPDATE_STEP,
 )
 res = ray.get(
     [
@@ -129,8 +133,11 @@ res = ray.get(
             init_params=None,
             init_dual_vars=None,
             max_iter=MAX_ITER,
+            primal_perturb_step=PRIMAL_PERTURB_STEP,
+            dual_perturb_step=DUAL_PERTURB_STEP,
+            primal_dual_update_step=update_step,
         )
-        for i in range(NUM_OPT_REPS)
+        for update_step in UPDATE_STEPS_LIST
     ]
 )
 for i, r in enumerate(res):

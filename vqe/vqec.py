@@ -241,6 +241,9 @@ class VQECResult:
     def __init__(
         self,
         ansatz: QuantumCircuit | None = None,
+        primal_perturb_step: float | None = None,
+        dual_perturb_step: float | None = None,
+        primal_dual_update_step: float | None = None,
         energies: np.ndarray | None = None,
         constraints: np.ndarray | None = None,
         dual_vars_history: np.ndarray | None = None,
@@ -252,13 +255,21 @@ class VQECResult:
         """
         Args:
             ansatz: The quantum circuit that prepares the quantum state.
+            primal_perturb_step: The perturbation step size for the primal variables.
+            dual_perturb_step: The perturbation step size for the dual variables.
+            primal_dual_update_step: The update step size for the primal and dual variables.
             energies: The energies of the optimization.
             constraints: The constraints of the optimization.
+            dual_vars_history: The history of the dual variables of the optimization.
             optimal_primal_vars: The optimal primal variables of the optimization.
             optimal_dual_vars: The optimal dual variables of the optimization.
             vqec_iterations: The number of iterations of the optimization.
+            lagrangian_gap_trajectory: The trajectory of the Lagrangian gap.
         """
         self._ansatz = ansatz
+        self._primal_perturb_step = primal_perturb_step
+        self._dual_perturb_step = dual_perturb_step
+        self._primal_dual_update_step = primal_dual_update_step
         self._energies = energies
         self._constraints = constraints
         self._dual_vars_history = dual_vars_history
@@ -276,6 +287,36 @@ class VQECResult:
     def ansatz(self, ansatz: QuantumCircuit):
         """Sets the quantum circuit that prepares the quantum state."""
         self._ansatz = ansatz
+
+    @property
+    def primal_perturb_step(self) -> float:
+        """Returns the perturbation step size for the primal variables."""
+        return self._primal_perturb_step
+
+    @primal_perturb_step.setter
+    def primal_perturb_step(self, primal_perturb_step: float):
+        """Sets the perturbation step size for the primal variables."""
+        self._primal_perturb_step = primal_perturb_step
+
+    @property
+    def dual_perturb_step(self) -> float:
+        """Returns the perturbation step size for the dual variables."""
+        return self._dual_perturb_step
+
+    @dual_perturb_step.setter
+    def dual_perturb_step(self, dual_perturb_step: float):
+        """Sets the perturbation step size for the dual variables."""
+        self._dual_perturb_step = dual_perturb_step
+
+    @property
+    def primal_dual_update_step(self) -> float:
+        """Returns the update step size for the primal and dual variables."""
+        return self._primal_dual_update_step
+
+    @primal_dual_update_step.setter
+    def primal_dual_update_step(self, primal_dual_update_step: float):
+        """Sets the update step size for the primal and dual variables."""
+        self._primal_dual_update_step = primal_dual_update_step
 
     @property
     def energies(self) -> np.ndarray:
@@ -350,6 +391,9 @@ class VQECResult:
     def write_to_json(self, file_name: str) -> None:
         """Writes the VQEC result to a JSON file."""
         data = {
+            "primal_perturb_step": self._primal_perturb_step,
+            "dual_perturb_step": self._dual_perturb_step,
+            "primal_dual_update_step": self._primal_dual_update_step,
             "energies": self._energies.tolist() if self._energies is not None else None,
             "constraints": (
                 self._constraints.tolist() if self._constraints is not None else None

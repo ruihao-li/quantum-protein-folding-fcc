@@ -26,9 +26,6 @@ class PerturbedPrimalDualOpt:
         ansatz: QuantumCircuit,
         estimator: BaseEstimator,
         gradient: BaseEstimatorGradient,
-        primal_perturb_step: float = 0.05,
-        dual_perturb_step: float = 0.05,
-        gamma: float = 1.0,
     ):
         """
         Args:
@@ -40,20 +37,12 @@ class PerturbedPrimalDualOpt:
             estimator: The estimator that computes the expectation values.
             gradient: The gradient tool that computes the gradients of the
             expectation values.
-            primal_perturb_step: The perturbation step size for the primal
-            variables.
-            dual_perturb_step: The perturbation step size for the dual
-            variables.
-            gamma: The step size parameter used for the primal-dual update.
         """
         self._qubit_op = qubit_op
         self._constr_ops = constr_ops
         self._ansatz = ansatz
         self._estimator = estimator
         self._gradient = gradient
-        self._primal_perturb_step = primal_perturb_step
-        self._dual_perturb_step = dual_perturb_step
-        self._gamma = gamma
 
     def get_expectation(
         self, circuit: QuantumCircuit, observable: SparsePauliOp, params: np.ndarray
@@ -77,6 +66,9 @@ class PerturbedPrimalDualOpt:
         self,
         initial_params: np.ndarray | None = None,
         initial_dual_vars: np.ndarray | None = None,
+        primal_perturb_step: float = 0.05,
+        dual_perturb_step: float = 0.05,
+        gamma: float = 1.0,
         max_iter: int = 200,
     ) -> VQECResult:
         """
@@ -85,6 +77,11 @@ class PerturbedPrimalDualOpt:
         Args:
             initial_params: The initial parameters of the quantum circuit.
             initial_dual_vars: The initial dual variables of the optimization.
+            primal_perturb_step: The perturbation step size for the primal
+            variables.
+            dual_perturb_step: The perturbation step size for the dual
+            variables.
+            gamma: The step size parameter used for the primal-dual update.
             max_iter: The maximum number of iterations of the optimization.
 
         Returns:
@@ -150,8 +147,7 @@ class PerturbedPrimalDualOpt:
                 axis=0
             ) + obj_grad
             perturbed_primal_vars = (
-                unperturbed_primal_vars
-                - self._primal_perturb_step * primal_var_perturbations
+                unperturbed_primal_vars - primal_perturb_step * primal_var_perturbations
             )
             # Perform the projection of the perturbed primal variables onto the feasible set [0, 4\pi] due to periodicity
             perturbed_primal_vars = np.mod(perturbed_primal_vars, 4 * np.pi)
@@ -165,8 +161,7 @@ class PerturbedPrimalDualOpt:
             # Compute the perturbed dual variables
             dual_var_perturbations = np.array(constraints[-1])
             perturbed_dual_vars = np.maximum(
-                unperturbed_dual_vars
-                + self._dual_perturb_step * dual_var_perturbations,
+                unperturbed_dual_vars + dual_perturb_step * dual_var_perturbations,
                 0,
             )
 
@@ -208,7 +203,7 @@ class PerturbedPrimalDualOpt:
             grad_dual = constr_exp_perturbed_primal
             # Update step size given by: \gamma * gap / ||d_\theta||^2 + ||d_\lambda||^2
             step_size = (
-                self._gamma
+                gamma
                 * lagrangian_gap
                 / (np.linalg.norm(grad_primal) ** 2 + np.linalg.norm(grad_dual) ** 2)
             )
@@ -251,19 +246,25 @@ class PerturbedPrimalDualOpt:
             unperturbed_dual_vars = updated_dual_vars
 
         return self._build_vqec_result(
+            primal_perturb_step=primal_perturb_step,
+            dual_perturb_step=dual_perturb_step,
+            primal_dual_update_step=gamma,
             energies=energies,
             constraints=constraints,
-            primal_vars=unperturbed_primal_vars,
-            dual_vars=unperturbed_dual_vars,
+            optimal_primal_vars=unperturbed_primal_vars,
+            optimal_dual_vars=unperturbed_dual_vars,
             lagrangian_gaps=lagrangian_gap_trajectory,
         )
 
     def _build_vqec_result(
         self,
+        primal_perturb_step: float,
+        dual_perturb_step: float,
+        primal_dual_update_step: float,
         energies: list[float],
         constraints: list[list[float]],
-        primal_vars: np.ndarray,
-        dual_vars: np.ndarray,
+        optimal_primal_vars: np.ndarray,
+        optimal_dual_vars: np.ndarray,
         lagrangian_gaps: np.ndarray,
     ) -> VQECResult:
         """
@@ -280,10 +281,13 @@ class PerturbedPrimalDualOpt:
         """
         result = VQECResult()
         result.ansatz = self._ansatz.copy()
+        result.primal_perturb_step = primal_perturb_step
+        result.dual_perturb_step = dual_perturb_step
+        result.primal_dual_update_step = primal_dual_update_step
         result.energies = np.array(energies)
         result.constraints = np.array(constraints)
-        result.optimal_primal_vars = primal_vars[0]
-        result.optimal_dual_vars = dual_vars
+        result.optimal_primal_vars = optimal_primal_vars[0]
+        result.optimal_dual_vars = optimal_dual_vars
         result.vqec_iterations = len(energies) - 1
         result.lagrangian_gap_trajectory = np.array(lagrangian_gaps)
         return result
@@ -301,7 +305,6 @@ class DualDecompOpt:
         ansatz: QuantumCircuit,
         estimator: BaseEstimator,
         optimizer: str,
-        dual_update_step: float = 0.1,
     ):
         """
         Args:
@@ -312,14 +315,12 @@ class DualDecompOpt:
             ansatz: The quantum circuit that prepares the quantum state.
             estimator: The estimator that computes the expectation values.
             optimizer: The SciPy optimizer used for the optimization.
-            dual_update_step: The step size for the dual variables update.
         """
         self._qubit_op = qubit_op
         self._constr_ops = constr_ops
         self._ansatz = ansatz
         self._estimator = estimator
         self._optimizer = optimizer
-        self._dual_update_step = dual_update_step
 
     def _get_expectation(
         self, circuit: QuantumCircuit, observable: SparsePauliOp, params: np.ndarray
@@ -360,6 +361,7 @@ class DualDecompOpt:
         self,
         initial_params: np.ndarray | None = None,
         initial_dual_vars: np.ndarray | None = None,
+        dual_update_step: float = 0.1,
         max_iter: int = 200,
         opt_options: None | dict = None,
     ) -> VQECResult:
@@ -369,6 +371,7 @@ class DualDecompOpt:
         Args:
             initial_params: The initial parameters of the quantum circuit.
             initial_dual_vars: The initial dual variables of the optimization.
+            dual_update_step: The perturbation step size for the dual variables.
             max_iter: The maximum number of iterations of the optimization.
             opt_options: The options for the SciPy optimizer
 
@@ -416,7 +419,7 @@ class DualDecompOpt:
             self.primal_vars = primal_result.x
 
             # Update the dual variables
-            dual_update_step = self._dual_update_step / (i + 1)
+            dual_update_step_i = dual_update_step / (i + 1)
             constraints = np.array(
                 [
                     self._get_expectation(self._ansatz, constr_op, self.primal_vars)
@@ -424,7 +427,7 @@ class DualDecompOpt:
                 ]
             )
             updated_dual_vars = np.maximum(
-                self.dual_vars + dual_update_step * constraints, 0
+                self.dual_vars + dual_update_step_i * constraints, 0
             )
             self.dual_vars = updated_dual_vars
 
