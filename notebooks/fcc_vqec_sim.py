@@ -28,7 +28,7 @@ import vqe
 MAIN_SEQ = "KLVFFA"
 NUM_WORKERS = 40  # 48
 ANSATZ_REPS = 2
-MAX_ITER = 1000  # 500
+MAX_ITER = 1500  # 500
 # NUM_OPT_REPS = 20  # 20
 PRIMAL_PERTURB_STEP = 0.05
 DUAL_PERTURB_STEP = 0.05
@@ -118,7 +118,7 @@ estimator = Estimator(
 )
 gradient = ParamShiftEstimatorGradient(estimator=estimator)
 
-
+init_dual_vars = np.array([0.0] * len(olap_constr_ops))  # Fix initial dual vars
 vqec = PerturbedPrimalDualOpt(
     qubit_op=qubit_op,
     constr_ops=olap_constr_ops,
@@ -131,7 +131,7 @@ res = ray.get(
         _optimize_ray.remote(
             ppd_opt=vqec,
             init_params=None,
-            init_dual_vars=None,
+            init_dual_vars=init_dual_vars,
             max_iter=MAX_ITER,
             primal_perturb_step=PRIMAL_PERTURB_STEP,
             dual_perturb_step=DUAL_PERTURB_STEP,
@@ -141,5 +141,8 @@ res = ray.get(
     ]
 )
 for i, r in enumerate(res):
-    file_name = f"klvffa_vqec_res_{i}.json"
+    if i < 10:
+        file_name = f"klvffa_vqec_res_0{i}.json"
+    else:
+        file_name = f"klvffa_vqec_res_{i}.json"
     r.write_to_json(file_name)
