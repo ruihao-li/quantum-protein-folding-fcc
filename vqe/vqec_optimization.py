@@ -69,6 +69,7 @@ class PerturbedPrimalDualOpt:
         primal_perturb_step: float = 0.05,
         dual_perturb_step: float = 0.05,
         gamma: float = 1.0,
+        auto_update_step: bool = True,
         max_iter: int = 200,
     ) -> VQECResult:
         """
@@ -82,6 +83,12 @@ class PerturbedPrimalDualOpt:
             dual_perturb_step: The perturbation step size for the dual
             variables.
             gamma: The step size parameter used for the primal-dual update.
+            auto_update_step: Whether to automatically update the step size
+            based on the method proposed in: M. Kallio and A. Ruszczynski,
+            Perturbation methods for saddle point computation, Tech. Rep.
+            (International Institute for Applied Systems Analysis, Laxenburg,
+            Austria: WP-94-038, 1994). If False, the step size is dynamically
+            adjusted based on a power-law decay of gamma.
             max_iter: The maximum number of iterations of the optimization.
 
         Returns:
@@ -165,48 +172,70 @@ class PerturbedPrimalDualOpt:
                 0,
             )
 
-            # To determine the update step sizes, we follow the method proposed
-            # in: M. Kallio and A. Ruszczynski, Perturbation methods for saddle
-            # point computation, Tech. Rep. (International Institute for Applied
-            # Systems Analysis, Laxenburg, Austria: WP-94-038, 1994).
+            if auto_update_step:
+                # To determine the update step sizes, we follow the method proposed
+                # in: M. Kallio and A. Ruszczynski, Perturbation methods for saddle
+                # point computation, Tech. Rep. (International Institute for Applied
+                # Systems Analysis, Laxenburg, Austria: WP-94-038, 1994).
 
-            # Compute the Lagrangian at perturbed dual variables
-            lagrangian_perturbed_dual = (
-                energies[-1] + perturbed_dual_vars @ dual_var_perturbations
-            )
-            # Compute the Lagrangian at perturbed primal variables
-            # First compute the expectation of the objective and constraint operators with the perturbed primal variables
-            obj_exp_perturbed_primal = self.get_expectation(
-                self._ansatz, self._qubit_op, perturbed_primal_vars
-            )
-            constr_exp_perturbed_primal = np.array(
-                [
-                    self.get_expectation(self._ansatz, constr_op, perturbed_primal_vars)
-                    for constr_op in self._constr_ops
-                ]
-            )
-            lagrangian_perturbed_primal = (
-                obj_exp_perturbed_primal
-                + unperturbed_dual_vars @ constr_exp_perturbed_primal
-            )
-            # Compute the gap function
-            lagrangian_gap = lagrangian_perturbed_dual - lagrangian_perturbed_primal
-            lagrangian_gap_trajectory.append(lagrangian_gap)
-            if np.abs(lagrangian_gap) < 1e-10:
-                print(f"Gap closed after {i+1} iterations; VQEC converged.")
-                break
-            # d_\theta = -\nabla_\theta L(\theta, \tilde{\lambda})
-            grad_primal = -(
-                obj_grad + (perturbed_dual_vars * constr_grads.T).T.sum(axis=0)
-            )
-            # d_\lambda = \nabla_\lambda L(\tilde{\theta}, \lambda)
-            grad_dual = constr_exp_perturbed_primal
-            # Update step size given by: \gamma * gap / ||d_\theta||^2 + ||d_\lambda||^2
-            step_size = (
-                gamma
-                * lagrangian_gap
-                / (np.linalg.norm(grad_primal) ** 2 + np.linalg.norm(grad_dual) ** 2)
-            )
+                # Compute the Lagrangian at perturbed dual variables
+                lagrangian_perturbed_dual = (
+                    energies[-1] + perturbed_dual_vars @ dual_var_perturbations
+                )
+                # Compute the Lagrangian at perturbed primal variables
+                # First compute the expectation of the objective and constraint operators with the perturbed primal variables
+                obj_exp_perturbed_primal = self.get_expectation(
+                    self._ansatz, self._qubit_op, perturbed_primal_vars
+                )
+                constr_exp_perturbed_primal = np.array(
+                    [
+                        self.get_expectation(
+                            self._ansatz, constr_op, perturbed_primal_vars
+                        )
+                        for constr_op in self._constr_ops
+                    ]
+                )
+                lagrangian_perturbed_primal = (
+                    obj_exp_perturbed_primal
+                    + unperturbed_dual_vars @ constr_exp_perturbed_primal
+                )
+                # Compute the gap function
+                lagrangian_gap = lagrangian_perturbed_dual - lagrangian_perturbed_primal
+                lagrangian_gap_trajectory.append(lagrangian_gap)
+                # if np.abs(lagrangian_gap) < 1e-10:
+                #     print(f"Gap closed after {i+1} iterations; VQEC converged.")
+                #     break
+                # d_\theta = -\nabla_\theta L(\theta, \tilde{\lambda})
+                grad_primal = -(
+                    obj_grad + (perturbed_dual_vars * constr_grads.T).T.sum(axis=0)
+                )
+                # d_\lambda = \nabla_\lambda L(\tilde{\theta}, \lambda)
+                grad_dual = constr_exp_perturbed_primal
+                # Update step size given by: \gamma * gap / ||d_\theta||^2 + ||d_\lambda||^2
+                step_size = (
+                    gamma
+                    * lagrangian_gap
+                    / (
+                        np.linalg.norm(grad_primal) ** 2
+                        + np.linalg.norm(grad_dual) ** 2
+                    )
+                )
+            else:
+                # d_\theta = -\nabla_\theta L(\theta, \tilde{\lambda})
+                grad_primal = -(
+                    obj_grad + (perturbed_dual_vars * constr_grads.T).T.sum(axis=0)
+                )
+                # d_\lambda = \nabla_\lambda L(\tilde{\theta}, \lambda)
+                constr_exp_perturbed_primal = np.array(
+                    [
+                        self.get_expectation(
+                            self._ansatz, constr_op, perturbed_primal_vars
+                        )
+                        for constr_op in self._constr_ops
+                    ]
+                )
+                grad_dual = constr_exp_perturbed_primal
+                step_size = gamma * 0.99**i
 
             # Compute the updated primal variables
             updated_primal_vars = unperturbed_primal_vars + step_size * grad_primal

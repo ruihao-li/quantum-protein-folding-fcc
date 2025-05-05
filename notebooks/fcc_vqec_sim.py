@@ -28,12 +28,15 @@ import vqe
 MAIN_SEQ = "KLVFFA"
 NUM_WORKERS = 40  # 48
 ANSATZ_REPS = 2
-MAX_ITER = 1500  # 500
+MAX_ITER = 1000  # 500
 # NUM_OPT_REPS = 20  # 20
-PRIMAL_PERTURB_STEP = 0.05
-DUAL_PERTURB_STEP = 0.05
+# PRIMAL_PERTURB_STEP = 0.05
+# DUAL_PERTURB_STEP = 0.05
 # PRIMAL_DUAL_UPDATE_STEP = 0.5
-UPDATE_STEPS_LIST = [0.2, 0.4, 0.6, 0.8, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0]
+
+# Grid search perturbation and update steps
+PERTURB_STEPS_LIST = [0.01, 0.05, 0.1, 0.2, 0.5]
+UPDATE_STEPS_LIST = [0.1, 0.5, 1, 2, 5]
 # ============================
 
 
@@ -70,6 +73,7 @@ def _optimize_ray(
     primal_perturb_step: float = 0.05,
     dual_perturb_step: float = 0.05,
     primal_dual_update_step: float = 1,
+    auto_update_step: bool = False,
     max_iter: int = 300,
 ) -> VQECResult:
     """Optimize the given problem using the Perturbed Primal Dual method."""
@@ -79,6 +83,7 @@ def _optimize_ray(
         primal_perturb_step=primal_perturb_step,
         dual_perturb_step=dual_perturb_step,
         gamma=primal_dual_update_step,
+        auto_update_step=auto_update_step,
         max_iter=max_iter,
     )
 
@@ -126,6 +131,13 @@ vqec = PerturbedPrimalDualOpt(
     estimator=estimator,
     gradient=gradient,
 )
+step_size_combos = [
+    (perturb_step, update_step)
+    for perturb_step in PERTURB_STEPS_LIST
+    for update_step in UPDATE_STEPS_LIST
+]
+print(f"Step size combinations: {step_size_combos}")
+# Initialize the optimization
 res = ray.get(
     [
         _optimize_ray.remote(
@@ -133,16 +145,32 @@ res = ray.get(
             init_params=None,
             init_dual_vars=init_dual_vars,
             max_iter=MAX_ITER,
-            primal_perturb_step=PRIMAL_PERTURB_STEP,
-            dual_perturb_step=DUAL_PERTURB_STEP,
+            auto_update_step=False,
+            primal_perturb_step=perturb_step,
+            dual_perturb_step=perturb_step,
             primal_dual_update_step=update_step,
         )
-        for update_step in UPDATE_STEPS_LIST
+        for perturb_step, update_step in step_size_combos
     ]
 )
+
+# for i, r in enumerate(res):
+#     if i < 10:
+#         file_name = f"klvffa_vqec_res_0{i}.json"
+#     else:
+#         file_name = f"klvffa_vqec_res_{i}.json"
+#     r.write_to_json(file_name)
+
 for i, r in enumerate(res):
+    perturb_step, update_step = step_size_combos[i]
+    # Format perturb_step and update_step as strings with decimal point replaced by underscore
+    perturb_step_str = str(perturb_step).replace(".", "_")
+    update_step_str = str(update_step).replace(".", "_")
     if i < 10:
-        file_name = f"klvffa_vqec_res_0{i}.json"
+        file_name = f"klvffa_vqec_res_0{i}_p{perturb_step_str}_u{update_step_str}.json"
     else:
-        file_name = f"klvffa_vqec_res_{i}.json"
-    r.write_to_json(file_name)
+        file_name = f"klvffa_vqec_res_{i}_p{perturb_step_str}_u{update_step_str}.json"
+    print(f"Result {i} saved to {file_name}")
+
+# Shut down Ray
+ray.shutdown()
