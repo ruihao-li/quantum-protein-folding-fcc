@@ -29,14 +29,14 @@ MAIN_SEQ = "KLVFFA"
 NUM_WORKERS = 40  # 48
 ANSATZ_REPS = 2
 MAX_ITER = 1000  # 500
-# NUM_OPT_REPS = 20  # 20
-# PRIMAL_PERTURB_STEP = 0.05
-# DUAL_PERTURB_STEP = 0.05
-# PRIMAL_DUAL_UPDATE_STEP = 0.5
+NUM_OPT_REPS = 20  # 20
+PRIMAL_PERTURB_STEP = 0.2
+DUAL_PERTURB_STEP = 0.2
+PRIMAL_DUAL_UPDATE_STEP = 0.5
 
 # Grid search perturbation and update steps
-PERTURB_STEPS_LIST = [0.01, 0.05, 0.1, 0.2, 0.5]
-UPDATE_STEPS_LIST = [0.1, 0.5, 1, 2, 5]
+# PERTURB_STEPS_LIST = [0.01, 0.05, 0.1, 0.2, 0.5]
+# UPDATE_STEPS_LIST = [0.1, 0.5, 1, 2, 5]
 # ============================
 
 
@@ -131,13 +131,7 @@ vqec = PerturbedPrimalDualOpt(
     estimator=estimator,
     gradient=gradient,
 )
-step_size_combos = [
-    (perturb_step, update_step)
-    for perturb_step in PERTURB_STEPS_LIST
-    for update_step in UPDATE_STEPS_LIST
-]
-print(f"Step size combinations: {step_size_combos}")
-# Initialize the optimization
+
 res = ray.get(
     [
         _optimize_ray.remote(
@@ -146,32 +140,57 @@ res = ray.get(
             init_dual_vars=init_dual_vars,
             max_iter=MAX_ITER,
             auto_update_step=False,
-            primal_perturb_step=perturb_step,
-            dual_perturb_step=perturb_step,
-            primal_dual_update_step=update_step,
+            primal_perturb_step=PRIMAL_PERTURB_STEP,
+            dual_perturb_step=DUAL_PERTURB_STEP,
+            primal_dual_update_step=PRIMAL_DUAL_UPDATE_STEP,
         )
-        for perturb_step, update_step in step_size_combos
+        for _ in range(NUM_OPT_REPS)
     ]
 )
 
-# for i, r in enumerate(res):
-#     if i < 10:
-#         file_name = f"klvffa_vqec_res_0{i}.json"
-#     else:
-#         file_name = f"klvffa_vqec_res_{i}.json"
-#     r.write_to_json(file_name)
+# step_size_combos = [
+#     (perturb_step, update_step)
+#     for perturb_step in PERTURB_STEPS_LIST
+#     for update_step in UPDATE_STEPS_LIST
+# ]
+# print(f"Step size combinations: {step_size_combos}")
+
+# res = ray.get(
+#     [
+#         _optimize_ray.remote(
+#             ppd_opt=vqec,
+#             init_params=None,
+#             init_dual_vars=init_dual_vars,
+#             max_iter=MAX_ITER,
+#             auto_update_step=False,
+#             primal_perturb_step=perturb_step,
+#             dual_perturb_step=perturb_step,
+#             primal_dual_update_step=update_step,
+#         )
+#         for perturb_step, update_step in step_size_combos
+#     ]
+# )
+
 
 for i, r in enumerate(res):
-    perturb_step, update_step = step_size_combos[i]
-    # Format perturb_step and update_step as strings with decimal point replaced by underscore
-    perturb_step_str = str(perturb_step).replace(".", "_")
-    update_step_str = str(update_step).replace(".", "_")
     if i < 10:
-        file_name = f"klvffa_vqec_res_0{i}_p{perturb_step_str}_u{update_step_str}.json"
+        file_name = f"klvffa_vqec_res_0{i}.json"
     else:
-        file_name = f"klvffa_vqec_res_{i}_p{perturb_step_str}_u{update_step_str}.json"
+        file_name = f"klvffa_vqec_res_{i}.json"
     r.write_to_json(file_name)
     print(f"Result {i} saved to {file_name}")
+
+# for i, r in enumerate(res):
+#     perturb_step, update_step = step_size_combos[i]
+#     # Format perturb_step and update_step as strings with decimal point replaced by underscore
+#     perturb_step_str = str(perturb_step).replace(".", "_")
+#     update_step_str = str(update_step).replace(".", "_")
+#     if i < 10:
+#         file_name = f"klvffa_vqec_res_0{i}_p{perturb_step_str}_u{update_step_str}.json"
+#     else:
+#         file_name = f"klvffa_vqec_res_{i}_p{perturb_step_str}_u{update_step_str}.json"
+#     r.write_to_json(file_name)
+#     print(f"Result {i} saved to {file_name}")
 
 # Shut down Ray
 ray.shutdown()
