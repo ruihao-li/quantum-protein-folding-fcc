@@ -170,6 +170,7 @@ for i, r in enumerate(res):
         file_name = f"klvffa_vqec_res_0{i}_p{perturb_step_str}_u{update_step_str}.json"
     else:
         file_name = f"klvffa_vqec_res_{i}_p{perturb_step_str}_u{update_step_str}.json"
+    r.write_to_json(file_name)
     print(f"Result {i} saved to {file_name}")
 
 # Shut down Ray
