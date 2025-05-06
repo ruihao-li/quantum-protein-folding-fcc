@@ -21,13 +21,14 @@ import numpy as np
 import ray
 import psutil
 import os
+from time import time
 import vqe
 
 
 # ============================
 # Define parameters
 MAIN_SEQ = "KLVFFA"
-NUM_WORKERS = 40  # 48
+NUM_WORKERS = 30  # 48
 ANSATZ_REPS = 2
 MAX_ITER = 1500  # 500
 NUM_OPT_REPS = 20  # 20
@@ -124,6 +125,7 @@ estimator = Estimator(
 )
 gradient = ParamShiftEstimatorGradient(estimator=estimator)
 
+start_time = time()
 init_dual_vars = np.array([0.0] * len(olap_constr_ops))  # Fix initial dual vars
 vqec = PerturbedPrimalDualOpt(
     qubit_op=qubit_op,
@@ -175,7 +177,7 @@ res = ray.get(
 perturb_step = str(PRIMAL_PERTURB_STEP).replace(".", "_")
 update_step = str(PRIMAL_DUAL_UPDATE_STEP).replace(".", "_")
 directory = f"klvffa_vqec_p{perturb_step}_u{update_step}"
-os.makedirs(directory, exist_ok=True)
+os.makedirs("vqec_results/" + directory, exist_ok=True)
 # Save results to JSON files
 for i, r in enumerate(res):
     if i < 10:
@@ -197,6 +199,9 @@ for i, r in enumerate(res):
 #         file_name = f"klvffa_vqec_res_{i}_p{perturb_step_str}_u{update_step_str}.json"
 #     r.write_to_json(file_name)
 #     print(f"Result {i} saved to {file_name}")
+
+end_time = time()
+print(f"Total time taken: {(end_time - start_time) / 60:.2f} minutes")
 
 # Shut down Ray
 ray.shutdown()
