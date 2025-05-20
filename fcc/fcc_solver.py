@@ -142,6 +142,7 @@ class ProteinSolver:
         final_results = {
             "final_cost": final_cost,
             "opt_params": opt_params.tolist(),
+            "init_params": init_params.tolist(),
             "cost_trajectory": self.cost_trajectory,
             "top_solutions": top_solutions,
         }

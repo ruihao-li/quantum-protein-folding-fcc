@@ -1,0 +1,23 @@
+{
+  "ansatz_reps": 2,
+  "backend": "aer_simulator_matrix_product_state",
+  "chunk_size": null,
+  "circ_preparation_time (s)": 0.04,
+  "hamiltonian_load_time (min)": 0.01,
+  "init_param_interval": "[\u03c0/2, \u03c0]",
+  "init_params_file": null,
+  "interval_index": 2,
+  "main_seq": "KLVFFA",
+  "max_iter": 500,
+  "max_num_saved_states": 1000,
+  "num_ham_terms": 18133,
+  "num_qubits": 24,
+  "num_workers": 16,
+  "optimizer": "COBYLA",
+  "parallelizer": "ray",
+  "r2_threshold": 0.999,
+  "runner": "aer-mps",
+  "session_id": null,
+  "shots": 100000,
+  "timestamp": "2025-05-18T22:52:04.279735+00:00"
+}
