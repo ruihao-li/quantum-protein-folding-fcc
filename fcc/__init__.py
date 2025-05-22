@@ -4,6 +4,7 @@ from .fcc_peptide import Peptide
 from .fcc_penalty_parameters import PenaltyParameters
 from .fcc_mj_interaction import MiyazawaJerniganInteraction
 from .fcc_solver import ProteinSolver
+from .fcc_protein_shape import ProteinShapeDecoder, ProteinShapeFileGen
 
 __all__ = [
     "ProteinFoldingProblem",
@@ -12,4 +13,6 @@ __all__ = [
     "PenaltyParameters",
     "MiyazawaJerniganInteraction",
     "ProteinSolver",
+    "ProteinShapeDecoder",
+    "ProteinShapeFileGen",
 ]

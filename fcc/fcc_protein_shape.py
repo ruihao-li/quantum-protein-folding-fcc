@@ -20,11 +20,17 @@ class ProteinShapeDecoder:
         self._peptide_length = peptide.peptide_length
         self._solution_bitstring = solution_bitstring
         self._turn_sequence = self._get_turn_sequence()
+        self._correct_bitstring = self._get_correct_bitstring()
 
     @property
     def turn_sequence(self) -> list:
         """Returns the turns of the main chain."""
         return self._turn_sequence
+
+    @property
+    def correct_bitstring(self) -> str:
+        """Returns the correct bitstring for the given configuration qubits."""
+        return self._correct_bitstring
 
     def _bitstring_to_turns(self, bitstring: str) -> list:
         """
@@ -90,6 +96,31 @@ class ProteinShapeDecoder:
         full_bitstring = full_bitstring[:-6] + "00" + full_bitstring[-6:]
         # Decode the bitstring
         return self._bitstring_to_turns(full_bitstring)
+
+    def _get_correct_bitstring(self) -> str:
+        """
+        The solution bitstring may contain interaction qubit values that are not compatible with the configuration qubits. This returns the correct full bitstring for the given configuration qubits.
+
+        Returns:
+            A string representing the correct bitstring for the given
+            configuration qubits.
+        """
+        turn_seq = self._turn_sequence
+        # Get the coordinates of the main chain
+        coordinates = ProteinShapeFileGen(
+            self._peptide, turn_seq
+        ).generate_amino_acid_positions()
+        # Loop through the pairs of beads and assign the interaction qubits (1 when the beads are in contact and 0 otherwise)
+        int_qubits = ""
+        for i in range(self._peptide_length - 2):
+            for j in range(i + 2, self._peptide_length):
+                if np.isclose(np.linalg.norm(coordinates[i] - coordinates[j]), 3.8):
+                    int_qubits += "1"
+                else:
+                    int_qubits += "0"
+        int_qubits = int_qubits[::-1]
+        config_bitstring = self._solution_bitstring[-(4 * self._peptide_length - 10) :]
+        return int_qubits + config_bitstring
 
 
 class ProteinShapeFileGen:
@@ -212,3 +243,51 @@ class ProteinShapeFileGen:
             fmt="%s",
             comments="",
         )
+
+
+def turns_to_bitstring(peptide: Peptide, turn_sequence: list) -> str:
+    """
+    Returns the full bitstring for the given turn sequence.
+
+    Args:
+        peptide: The peptide we are getting the positions for.
+        turn_sequence: A list of integers representing the sequence of turns of the peptide.
+
+    Returns:
+        A string representing the full bitstring for the given turn sequence.
+    """
+    # Get the coordinates of the main chain
+    coordinates = ProteinShapeFileGen(
+        peptide, turn_sequence
+    ).generate_amino_acid_positions()
+    # Loop through the pairs of beads and assign the interaction qubits (1 when the beads are in contact and 0 otherwise)
+    peptide_length = len(turn_sequence) + 1
+    int_qubits = ""
+    for i in range(peptide_length - 2):
+        for j in range(i + 2, peptide_length):
+            if np.isclose(np.linalg.norm(coordinates[i] - coordinates[j]), 3.8):
+                int_qubits += "1"
+            else:
+                int_qubits += "0"
+    int_qubits = int_qubits[::-1]
+
+    turns_bitstring_mapping = {
+        0: "0000",
+        1: "0011",
+        2: "1100",
+        3: "1111",
+        4: "1001",
+        5: "0101",
+        6: "1010",
+        7: "0110",
+        8: "1000",
+        9: "0100",
+        10: "1011",
+        11: "0111",
+    }
+    config_bitstring = "".join(turns_bitstring_mapping[turn] for turn in turn_sequence)
+    config_bitstring = config_bitstring[:6] + config_bitstring[8:]
+    config_bitstring = config_bitstring[4:]
+    config_bitstring = config_bitstring[::-1]
+    full_bitstring = int_qubits + config_bitstring
+    return full_bitstring
