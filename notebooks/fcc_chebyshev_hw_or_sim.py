@@ -30,13 +30,14 @@ metadata = {}
 # Define parameters
 MAIN_SEQ = "KLVFFA"
 # MAIN_SEQ = "GNLVS"
-NUM_WORKERS = None
+NUM_WORKERS = 28
 R2_THRESHOLD = 0.999
 CHUNK = None
 ANSATZ_REPS = 2
-INIT_PARAMS_FILE = None # "YQFWKNFQ_2025-02-07-20-14-40_aer_simulator_matrix_product_state"  # "GNLVS_2025-02-03-21-10-57_aer_simulator_statevector", None
-RUNNER = "aer-mps"  # "aer-sv", "aer-mps", "hardware"
-PARALLELIZER = "ray"  # "ray" or "python-mp"
+INIT_PARAMS_FILE = 'KLVFFA_2025-05-15-19-51-03_aer_simulator_matrix_product_state_interval2' # "YQFWKNFQ_2025-02-07-20-14-40_aer_simulator_matrix_product_state"  # "GNLVS_2025-02-03-21-10-57_aer_simulator_statevector", None
+RUNNER = "hardware"  # "aer-sv", "aer-mps", "hardware"
+BACKEND = "ibm_kingston"  # "ibm_cleveland", "ibm_sherbrooke", "fake_sherbrooke"
+PARALLELIZER = "python-mp"  # "ray" or "python-mp"
 SHOTS = 100_000
 OPTIMIZER = "COBYLA"
 MAX_ITER = 50
@@ -182,7 +183,7 @@ if __name__ == "__main__":
         backend = AerSimulator(method="matrix_product_state")
     elif RUNNER == "hardware":
         service = QiskitRuntimeService()
-        backend = service.backend("ibm_cleveland")
+        backend = service.backend(BACKEND)
         # backend = FakeSherbrooke()
     print(f"Backend: {backend.name}")
     metadata["backend"] = backend.name
