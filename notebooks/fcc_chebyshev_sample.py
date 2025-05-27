@@ -17,10 +17,10 @@ from math import pi
 from time import time
 import psutil
 
-# ============================
-# Define parameters
+# ============================ 
+# Define parameters 
 MAIN_SEQ = "KLVFFA"
-INIT_PARAMS_SOURCE = "KLVFFA_2025-05-18-22-52-04_aer_simulator_matrix_product_state_interval2rerun1"  
+INIT_PARAMS_SOURCE = "KLVFFA_2025-05-24-16-44-24_aer_simulator_matrix_product_state_interval4"  
 NUM_WORKERS = None
 QUBIT_NUMBER = 24
 ANSATZ_REPS = 2

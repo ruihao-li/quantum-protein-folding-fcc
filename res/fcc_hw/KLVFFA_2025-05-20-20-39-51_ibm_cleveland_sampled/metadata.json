@@ -1,0 +1,11 @@
+{
+  "ansatz_reps": 2,
+  "backend": "ibm_cleveland",
+  "circuit_prep_time (s)": 8.93,
+  "init_param_source": "KLVFFA_2025-05-18-22-52-04_aer_simulator_matrix_product_state_interval2rerun1",
+  "main_seq": "KLVFFA",
+  "runner": "hardware",
+  "session_id": "d0pehh6csg80008g2qb0",
+  "shots": 100000,
+  "timestamp": "2025-05-20T20:39:51.962018+00:00"
+}

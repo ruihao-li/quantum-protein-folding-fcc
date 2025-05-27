@@ -30,8 +30,8 @@ metadata = {}
 # Define parameters
 MAIN_SEQ = "KLVFFA"
 # MAIN_SEQ = "GNLVS"
-NUM_WORKERS = 28
-R2_THRESHOLD = 0.999
+NUM_WORKERS = None
+R2_THRESHOLD = 1.0
 CHUNK = None
 ANSATZ_REPS = 2
 INIT_PARAMS_FILE = 'KLVFFA_2025-05-15-19-51-03_aer_simulator_matrix_product_state_interval2' # "YQFWKNFQ_2025-02-07-20-14-40_aer_simulator_matrix_product_state"  # "GNLVS_2025-02-03-21-10-57_aer_simulator_statevector", None
@@ -40,7 +40,7 @@ BACKEND = "ibm_kingston"  # "ibm_cleveland", "ibm_sherbrooke", "fake_sherbrooke"
 PARALLELIZER = "python-mp"  # "ray" or "python-mp"
 SHOTS = 100_000
 OPTIMIZER = "COBYLA"
-MAX_ITER = 50
+MAX_ITER = 500
 MAX_NUM_SAVED_STATES = 1000
 TIMESTAMP = datetime.now(timezone.utc)
 # ============================
@@ -136,9 +136,8 @@ if __name__ == "__main__":
             data = json.load(f)
             num_qubits = data["num_qubits"]
             sparse_op_list = [
-            (label, complex(coeff["real"], coeff["imag"]))
-            for label, coeff in data["sparse_list"]
-            ]   
+            (label, coeff) for label, coeff in data["sparse_list"]
+            ]
 
         qubit_op = SparsePauliOp.from_list(sparse_op_list, num_qubits=num_qubits)
         toc = time()
