@@ -177,7 +177,7 @@ res = ray.get(
 perturb_step = str(PRIMAL_PERTURB_STEP).replace(".", "_")
 update_step = str(PRIMAL_DUAL_UPDATE_STEP).replace(".", "_")
 directory = f"klvffa_vqec_p{perturb_step}_u{update_step}"
-os.makedirs("vqec_results/" + directory, exist_ok=True)
+os.makedirs("../notebooks/vqec_results/" + directory, exist_ok=True)
 # Save results to JSON files
 for i, r in enumerate(res):
     if i < 10:

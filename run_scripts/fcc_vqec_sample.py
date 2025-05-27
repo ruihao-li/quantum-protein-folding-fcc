@@ -42,7 +42,7 @@ metadata = {
 
 def load_opt_params(source_path: str) -> np.ndarray:
     """Load optimal parameters from the simulation run."""
-    path = f"vqec_results/{source_path}"
+    path = f"../notebooks/vqec_results/{source_path}"
     if not os.path.exists(path):
         raise FileNotFoundError(f"Cannot find file: {path}")
     with open(path, "r") as f:
