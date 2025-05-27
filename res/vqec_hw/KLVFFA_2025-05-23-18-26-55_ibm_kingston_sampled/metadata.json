@@ -1,0 +1,11 @@
+{
+  "ansatz_reps": 2,
+  "backend": "ibm_kingston",
+  "circuit_prep_time (s)": 10.96,
+  "main_seq": "KLVFFA",
+  "runner": "hardware",
+  "session_id": "d0rbvyq7qc70008r65k0",
+  "shots": 100000,
+  "timestamp": "2025-05-23T18:26:55.124757+00:00",
+  "vqec_opt_params_source": "klvffa_vqec_p0_5_u2/klvffa_vqec_res_12.json"
+}

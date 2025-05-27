@@ -1,0 +1,21 @@
+{
+  "ansatz_reps": 2,
+  "backend": "ibm_marrakesh",
+  "chunk_size": null,
+  "circ_preparation_time (s)": 11.23,
+  "hamiltonian_load_time (min)": 0.01,
+  "init_params_file": "KLVFFA_2025-05-15-19-51-03_aer_simulator_matrix_product_state_interval2",
+  "main_seq": "KLVFFA",
+  "max_iter": 50,
+  "max_num_saved_states": 1000,
+  "num_ham_terms": 18133,
+  "num_qubits": 24,
+  "num_workers": 28,
+  "optimizer": "COBYLA",
+  "parallelizer": "python-mp",
+  "r2_threshold": 0.999,
+  "runner": "hardware",
+  "session_id": "d0q76d9z41mg0089ytng",
+  "shots": 100000,
+  "timestamp": "2025-05-22T00:43:21.625177+00:00"
+}
