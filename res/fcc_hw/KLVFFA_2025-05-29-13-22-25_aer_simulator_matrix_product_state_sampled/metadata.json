@@ -1,0 +1,11 @@
+{
+  "ansatz_reps": 2,
+  "backend": "aer_simulator_matrix_product_state",
+  "circuit_prep_time (s)": 0.04,
+  "init_param_source": "KLVFFA_2025-05-24-16-44-24_aer_simulator_matrix_product_state_interval4",
+  "main_seq": "KLVFFA",
+  "runner": "aer-mps",
+  "session_id": null,
+  "shots": 100000,
+  "timestamp": "2025-05-29T13:22:25.724262+00:00"
+}
