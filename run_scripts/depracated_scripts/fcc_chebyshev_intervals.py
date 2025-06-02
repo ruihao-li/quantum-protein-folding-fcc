@@ -1,5 +1,5 @@
 import sys
-sys.path.append("../")
+sys.path.append("../../")
 from fcc import (
     MiyazawaJerniganInteraction,
     Peptide,
@@ -106,7 +106,7 @@ if __name__ == "__main__":
     metadata["backend"] = backend.name
     pass_manager = generate_preset_pass_manager(backend=backend, optimization_level=3)
     isa_circ = pass_manager.run(ansatz)
-  #(0, pi / 2), (pi / 2, pi),
+
     intervals = [
         (pi, 3 * pi / 2),
         (3 * pi / 2, 2 * pi),

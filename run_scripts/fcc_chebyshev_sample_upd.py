@@ -15,9 +15,9 @@ from datetime import datetime, timezone
 from time import time
 
 # ============================ 
-# Define parameters 
+# Define parameters data/protein-folding-qc/res/cheb_mps/KLVFFA_2025-05-30-04-13-01_mps_run0
 MAIN_SEQ = "KLVFFA"
-INIT_PARAMS_SOURCE = "KLVFFA_2025-05-24-16-44-24_aer_simulator_matrix_product_state_interval4"  
+INIT_PARAMS_SOURCE = "KLVFFA_2025-05-30-04-13-01_mps_run0"  
 NUM_WORKERS = None
 QUBIT_NUMBER = 24
 ANSATZ_REPS = 2
@@ -39,7 +39,7 @@ metadata = {
 
 
 def load_opt_params(folder_name: str) -> np.ndarray:
-    path = f"../res/fcc_hw/{folder_name}/opt_results.json"
+    path = f"../res/cheb_mps/{folder_name}/opt_results.json"
     if not os.path.exists(path):
         raise FileNotFoundError(f"Cannot find file: {path}")
     with open(path, "r") as f:
@@ -91,7 +91,8 @@ if __name__ == "__main__":
         if RUNNER == "hardware":
             sampler.options.twirling.enable_gates = True
             sampler.options.twirling.enable_measure = True
-
+            sampler.options.dynamical_decoupling.enable = True
+            sampler.options.dynamical_decoupling.sequence_type = "XY4"
         print("🎯 Submitting sampling job...")
         job = sampler.run([(isa_circ, init_params)])
         result = job.result()
