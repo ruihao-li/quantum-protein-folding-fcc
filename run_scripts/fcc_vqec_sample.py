@@ -99,7 +99,9 @@ if __name__ == "__main__":
         if RUNNER == "hardware":
             sampler.options.twirling.enable_gates = True
             sampler.options.twirling.enable_measure = True
-
+            sampler.options.dynamical_decoupling.enable = True
+            sampler.options.dynamical_decoupling.sequence_type = "XY4"
+            
         print("🎯 Submitting sampling job...")
         job = sampler.run([(isa_circ, opt_params)])
         result = job.result()
