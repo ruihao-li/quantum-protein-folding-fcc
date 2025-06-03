@@ -156,8 +156,8 @@ class PerturbedPrimalDualOpt:
             perturbed_primal_vars = (
                 unperturbed_primal_vars - primal_perturb_step * primal_var_perturbations
             )
-            # Perform the projection of the perturbed primal variables onto the feasible set [0, 4\pi] due to periodicity
-            perturbed_primal_vars = np.mod(perturbed_primal_vars, 4 * np.pi)
+            # Perform the projection of the perturbed primal variables onto the feasible set [0, 2\pi] due to periodicity
+            perturbed_primal_vars = np.mod(perturbed_primal_vars, 2 * np.pi)
 
             # # Orthogonal projection onto [0, 4*\pi]
             # if np.any(perturbed_primal_vars < 0):
@@ -239,8 +239,8 @@ class PerturbedPrimalDualOpt:
 
             # Compute the updated primal variables
             updated_primal_vars = unperturbed_primal_vars + step_size * grad_primal
-            # Projection onto the feasible set [0, 4\pi] due to periodicity
-            updated_primal_vars = np.mod(updated_primal_vars, 4 * np.pi)
+            # Projection onto the feasible set [0, 2\pi] due to periodicity
+            updated_primal_vars = np.mod(updated_primal_vars, 2 * np.pi)
 
             # # Orthogonal projection onto [0, 4*\pi]
             # if np.any(updated_primal_vars < 0):
@@ -493,4 +493,241 @@ class DualDecompOpt:
         result.optimal_primal_vars = self.primal_vars
         result.optimal_dual_vars = self.dual_vars
         result.vqec_iterations = len(self.energy_trajectory) - 1
+        return result
+
+
+class OptimisticGDAOpt:
+    """
+    Class implementing the optimistic gradient descent ascent (OGDA) optimization method for the VQEC.
+    """
+
+    def __init__(
+        self,
+        qubit_op: SparsePauliOp,
+        constr_ops: list[SparsePauliOp],
+        ansatz: QuantumCircuit,
+        estimator: BaseEstimator,
+        gradient: BaseEstimatorGradient,
+    ):
+        """
+        Args:
+            qubit_op: The qubit operator for which the expectation value is
+            minimized.
+            constr_ops: The constraint operators whose the expectation values
+            are constrained.
+            ansatz: The quantum circuit that prepares the quantum state.
+            estimator: The estimator that computes the expectation values.
+            gradient: The gradient tool that computes the gradients of the
+            expectation values.
+        """
+        self._qubit_op = qubit_op
+        self._constr_ops = constr_ops
+        self._ansatz = ansatz
+        self._estimator = estimator
+        self._gradient = gradient
+
+    def get_expectation(
+        self, circuit: QuantumCircuit, observable: SparsePauliOp, params: np.ndarray
+    ) -> float:
+        """
+        Computes the expectation value of an observable with respect to a
+        quantum state.
+
+        Args:
+            circuit: The quantum circuit that prepares the quantum state.
+            observable: The observable for which the expectation value is
+            computed.
+            params: The parameters of the quantum circuit.
+
+        Returns:
+            The expectation value of the observable.
+        """
+        return self._estimator.run(circuit, observable, params).result().values[0]
+
+    def optimize_primal_dual(
+        self,
+        initial_params: np.ndarray | None = None,
+        initial_dual_vars: np.ndarray | None = None,
+        learning_rate: float = 0.01,
+        schedule: str = "constant",
+        alpha: float = 1.0,
+        beta: float = 1.0,
+        max_iter: int = 200,
+        lr_options: None | dict = None,
+    ) -> dict:
+        r"""
+        Optimizes the primal and dual parameters of the VQEC, based on the following updates:
+        $$
+        \theta_{k+1} = \theta_k - (\alpha + \beta)\eta_k \nabla_\theta L(\theta_k, \lambda_k) + \beta \eta_k \nabla_\theta L(\theta_{k-1}, \lambda_{k-1}) \\
+        \lambda_{k+1} = \lambda_k + (\alpha + \beta)\eta_k \nabla_\lambda L(\theta_k, \lambda_k) - \beta \eta_k \nabla_\lambda L(\theta_{k-1}, \lambda_{k-1})
+        $$
+
+        Args:
+            initial_params: The initial parameters of the quantum circuit.
+            initial_dual_vars: The initial dual variables of the optimization.
+            learning_rate: The learning rate for the optimization.
+            schedule: The schedule for the learning rate. Options: "constant",
+            "inverse_linear", "exponential".
+            alpha: The parameter for the optimistic update.
+            beta: The parameter for the negative momentum.
+            max_iter: The maximum number of iterations of the optimization.
+            lr_options: The options for the learning rate schedule. Options:
+            "decay_rate". Default is None.
+
+        Returns:
+            The result of the optimization as a dictionary.
+        """
+        # Generate the initial parameters and dual variables randomly if not provided
+        initial_params = (
+            initial_params
+            if initial_params is not None
+            else np.random.uniform(0, 2 * np.pi, self._ansatz.num_parameters)
+        )
+        initial_dual_vars = (
+            initial_dual_vars
+            if initial_dual_vars is not None
+            # else np.array([0.1] * len(constr_ops))
+            else np.random.uniform(0, 1, len(self._constr_ops))
+        )
+
+        primal_vars_list = [np.array([initial_params])]
+        dual_vars_list = [initial_dual_vars]
+
+        energies = [
+            self.get_expectation(self._ansatz, self._qubit_op, primal_vars_list[0])
+        ]
+        constraints = [
+            [
+                self.get_expectation(self._ansatz, constr_op, primal_vars_list[0])
+                for constr_op in self._constr_ops
+            ]
+        ]
+        obj_grads_list = []
+        constr_grads_list = []
+        dynamic_lr = learning_rate
+        for i in tqdm(range(max_iter)):
+            # Compute gradients for the objective and constraint operators with current primal variables
+            obj_grad = np.array(
+                (
+                    self._gradient.run(
+                        circuits=self._ansatz,
+                        observables=self._qubit_op,
+                        parameter_values=primal_vars_list[-1],
+                    )
+                    .result()
+                    .gradients
+                )
+            )
+            constr_grads = np.array(
+                [
+                    self._gradient.run(
+                        circuits=self._ansatz,
+                        observables=constr_op,
+                        parameter_values=primal_vars_list[-1],
+                    )
+                    .result()
+                    .gradients
+                    for constr_op in self._constr_ops
+                ]
+            )
+            obj_grads_list.append(obj_grad)
+            constr_grads_list.append(constr_grads)
+
+            # Compute the primal update at current step
+            # dual_vars dim: (n_constraints,)
+            # constr_grads dim: (n_constraints, 1, n_parameters)
+            # obj_grad dim: (1, n_parameters)
+            primal_var_update_current = (
+                dual_vars_list[-1] * constr_grads_list[-1].T
+            ).T.sum(axis=0) + obj_grads_list[-1]
+            # Compute the primal update at previous step if i > 0 (for the memory-based negative momentum)
+            if i > 0:
+                primal_var_update_prev = (
+                    dual_vars_list[-2] * constr_grads_list[-2].T
+                ).T.sum(axis=0) + obj_grads_list[-2]
+            else:
+                primal_var_update_prev = np.zeros_like(primal_var_update_current)
+
+            updated_primal_vars = (
+                primal_vars_list[-1]
+                - (alpha + beta) * dynamic_lr * primal_var_update_current
+                + beta * dynamic_lr * primal_var_update_prev
+            )
+            # Perform the projection of the perturbed primal variables onto the feasible set [0, 2*\pi] due to periodicity
+            updated_primal_vars = np.mod(updated_primal_vars, 2 * np.pi)
+            primal_vars_list.append(updated_primal_vars)
+
+            # # Orthogonal projection onto [0, 2*\pi]
+            # if np.any(updated_primal_vars < 0):
+            #     updated_primal_vars = np.maximum(updated_primal_vars, 0)
+            # if np.any(updated_primal_vars > 2 * np.pi):
+            #     updated_primal_vars = np.minimum(updated_primal_vars, 2 * np.pi)
+
+            # Compute the dual update at current step
+            dual_var_update_current = np.array(constraints[-1])
+            # Compute the dual update at previous step if i > 0 (for the memory-based negative momentum)
+            if i > 0:
+                dual_var_update_prev = np.array(constraints[-2])
+            else:
+                dual_var_update_prev = np.zeros_like(dual_var_update_current)
+            updated_dual_vars = (
+                dual_vars_list[-1]
+                + (alpha + beta) * dynamic_lr * dual_var_update_current
+                - beta * dynamic_lr * dual_var_update_prev
+            )
+            # Make sure the dual variables are non-negative
+            updated_dual_vars = np.maximum(
+                updated_dual_vars,
+                0,
+            )
+            dual_vars_list.append(updated_dual_vars)
+
+            # Compute expectation values with updated primal variables
+            energies.append(
+                self.get_expectation(self._ansatz, self._qubit_op, updated_primal_vars)
+            )
+            constraints.append(
+                [
+                    self.get_expectation(self._ansatz, constr_op, updated_primal_vars)
+                    for constr_op in self._constr_ops
+                ]
+            )
+
+            # Check for convergence
+            tol = 1e-7
+            if np.abs(energies[-1] - energies[-2]) / np.abs(energies[-2]) < tol:
+                print(f"Converged after {i+1} iterations")
+                break
+
+            # Update the step size based on the learning rate
+            if schedule == "constant":
+                dynamic_lr = learning_rate
+            elif schedule == "inverse_linear":
+                if lr_options is not None and "decay_rate" in lr_options:
+                    decay_rate = lr_options["decay_rate"]
+                    dynamic_lr = learning_rate * 1 / (1 + decay_rate * i)
+                else:
+                    dynamic_lr = learning_rate * 1 / (1 + i / max_iter)
+            elif schedule == "exponential":
+                if lr_options is not None and "decay_rate" in lr_options:
+                    decay_rate = lr_options["decay_rate"]
+                    dynamic_lr = learning_rate * np.exp(-decay_rate * i)
+                else:
+                    dynamic_lr = learning_rate * np.exp(-i / max_iter)
+            else:
+                raise ValueError(
+                    "Invalid schedule type. Choose 'constant', 'inverse_linear', or 'exponential'."
+                )
+
+        result = {
+            "learning_rate": learning_rate,
+            "schedule": schedule,
+            "alpha": alpha,
+            "beta": beta,
+            "energy_history": energies,
+            "constraints_history": constraints,
+            "optimal_primal_vars": primal_vars_list[-1],
+            "optimal_dual_vars": dual_vars_list[-1],
+        }
+
         return result
