@@ -22,7 +22,7 @@ NUM_WORKERS = None
 QUBIT_NUMBER = 24
 ANSATZ_REPS = 2
 RUNNER = "hardware"  # "aer-sv", "aer-mps", "hardware"
-BACKEND_NAME = "ibm_cleveland"
+BACKEND_NAME = "ibm_kingston"
 SHOTS = 100_000
 TIMESTAMP = datetime.now(timezone.utc)
 # ============================
