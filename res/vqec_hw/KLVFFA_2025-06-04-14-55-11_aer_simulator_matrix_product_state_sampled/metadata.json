@@ -1,0 +1,11 @@
+{
+  "ansatz_reps": 2,
+  "backend": "aer_simulator_matrix_product_state",
+  "circuit_prep_time (s)": 0.05,
+  "main_seq": "KLVFFA",
+  "runner": "aer-mps",
+  "session_id": null,
+  "shots": 100000,
+  "timestamp": "2025-06-04T14:55:11.856616+00:00",
+  "vqec_opt_params_source": "klvffa_vqec_p0_5_u5/klvffa_vqec_res_12.json"
+}

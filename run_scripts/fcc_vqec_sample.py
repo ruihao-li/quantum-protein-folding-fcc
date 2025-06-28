@@ -23,8 +23,8 @@ MAIN_SEQ = "KLVFFA"
 OPT_PARAMS_SOURCE = "klvffa_vqec_p0_5_u5/klvffa_vqec_res_12.json"
 QUBIT_NUMBER = 24
 ANSATZ_REPS = 2
-RUNNER = "hardware"  # "aer-sv", "aer-mps", "hardware"
-BACKEND_NAME = "ibm_kingston"  # change to other backends if needed, comment out if not using hardware
+RUNNER = "aer-mps"  # "aer-sv", "aer-mps", "hardware"
+# BACKEND_NAME = "ibm_cleveland"  # change to other backends if needed, comment out if not using hardware
 SHOTS = 100_000
 TIMESTAMP = datetime.now(timezone.utc)
 # ============================

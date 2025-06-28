@@ -21,8 +21,8 @@ INIT_PARAMS_SOURCE = "KLVFFA_2025-05-30-04-13-01_mps_run0"
 NUM_WORKERS = None
 QUBIT_NUMBER = 24
 ANSATZ_REPS = 2
-RUNNER = "hardware"  # "aer-sv", "aer-mps", "hardware"
-BACKEND_NAME = "ibm_kingston"
+RUNNER = "aer-mps"  # "aer-sv", "aer-mps", "hardware"
+# BACKEND_NAME = "ibm_kingston"
 SHOTS = 100_000
 TIMESTAMP = datetime.now(timezone.utc)
 # ============================
@@ -78,8 +78,8 @@ if __name__ == "__main__":
     metadata["circuit_prep_time (s)"] = round(time_end - time_start, 2)
 
     # Extract final physical qubit mapping (used qubit indices)
-    physical_qubits_used = isa_circ.layout.final_index_layout()
-    metadata["physical_qubits_used"] = physical_qubits_used
+    #physical_qubits_used = isa_circ.layout.final_index_layout()
+    #metadata["physical_qubits_used"] = physical_qubits_used
 
 
     # Run sampling using Qiskit Runtime
