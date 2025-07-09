@@ -295,7 +295,7 @@ class QubitOpBuilder:
                 # qubit operator that acts on the configuration qubits
                 h_contact += (self._contact_map.contact_map[i][j]) ^ (
                     self._distance_map.first_neighbor(
-                        i, j, self._pair_energies, pair_energies_multiplier=0.1
+                        i, j, self._pair_energies, pair_energies_multiplier=1.0
                     )
                 )
         return fix_qubits(h_contact)

@@ -18,12 +18,12 @@
 
 
 // define peptide sequence:
-// #define AMINOACIDS	5
-// #define PEPTIDE "GNLVS"	// 4QXX
+#define AMINOACIDS	5
+#define PEPTIDE "GNLVS"	// 4QXX
 // #define AMINOACIDS	6
 // #define PEPTIDE "SNQNNF" // 2OL9
-#define AMINOACIDS	6
-#define PEPTIDE "KLVFFA"
+// #define AMINOACIDS	6
+// #define PEPTIDE "KLVFFA"
 // #define AMINOACIDS	7
 // #define PEPTIDE "GSNQNNF"	// linear 7 AA peptide
 //#define AMINOACIDS	7
