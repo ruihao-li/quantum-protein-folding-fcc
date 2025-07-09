@@ -1,4 +1,0 @@
-source leaprc.protein.ff19SB  #YYDPETGTWY
-5AWL = sequence { NTYR TYR ASP PRO GLU THR GLY THR TRP CTYR } 
-savepdb 5AWL EXT.pdb
-quit

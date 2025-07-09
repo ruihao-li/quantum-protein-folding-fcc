@@ -1,9 +1,0 @@
-source leaprc.protein.ff19SB
-TC5b = sequence { NASN LEU TYR ILE GLN TRP LEU LYS ASP GLY GLY PRO SER SER GLY ARG PRO PRO PRO CSER } #1L2Y
-#TC10b = sequence {  NASP ALA TYR ALA GLN TRP LEU LYS ASP GLY GLY PRO SER SER GLY ARG PRO PRO PRO CSER } #2JOF (3 AA are different!!)
-saveoff TC5b TC5b_linear.lib
-savepdb TC5b TC5b_linear.pdb
-loadoff TC5b_linear.lib # if you exited xleap (we didn't and are only using tleap)
-# loadamberparams frcmod.mod_phipsi.1 # from https://ambermd.org/tutorials/basic/tutorial3/files/frcmod.mod_phipsi.1
-saveamberparm TC5b TC5b.prmtop TC5b.rst7
-quit

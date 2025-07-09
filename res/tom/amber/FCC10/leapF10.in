@@ -1,4 +1,0 @@
-source leaprc.protein.ff19SB
-TC5b = loadpdb ../../pulchra/pdbTC5b/FCC5.pdb
-saveamberparm TC5b TC5b.prmtop TC5b.rst7
-quit

@@ -1,5 +1,0 @@
-trajin equil_1-10.binpos
-dihedral trpphi :5@C :6@N :6@CA :6@C out trp_phi.dat
-dihedral trppsi :6@N :6@CA :6@C :7@N out trp_psi.dat
-dihedral trpchi1 :6@N :6@CA :6@CB :6@CG out trp_chi1.dat
-dihedral trpchi2 :6@CA :6@CB :6@CG :6@CD2 out trp_chi2.dat

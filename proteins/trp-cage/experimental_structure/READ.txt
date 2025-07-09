@@ -1,4 +1,0 @@
-2jof.pdb is the whole NMR ensemble pdb file. The first frame (0) is representative enough of the whole structure, 
-so this was saved as its own pdb file named 2jof_firstframe_of_NMR_structure.pdb
-
-also made an alpha carbon file out of Galaxy99-[Search_in_textfiles_on_data_98].pdb 
