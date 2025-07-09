@@ -33,6 +33,8 @@ class ProteinSolver:
             "ray", "python-mp".
         """
         self.ansatz = ansatz
+        if self.ansatz.num_clbits == 0:
+            ansatz.measure_all()  # Ensure the ansatz has measurements
         self.hamiltonian = hamiltonian
         self.sampler = sampler
         self.parallelizer = parallelizer

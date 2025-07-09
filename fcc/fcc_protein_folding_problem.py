@@ -41,7 +41,7 @@ class ProteinFoldingProblem:
         )
         self._unused_qubits = []
 
-    def qubit_op(self, r2_threshold: float = 0.99, chunk: int = 20) -> SparsePauliOp:
+    def qubit_op(self, r2_threshold: float = 1.0, chunk: int = 20) -> SparsePauliOp:
         """
         Builds the total qubit operator for the full Hamiltonian encoding a
         protein folding problem on the FCC lattice.

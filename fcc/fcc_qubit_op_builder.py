@@ -71,7 +71,8 @@ class QubitOpBuilder:
         """
         Builds qubit operators for the constraints that penalize overlapping
         beads, which are subsequently used in the VQEC approach based on the
-        Lagrangian dual method (arXiv:2311.08502).
+        Lagrangian dual method (arXiv:2311.08502). Note that this should be used
+        only when the overlap penalty parameter is None.
 
         Returns:
             A dictionary containing the indices of bead pairs as keys and the
@@ -223,7 +224,8 @@ class QubitOpBuilder:
         :math:`R^2_{ij}` depends on the domain of the function, which is
         :math:`[-2, 2(i-j)^2 - 2]`. The further the pair of beads are from each
         other, the higher the degree of the polynomial required to approximate
-        the penalty function.
+        the penalty function. Note that if the overlap penalty parameter is
+        None, this returns 0.
 
         Args:
             r2_threshold: The threshold for the R^2 score of the Chebyshev fit
@@ -241,7 +243,7 @@ class QubitOpBuilder:
         for i in range(self._peptide_length - 3):
             for j in range(
                 i + 3, self._peptide_length
-            ):  # overlap cannot happen within 3 beads
+            ):  # overlap cannot happen within 3 beads on FCC lattice
                 dist_op = self._distance_map[(i, j)]
                 print(f"Beads {i} and {j} -- dist_op size: {dist_op.size}")
                 # Perform Chebyshev fit to approximate the penalty function
@@ -259,18 +261,10 @@ class QubitOpBuilder:
                 cheb_coeffs = cheb_fit.convert().coef
                 # print(f"Highest degree of the polynomial for {i} and {j}: {degree}")
                 poly_coeffs = np.polynomial.chebyshev.cheb2poly(cheb_coeffs)
-                # print(f"Polynomial coefficients: {poly_coeffs}")
-                # print(f"Penalty values: {np.polynomial.Polynomial(poly_coeffs)(x)}")
                 # Create the qubit operator based on the polynomial coefficients
                 h_olap += poly_coeffs[0] * full_id
-                # # Old implementation
-                # for k in range(1, len(poly_coeffs)):
-                #     h_op = dist_op
-                #     for _ in range(k - 1):
-                #         h_op = (h_op @ dist_op).simplify()
-                #     h_olap += poly_coeffs[k] * h_op
 
-                # New implementation
+                # Perform the composition of operators in chunks
                 for k in range(1, len(poly_coeffs)):
                     if k == 1:
                         h_op = dist_op.simplify()
@@ -278,8 +272,8 @@ class QubitOpBuilder:
                         tic = time.time()
                         h_op = self._compose_in_chunks(h_op, dist_op, chunk)
                         toc = time.time()
-                        print(f"Time taken to do composition @ k = {k}: {toc - tic}")
-                    print(f"h_op size @ k = {k}: {h_op.size}")
+                        # print(f"Time taken to do composition @ k = {k}: {toc - tic}")
+                    # print(f"h_op size @ k = {k}: {h_op.size}")
                     h_olap = SparsePauliOp.sum(
                         [h_olap, poly_coeffs[k] * h_op]
                     ).simplify()

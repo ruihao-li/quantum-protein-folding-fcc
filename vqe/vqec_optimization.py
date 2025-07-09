@@ -8,7 +8,6 @@ Applied Systems Analysis, Laxenburg, Austria: WP-94-038, 1994).
 """
 
 from __future__ import annotations
-from .vqec import VQECResult
 from qiskit import QuantumCircuit
 from qiskit.quantum_info import SparsePauliOp
 from qiskit.primitives import BaseEstimator

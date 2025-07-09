@@ -18,7 +18,7 @@ class PenaltyParameters:
             turns.
             penalty_olap: A penalty parameter used to penalize long-range
             overlaps using higher-order polynomials if finite. If None, such
-            penalties are applied through the Lagrangian duality formalism.
+            penalties can be applied through the Lagrangian duality formalism.
         """
 
         self._penalty_back = penalty_back
