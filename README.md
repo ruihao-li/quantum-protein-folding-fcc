@@ -1,6 +1,6 @@
 # protein-folding-fcc
 
-[![Supported Python Versions](https://img.shields.io/badge/Python-3.10%20%7C%203.10%20%7C%203.12-blue)](https://www.python.org/downloads/) 
+[![Supported Python Versions](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/) 
 
 ## Overview
 
