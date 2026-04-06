@@ -1,3 +1,9 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#     http://www.apache.org/licenses/LICENSE-2.0
+
 """Builds the total qubit operator for the full Hamiltonian encoding a protein folding problem on the FCC lattice."""
 
 import numpy as np

@@ -1,3 +1,9 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#     http://www.apache.org/licenses/LICENSE-2.0
+
 """A class defining the Hydrophobic-Polar (HP) interaction between beads of a peptide."""
 
 import os
@@ -55,7 +61,7 @@ def _validate_residue_sequence(residue_sequence: str):
 
 def _validate_residue_symbol(residue_symbol: str):
     """
-    Checks if the provided residue character is legal ('H' or 'P'). 
+    Checks if the provided residue character is legal ('H' or 'P').
     If not, an InvalidResidueException is thrown.
 
     Args:
@@ -99,7 +105,9 @@ class HPInteraction:
         """
         chain_len = len(residue_sequence)
         _validate_residue_sequence(residue_sequence)
-        hp_interaction, list_residues = _load_energy_matrix_file(self.energy_matrix_file)
+        hp_interaction, list_residues = _load_energy_matrix_file(
+            self.energy_matrix_file
+        )
         pair_energies = np.zeros((chain_len, chain_len))
         for i in range(chain_len):
             for j in range(i + 1, chain_len):

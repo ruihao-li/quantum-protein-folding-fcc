@@ -1,3 +1,9 @@
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+
+//   http://www.apache.org/licenses/LICENSE-2.0
+
 // Exhaustive search for protein structures on the tetrahedral lattice.
 // 1NN interactions only, no side chains.
 // Developed by: Frank DiFilippo, Nicholas DiSanto (Cleveland Clinic)
