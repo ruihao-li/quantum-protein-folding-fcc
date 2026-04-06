@@ -16,7 +16,7 @@ Applied Systems Analysis, Laxenburg, Austria: WP-94-038, 1994).
 from __future__ import annotations
 from qiskit import QuantumCircuit
 from qiskit.quantum_info import SparsePauliOp
-from qiskit.primitives import BaseEstimator
+from qiskit.primitives import BaseEstimatorV2
 from qiskit_algorithms.gradients import BaseEstimatorGradient
 import numpy as np
 from tqdm import tqdm
@@ -33,7 +33,7 @@ class PerturbedPrimalDualOpt:
         qubit_op: SparsePauliOp,
         constr_ops: list[SparsePauliOp],
         ansatz: QuantumCircuit,
-        estimator: BaseEstimator,
+        estimator: BaseEstimatorV2,
         gradient: BaseEstimatorGradient,
     ):
         """
@@ -69,7 +69,9 @@ class PerturbedPrimalDualOpt:
         Returns:
             The expectation value of the observable.
         """
-        return self._estimator.run(circuit, observable, params).result().values[0]
+        return (
+            self._estimator.run([(circuit, observable, params)]).result()[0].data.evs[0]
+        )
 
     def optimize_primal_dual(
         self,
