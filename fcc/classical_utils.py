@@ -8,6 +8,7 @@
 
 import sys
 
+#FIXME: Consider refactoring the code to avoid having to modify the sys.path.
 sys.path.append("../")
 
 
@@ -37,7 +38,7 @@ def _relabel_turns(turns: str) -> str:
 def load_top_cls_solns(file_name: str) -> list[tuple[str, float]]:
     """
     Loads the top solutions from the classical search results file
-    (`topojb_<sequence>.txt`).
+    (`topobj_<sequence>.txt`).
 
     Args:
         file_name (str): The name of the file containing the classical search results.
@@ -48,6 +49,7 @@ def load_top_cls_solns(file_name: str) -> list[tuple[str, float]]:
         that configuration.
     """
     top_cls_turns = []
+    # FIXME: Consider allowing the user to specify the path to the file instead of hardcoding it
     with open("classical_search/results/" + file_name, "r") as file:
         data = file.read()
         # Split by line

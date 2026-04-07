@@ -1,4 +1,4 @@
-# protein-folding-fcc
+# quantum-protein-folding-fcc
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) [![Supported Python Versions](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/) ![Qiskit](https://img.shields.io/badge/qiskit-1.4+-green.svg)
 
 

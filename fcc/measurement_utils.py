@@ -115,8 +115,8 @@ def process_counts(
     counts: Counts | dict[str, int],
     observable: SparsePauliOp,
     num_batches: int | None = None,
-    global_bitstring_energies: dict[str, float] = {},
-    parallelizer: str = "ray",
+    global_bitstring_energies: dict[str, float] = {}, #FIXME: Consider refactoring the code to avoid using a mutable default argument.
+    parallelizer: str = "ray", #FIXME: Only "ray" and "python-mp" are supported. Consider using an Enum or similar to enforce this.
 ) -> tuple[dict[str, float], list[tuple[float, float]]]:
     """
     Process a Counts distribution in parallel batches using Ray. First, it
