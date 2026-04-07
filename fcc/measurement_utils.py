@@ -5,7 +5,7 @@
 #     http://www.apache.org/licenses/LICENSE-2.0
 
 from itertools import chain
-from typing import Iterable
+from typing import Iterable, Literal
 import numpy as np
 import psutil
 import ray
@@ -29,14 +29,17 @@ def _evaluate_sparsepauli(state: str, observable: SparsePauliOp) -> float:
     Returns:
         float: Expectation value.
     """
-    state = int(state, 2)
+    state_int = int(state, 2)
     packed_uint8 = np.packbits(observable.paulis.z, axis=1, bitorder="little")
     state_bytes = np.frombuffer(
-        state.to_bytes(packed_uint8.shape[1], "little"), dtype=np.uint8
+        state_int.to_bytes(packed_uint8.shape[1], "little"), dtype=np.uint8
     )
     reduced = np.bitwise_xor.reduce(packed_uint8 & state_bytes, axis=1)
+    coeffs = observable.coeffs
+    if coeffs is None:
+        raise ValueError("Observable coefficients are not available.")
 
-    return np.real(np.sum(observable.coeffs * _PARITY[reduced]))
+    return np.real(np.sum(coeffs * _PARITY[reduced]))
 
 
 # https://github.com/qiskit-community/qiskit-algorithms/blob/3fb69b3051f39602b1e4c3f0229a849a2ff6b8e4/qiskit_algorithms/minimum_eigensolvers/diagonal_estimator.py#L158
@@ -115,8 +118,8 @@ def process_counts(
     counts: Counts | dict[str, int],
     observable: SparsePauliOp,
     num_batches: int | None = None,
-    global_bitstring_energies: dict[str, float] = {}, #FIXME: Consider refactoring the code to avoid using a mutable default argument.
-    parallelizer: str = "ray", #FIXME: Only "ray" and "python-mp" are supported. Consider using an Enum or similar to enforce this.
+    global_bitstring_energies: dict[str, float] | None = None,
+    parallelizer: Literal["ray", "python-mp"] = "ray",
 ) -> tuple[dict[str, float], list[tuple[float, float]]]:
     """
     Process a Counts distribution in parallel batches using Ray. First, it
@@ -127,13 +130,14 @@ def process_counts(
 
     Args:
         counts (Counts): The counts of a quantum circuit run.
-        observable (SparsePauliOp): The observable for expectation value evaluation.
-        num_batches (int, optional): The number of batches to split the unique
-        states into. Defaults to None.
-        global_bitstring_energies (dict[str, float], optional): The global
-        dictionary that keeps track of all bitstrings ever measured. Bitstrings
-        that are already in this dictionary will not be processed. Defaults to
-        empty dictionary.
+        observable (SparsePauliOp): The observable for expectation value
+        evaluation.
+        num_batches (int, optional): The number of batches to split the
+        unique states into. Defaults to None.
+        global_bitstring_energies (dict[str, float] | None, optional): The
+        global dictionary that keeps track of all bitstrings ever measured.
+        Bitstrings that are already in this dictionary will not be
+        processed. If None, an empty dictionary is used.
         parallelizer (str, optional): The parallelizer to use. Defaults to
         "ray". Options: "ray", "python-mp".
 
@@ -145,6 +149,14 @@ def process_counts(
         first element of the tuple is the probability of a state. The seconds
         element of the tuple is the energy of that corresponding state.
     """
+    if global_bitstring_energies is None:
+        global_bitstring_energies = {}
+
+    if parallelizer not in ("ray", "python-mp"):
+        raise ValueError(
+            "Unsupported parallelizer. Supported values are 'ray' and 'python-mp'."
+        )
+
     total_shots = sum(counts.values())
     states = list(counts.keys())
     state_counts = np.array(list(counts.values()))
@@ -162,8 +174,9 @@ def process_counts(
         )
         return {}, prob_energy_pairs
 
-    if num_batches is None or num_batches > psutil.cpu_count():
-        num_batches = psutil.cpu_count()
+    cpu_count = psutil.cpu_count() or 1
+    if num_batches is None or num_batches > cpu_count:
+        num_batches = cpu_count
     if num_batches > num_unique_states:
         num_batches = num_unique_states
     batch_size = num_unique_states // num_batches

@@ -6,10 +6,7 @@
 
 """Utility functions relevant for classical search methods."""
 
-import sys
-
-#FIXME: Consider refactoring the code to avoid having to modify the sys.path.
-sys.path.append("../")
+import os
 
 
 def _relabel_turns(turns: str) -> str:
@@ -35,13 +32,26 @@ def _relabel_turns(turns: str) -> str:
     return new_turns[::-1]  # Reverse the string to read from left to right
 
 
-def load_top_cls_solns(file_name: str) -> list[tuple[str, float]]:
+def _construct_results_file_path(file_name: str, results_dir: str | None = None) -> str:
+    """Constructs an absolute path to a classical search results file."""
+    if results_dir is None:
+        repo_root = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
+        results_dir = os.path.join(repo_root, "classical_search", "results")
+    return os.path.normpath(os.path.join(results_dir, file_name))
+
+
+def load_top_cls_solns(
+    file_name: str, results_dir: str | None = None
+) -> list[tuple[str, float]]:
     """
     Loads the top solutions from the classical search results file
     (`topobj_<sequence>.txt`).
 
     Args:
         file_name (str): The name of the file containing the classical search results.
+        results_dir (str | None): Optional directory containing classical search
+            result files. If omitted, defaults to
+            `<repo_root>/classical_search/results`.
 
     Returns:
         list[tuple[str, float]]: A list of tuples where each tuple contains a
@@ -49,8 +59,8 @@ def load_top_cls_solns(file_name: str) -> list[tuple[str, float]]:
         that configuration.
     """
     top_cls_turns = []
-    # FIXME: Consider allowing the user to specify the path to the file instead of hardcoding it
-    with open("classical_search/results/" + file_name, "r") as file:
+    file_path = _construct_results_file_path(file_name, results_dir)
+    with open(file_path, "r") as file:
         data = file.read()
         # Split by line
         data_by_line = data.split("\n")
