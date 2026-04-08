@@ -1,0 +1,4 @@
+include workflow_demo.ipynb
+recursive-include fcc/potentials *.txt
+recursive-include classical_search *
+global-exclude .DS_Store
