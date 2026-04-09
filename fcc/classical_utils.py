@@ -7,6 +7,8 @@
 """Utility functions relevant for classical search methods."""
 
 import os
+import sys
+from pathlib import Path
 
 
 def _relabel_turns(turns: str) -> str:
@@ -28,16 +30,44 @@ def _relabel_turns(turns: str) -> str:
         "a": "9",
         "b": "b",
     }
-    new_turns = "".join([mapping[turn] for turn in turns])
+    try:
+        new_turns = "".join(mapping[turn.lower()] for turn in turns)
+    except KeyError as exc:
+        raise ValueError(
+            f"Unsupported classical-search turn symbol: {exc.args[0]!r}."
+        ) from exc
     return new_turns[::-1]  # Reverse the string to read from left to right
 
 
 def _construct_results_file_path(file_name: str, results_dir: str | None = None) -> str:
-    """Constructs an absolute path to a classical search results file."""
-    if results_dir is None:
-        repo_root = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
-        results_dir = os.path.join(repo_root, "classical_search", "results")
-    return os.path.normpath(os.path.join(results_dir, file_name))
+    """Construct an absolute path to a classical-search results file.
+
+    The repository layout stores the result files under
+    ``<repo_root>/classical_search/results``, while package installs place them
+    under ``<sys.prefix>/share/quantum-protein-folding-fcc/classical_search/results``.
+    """
+    if results_dir is not None:
+        return os.path.normpath(os.path.join(results_dir, file_name))
+
+    repo_root = Path(__file__).resolve().parent.parent
+    candidate_dirs = [
+        repo_root / "classical_search" / "results",
+        Path(sys.prefix)
+        / "share"
+        / "quantum-protein-folding-fcc"
+        / "classical_search"
+        / "results",
+    ]
+
+    for candidate_dir in candidate_dirs:
+        candidate_file = candidate_dir / file_name
+        if candidate_file.exists():
+            return os.path.normpath(str(candidate_file))
+
+    searched_dirs = ", ".join(str(path) for path in candidate_dirs)
+    raise FileNotFoundError(
+        f"Could not find classical-search results file '{file_name}'. Searched: {searched_dirs}"
+    )
 
 
 def load_top_cls_solns(
@@ -58,7 +88,7 @@ def load_top_cls_solns(
         string representing the turns and a float representing the energy of
         that configuration.
     """
-    top_cls_turns = []
+    top_cls_turns: list[tuple[str, float]] = []
     file_path = _construct_results_file_path(file_name, results_dir)
     with open(file_path, "r") as file:
         data = file.read()
@@ -67,5 +97,5 @@ def load_top_cls_solns(
         for line in data_by_line:
             if len(line.split("\t")) == 2:
                 [energy, turns] = line.split("\t")
-                top_cls_turns.append([_relabel_turns(turns), float(energy)])
+                top_cls_turns.append((_relabel_turns(turns), float(energy)))
     return top_cls_turns

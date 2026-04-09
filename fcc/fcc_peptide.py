@@ -6,20 +6,86 @@
 
 """A class defining the main chain of a peptide."""
 
+from collections.abc import Collection
+
 from qiskit.quantum_info import SparsePauliOp
+
 from .fcc_bead import Bead
 from .utils import build_full_identity, build_pauli_z_op
 
 
+DEFAULT_VALID_RESIDUE_SYMBOLS = frozenset(
+    {
+        "A",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H",
+        "I",
+        "K",
+        "L",
+        "M",
+        "N",
+        "P",
+        "Q",
+        "R",
+        "S",
+        "T",
+        "V",
+        "W",
+        "Y",
+    }
+)
+
+
+def _validate_residue_sequence(
+    peptide_sequence: str, allowed_residue_symbols: Collection[str]
+) -> None:
+    """Validate a peptide sequence against the provided residue alphabet."""
+    allowed_residue_symbols = frozenset(allowed_residue_symbols)
+    invalid_symbols = sorted(set(peptide_sequence) - allowed_residue_symbols)
+    if invalid_symbols:
+        raise ValueError(
+            "peptide_sequence contains unsupported residue symbols: "
+            f"{invalid_symbols}. Use uppercase one-letter residue codes."
+        )
+
+
+VALID_RESIDUE_SYMBOLS = DEFAULT_VALID_RESIDUE_SYMBOLS
+
+
 class Peptide:
 
-    def __init__(self, peptide_sequence: str):
+    def __init__(
+        self,
+        peptide_sequence: str,
+        allowed_residue_symbols: Collection[str] | None = DEFAULT_VALID_RESIDUE_SYMBOLS,
+    ):
         """
         Args:
             peptide_sequence: String of characters that define residues for the
-            main chain of a peptide. Valid residue types are [A, C, D, E, F, G,
-            H, I, K, L, M, N, P, Q, R, S, T, V, W, Y].
+            main chain of a peptide.
+            allowed_residue_symbols: Optional residue alphabet used for early
+                validation. The default preserves the original behavior of
+                accepting the 20 standard uppercase amino-acid one-letter
+                codes. Pass a custom collection to allow a different alphabet,
+                or ``None`` to skip early residue-symbol validation and defer
+                semantic validation to the selected interaction model.
+
+        Raises:
+            ValueError: If the peptide sequence is empty or too short for the
+                FCC encoding.
         """
+        if not peptide_sequence:
+            raise ValueError("peptide_sequence must not be empty.")
+        if len(peptide_sequence) < 3:
+            raise ValueError(
+                "peptide_sequence must contain at least 3 residues for the FCC encoding."
+            )
+        if allowed_residue_symbols is not None:
+            _validate_residue_sequence(peptide_sequence, allowed_residue_symbols)
         self._peptide_sequence = peptide_sequence
         self._beads_list = self._build_main_chain(peptide_sequence)
 
@@ -47,7 +113,7 @@ class Peptide:
             main chain of a peptide.
 
         Returns:
-            A list of MainBead instances.
+            A list of Bead instances.
         """
         main_chain = []
         main_chain_len = len(peptide_sequence)

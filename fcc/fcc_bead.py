@@ -16,7 +16,8 @@ class Bead:
         self,
         main_index: int,
         residue_type: str,
-        turn_qubits: tuple[SparsePauliOp, SparsePauliOp, SparsePauliOp, SparsePauliOp],
+        turn_qubits: tuple[SparsePauliOp, SparsePauliOp, SparsePauliOp, SparsePauliOp]
+        | None,
     ):
         """
         Args:
@@ -52,8 +53,8 @@ class Bead:
     @property
     def turn_qubits(
         self,
-    ) -> tuple[SparsePauliOp, SparsePauliOp, SparsePauliOp, SparsePauliOp]:
-        """Returns the list of four qubits that encode the turn following from the bead."""
+    ) -> tuple[SparsePauliOp, SparsePauliOp, SparsePauliOp, SparsePauliOp] | None:
+        """Returns the four operators encoding the turn following from the bead."""
         return self._turn_qubits
 
     @property

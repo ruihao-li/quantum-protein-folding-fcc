@@ -10,11 +10,13 @@ Link to the paper: [Quantum Algorithm for Protein Structure Prediction Using the
 This repository contains the core functionality for performing protein structure prediction with variational quantum algorithms, for a coarse-grained model on the face-centered cubic (FCC) lattice. The implementation is inspired by the existing [quantum protein folding codebase](https://github.com/qiskit-community/quantum-protein-folding) developed by IBM Quantum, based on the article: [Resource-efficient quantum algorithm for protein folding](https://www.nature.com/articles/s41534-021-00368-4). While stylistically similar, our work presents the following key differences:
 
 - The original code is built on the tetrahedral lattice, while this implementation is adapted for the face-centered cubic (FCC) lattice, and can be easily extended to other lattices.
-- The `qubit_op_builder` module contains some key differences due to a different formulation of the Hamiltonian for the FCC lattice.
+- The `fcc_qubit_op_builder` module contains some key differences due to a different formulation of the Hamiltonian for the FCC lattice.
 - We include two ways to enforce the non-overlapping constraint without invoking slack variables: the polynomial fit and Lagrangian duality methods.
 - In the polynomial fit approach, we use the Sampler primitive. This allows us to accelerate the energy computations with parallelization using [Ray](https://docs.ray.io/en/latest/index.html) and record the best solutions throughout the optimization process.
 
 ---
+
+Input sequences should use uppercase one-letter symbols. `Peptide` validates the symbols early, and the selected interaction model determines the allowed alphabet for the run (for example, HP uses `H`/`P`, while Miyazawa-Jernigan uses standard one-letter amino-acid codes).
 
 ## Quick Start
 
@@ -22,15 +24,28 @@ This repository contains the core functionality for performing protein structure
    ```bash
    git clone https://github.com/ruihao-li/quantum-protein-folding-fcc.git
    ```
-2. Navigate to the project directory and install the required dependencies:
+2. Navigate to the project directory and install the core package:
    ```bash
    cd quantum-protein-folding-fcc
    pip install -e .
+   ```
+   Optional extras:
+   ```bash
+   pip install -e '.[ray]'        # Ray-based parallel energy evaluation
+   pip install -e '.[runtime]'    # IBM Runtime integration
+   pip install -e '.[all]'        # Install both optional extras
    ```
 3. [Optional] Run the workflow demo notebook to see how it works:
    ```bash
    jupyter notebook workflow_demo.ipynb
    ```
+
+   The notebook uses Ray when the optional `.[ray]` extra is installed and
+   otherwise falls back to the built-in Python multiprocessing backend.
+
+   Note: call `pf_problem.qubit_op(...)` before `pf_problem.olap_constr_ops()`
+   or `pf_problem.interpret(...)` so the overlap constraints and decoded
+   results use the same qubit-compression map as the Hamiltonian you solved.
 
 ---
 

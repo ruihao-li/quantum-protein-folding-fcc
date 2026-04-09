@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 
 from setuptools import find_packages, setup
 
@@ -10,6 +11,11 @@ DATA_INSTALL_PREFIX = "share/quantum-protein-folding-fcc"
 def load_requirements(filename):
     with (REPO_ROOT / filename).open(encoding="utf-8") as f:
         return [line.strip() for line in f if line.strip() and not line.startswith("#")]
+
+
+def requirement_name(requirement: str) -> str:
+    """Return the distribution name for a requirement specifier string."""
+    return re.split(r"[<>=!~]", requirement, maxsplit=1)[0].strip()
 
 
 def collect_data_files(
@@ -27,6 +33,23 @@ def collect_data_files(
     return [(target_dir, files) for target_dir, files in sorted(grouped_files.items())]
 
 
+all_requirements = load_requirements("requirements.txt")
+optional_requirements = {
+    "ray": [requirement for requirement in all_requirements if requirement_name(requirement) == "ray"],
+    "runtime": [
+        requirement
+        for requirement in all_requirements
+        if requirement_name(requirement) == "qiskit_ibm_runtime"
+    ],
+}
+install_requires = [
+    requirement
+    for requirement in all_requirements
+    if requirement_name(requirement) not in {"ray", "qiskit_ibm_runtime"}
+]
+optional_requirements["all"] = optional_requirements["ray"] + optional_requirements["runtime"]
+
+
 setup(
     name="quantum-protein-folding-fcc",
     version="0.1.0",
@@ -42,7 +65,8 @@ setup(
         (DATA_INSTALL_PREFIX, ["workflow_demo.ipynb"]),
         *collect_data_files("classical_search", DATA_INSTALL_PREFIX),
     ],
-    install_requires=load_requirements("requirements.txt"),
+    install_requires=install_requires,
+    extras_require=optional_requirements,
     python_requires=">=3.10",
     license="Apache-2.0",
     classifiers=[

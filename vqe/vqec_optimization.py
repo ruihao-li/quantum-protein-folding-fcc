@@ -22,6 +22,63 @@ import numpy as np
 from tqdm import tqdm
 
 
+def _normalize_primal_params(params: np.ndarray, num_parameters: int) -> np.ndarray:
+    """Normalize a single variational parameter set to shape ``(1, num_parameters)``."""
+    values = np.asarray(params, dtype=float)
+    if values.ndim == 0:
+        raise ValueError("initial_params must contain at least one parameter value.")
+    if values.ndim == 1:
+        values = values.reshape(1, -1)
+    elif values.ndim != 2:
+        raise ValueError(
+            "initial_params must be one parameter vector or one batched parameter row."
+        )
+    if values.shape[0] != 1:
+        raise ValueError("Exactly one parameter row is supported for VQEC optimization.")
+    if values.shape[1] != num_parameters:
+        raise ValueError(
+            f"Expected {num_parameters} ansatz parameters, got {values.shape[1]}."
+        )
+    return values.copy()
+
+
+def _normalize_dual_vars(dual_vars: np.ndarray, num_constraints: int) -> np.ndarray:
+    """Normalize dual variables to a flat vector of length ``num_constraints``."""
+    values = np.asarray(dual_vars, dtype=float).reshape(-1)
+    if values.size != num_constraints:
+        raise ValueError(
+            f"Expected {num_constraints} dual variables, got {values.size}."
+        )
+    return values.copy()
+
+
+def _first_expectation_value(result) -> float:
+    """Return the first expectation value from an Estimator V2 PUB result."""
+    evs = np.asarray(result[0].data.evs)
+    if evs.size == 0:
+        raise ValueError("Estimator returned no expectation values.")
+    return float(evs.reshape(-1)[0])
+
+
+def _validate_operator_shapes(
+    qubit_op: SparsePauliOp,
+    constr_ops: list[SparsePauliOp],
+    ansatz: QuantumCircuit,
+) -> None:
+    """Validate that the ansatz and all observables act on the same qubits."""
+    if qubit_op.num_qubits != ansatz.num_qubits:
+        raise ValueError(
+            "The ansatz and objective operator must act on the same number of qubits: "
+            f"{ansatz.num_qubits} != {qubit_op.num_qubits}."
+        )
+    for idx, constr_op in enumerate(constr_ops):
+        if constr_op.num_qubits != ansatz.num_qubits:
+            raise ValueError(
+                "Constraint operator qubit counts must match the ansatz qubit count. "
+                f"Constraint {idx} uses {constr_op.num_qubits} qubits while the ansatz uses {ansatz.num_qubits}."
+            )
+
+
 class PerturbedPrimalDualOpt:
     """
     Class implementing the perturbed primal-dual (PPD) optimization method for
@@ -34,24 +91,66 @@ class PerturbedPrimalDualOpt:
         constr_ops: list[SparsePauliOp],
         ansatz: QuantumCircuit,
         estimator: BaseEstimatorV2,
-        gradient: BaseEstimatorGradient,
+        gradient: BaseEstimatorGradient | None = None,
     ):
         """
         Args:
             qubit_op: The qubit operator for which the expectation value is
             minimized.
-            constr_ops: The constraint operators whose the expectation values
+            constr_ops: The constraint operators whose expectation values
             are constrained.
             ansatz: The quantum circuit that prepares the quantum state.
             estimator: The estimator that computes the expectation values.
-            gradient: The gradient tool that computes the gradients of the
-            expectation values.
+            gradient: Optional gradient tool that computes the gradients of the
+            expectation values. When the provided gradient helper is
+            incompatible with Estimator V2, the optimizer falls back to a
+            finite-difference gradient computed through ``estimator``.
         """
+        _validate_operator_shapes(qubit_op, constr_ops, ansatz)
         self._qubit_op = qubit_op
         self._constr_ops = constr_ops
         self._ansatz = ansatz
-        self._estimator = estimator  # Note that the gradient module works only with EstimatorV1 at this time
+        self._estimator = estimator
         self._gradient = gradient
+        self._use_finite_differences = gradient is None
+
+    def _get_gradient(
+        self, observable: SparsePauliOp, params: np.ndarray, eps: float = 1e-6
+    ) -> np.ndarray:
+        """Return a gradient row compatible with the current estimator backend."""
+        parameter_values = _normalize_primal_params(params, self._ansatz.num_parameters)
+        if self._ansatz.num_parameters == 0:
+            return np.zeros((1, 0), dtype=float)
+
+        if not self._use_finite_differences and self._gradient is not None:
+            try:
+                gradients = (
+                    self._gradient.run(
+                        circuits=self._ansatz,
+                        observables=observable,
+                        parameter_values=parameter_values,
+                    )
+                    .result()
+                    .gradients
+                )
+                return np.asarray(gradients, dtype=float).reshape(1, -1)
+            except TypeError as exc:
+                if "EstimatorV2.run" not in str(exc):
+                    raise
+                self._use_finite_differences = True
+
+        base_params = parameter_values.reshape(-1)
+        gradient = np.zeros((1, self._ansatz.num_parameters), dtype=float)
+        for param_idx in range(self._ansatz.num_parameters):
+            shifted_plus = base_params.copy()
+            shifted_minus = base_params.copy()
+            shifted_plus[param_idx] += eps
+            shifted_minus[param_idx] -= eps
+            gradient[0, param_idx] = (
+                self.get_expectation(self._ansatz, observable, shifted_plus)
+                - self.get_expectation(self._ansatz, observable, shifted_minus)
+            ) / (2 * eps)
+        return gradient
 
     def get_expectation(
         self, circuit: QuantumCircuit, observable: SparsePauliOp, params: np.ndarray
@@ -69,9 +168,9 @@ class PerturbedPrimalDualOpt:
         Returns:
             The expectation value of the observable.
         """
-        return (
-            self._estimator.run([(circuit, observable, params)]).result()[0].data.evs[0]
-        )
+        parameter_values = _normalize_primal_params(params, circuit.num_parameters)
+        result = self._estimator.run([(circuit, observable, parameter_values)]).result()
+        return _first_expectation_value(result)
 
     def optimize_primal_dual(
         self,
@@ -82,7 +181,7 @@ class PerturbedPrimalDualOpt:
         gamma: float = 1.0,
         auto_update_step: bool = True,
         max_iter: int = 200,
-    ) -> VQECResult:
+    ) -> dict:
         """
         Optimizes the primal and dual problems of the VQEC.
 
@@ -99,7 +198,7 @@ class PerturbedPrimalDualOpt:
             Perturbation methods for saddle point computation, Tech. Rep.
             (International Institute for Applied Systems Analysis, Laxenburg,
             Austria: WP-94-038, 1994). If False, the step size is dynamically
-            adjusted based on a power-law decay of gamma.
+            adjusted based on an exponential decay of gamma.
             max_iter: The maximum number of iterations of the optimization.
 
         Returns:
@@ -107,19 +206,19 @@ class PerturbedPrimalDualOpt:
         """
         # Generate the initial parameters and dual variables randomly if not provided
         initial_params = (
-            initial_params
+            _normalize_primal_params(initial_params, self._ansatz.num_parameters)
             if initial_params is not None
-            else np.random.uniform(0, 2 * np.pi, self._ansatz.num_parameters)
+            else np.random.uniform(0, 2 * np.pi, (1, self._ansatz.num_parameters))
         )
         initial_dual_vars = (
-            initial_dual_vars
+            _normalize_dual_vars(initial_dual_vars, len(self._constr_ops))
             if initial_dual_vars is not None
             # else np.array([0.1] * len(constr_ops))
             else np.random.uniform(0, 1, len(self._constr_ops))
         )
 
-        unperturbed_primal_vars = np.array([initial_params])
-        unperturbed_dual_vars = initial_dual_vars
+        unperturbed_primal_vars = initial_params.copy()
+        unperturbed_dual_vars = initial_dual_vars.copy()
 
         energies = [
             self.get_expectation(self._ansatz, self._qubit_op, unperturbed_primal_vars)
@@ -133,26 +232,10 @@ class PerturbedPrimalDualOpt:
         update_step_history = []
         for i in tqdm(range(max_iter)):
             # Compute gradients for the objective and constraint operators
-            obj_grad = np.array(
-                (
-                    self._gradient.run(
-                        circuits=self._ansatz,
-                        observables=self._qubit_op,
-                        parameter_values=unperturbed_primal_vars,
-                    )
-                    .result()
-                    .gradients
-                )
-            )
+            obj_grad = self._get_gradient(self._qubit_op, unperturbed_primal_vars)
             constr_grads = np.array(
                 [
-                    self._gradient.run(
-                        circuits=self._ansatz,
-                        observables=constr_op,
-                        parameter_values=unperturbed_primal_vars,
-                    )
-                    .result()
-                    .gradients
+                    self._get_gradient(constr_op, unperturbed_primal_vars)
                     for constr_op in self._constr_ops
                 ]
             )
@@ -221,15 +304,15 @@ class PerturbedPrimalDualOpt:
                 )
                 # d_\lambda = \nabla_\lambda L(\tilde{\theta}, \lambda)
                 grad_dual = constr_exp_perturbed_primal
-                # Update step size given by: \gamma * gap / ||d_\theta||^2 + ||d_\lambda||^2
-                step_size = (
-                    gamma
-                    * lagrangian_gap
-                    / (
-                        np.linalg.norm(grad_primal) ** 2
-                        + np.linalg.norm(grad_dual) ** 2
-                    )
+                # Update step size given by: \gamma * gap / (||d_\theta||^2 + ||d_\lambda||^2)
+                grad_norm_sq = (
+                    np.linalg.norm(grad_primal) ** 2
+                    + np.linalg.norm(grad_dual) ** 2
                 )
+                if grad_norm_sq <= 1e-12:
+                    step_size = 0.0
+                else:
+                    step_size = float(gamma * lagrangian_gap / grad_norm_sq)
             else:
                 # d_\theta = -\nabla_\theta L(\theta, \tilde{\lambda})
                 grad_primal = -(
@@ -276,15 +359,17 @@ class PerturbedPrimalDualOpt:
                 ]
             )
 
-            # Check for convergence
-            tol = 1e-5
-            if np.abs(energies[-1] - energies[-2]) / np.abs(energies[-2]) < tol:
-                print(f"Converged after {i+1} iterations")
-                break
-
-            # Update the primal and dual variables
+            # Store the latest iterate before the convergence check so the
+            # returned optimum matches the final evaluated point.
             unperturbed_primal_vars = updated_primal_vars
             unperturbed_dual_vars = updated_dual_vars
+
+            # Check for convergence
+            tol = 1e-5
+            denominator = max(np.abs(energies[-2]), 1e-12)
+            if np.abs(energies[-1] - energies[-2]) / denominator < tol:
+                print(f"Converged after {i+1} iterations")
+                break
 
         result = {
             "primal_perturb_step": primal_perturb_step,
@@ -292,8 +377,8 @@ class PerturbedPrimalDualOpt:
             "update_step_history": update_step_history,
             "energy_history": energies,
             "constraints_history": constraints,
-            "optimal_primal_vars": unperturbed_primal_vars,
-            "optimal_dual_vars": unperturbed_dual_vars,
+            "optimal_primal_vars": np.asarray(unperturbed_primal_vars).reshape(-1).copy(),
+            "optimal_dual_vars": np.asarray(unperturbed_dual_vars).reshape(-1).copy(),
         }
 
         return result
@@ -311,25 +396,67 @@ class OptimisticGDAOpt:
         qubit_op: SparsePauliOp,
         constr_ops: list[SparsePauliOp],
         ansatz: QuantumCircuit,
-        estimator: BaseEstimator,
-        gradient: BaseEstimatorGradient,
+        estimator: BaseEstimatorV2,
+        gradient: BaseEstimatorGradient | None = None,
     ):
         """
         Args:
             qubit_op: The qubit operator for which the expectation value is
             minimized.
-            constr_ops: The constraint operators whose the expectation values
+            constr_ops: The constraint operators whose expectation values
             are constrained.
             ansatz: The quantum circuit that prepares the quantum state.
             estimator: The estimator that computes the expectation values.
-            gradient: The gradient tool that computes the gradients of the
-            expectation values.
+            gradient: Optional gradient tool that computes the gradients of the
+            expectation values. When the provided gradient helper is
+            incompatible with Estimator V2, the optimizer falls back to a
+            finite-difference gradient computed through ``estimator``.
         """
+        _validate_operator_shapes(qubit_op, constr_ops, ansatz)
         self._qubit_op = qubit_op
         self._constr_ops = constr_ops
         self._ansatz = ansatz
         self._estimator = estimator
         self._gradient = gradient
+        self._use_finite_differences = gradient is None
+
+    def _get_gradient(
+        self, observable: SparsePauliOp, params: np.ndarray, eps: float = 1e-6
+    ) -> np.ndarray:
+        """Return a gradient row compatible with the current estimator backend."""
+        parameter_values = _normalize_primal_params(params, self._ansatz.num_parameters)
+        if self._ansatz.num_parameters == 0:
+            return np.zeros((1, 0), dtype=float)
+
+        if not self._use_finite_differences and self._gradient is not None:
+            try:
+                gradients = (
+                    self._gradient.run(
+                        circuits=self._ansatz,
+                        observables=observable,
+                        parameter_values=parameter_values,
+                    )
+                    .result()
+                    .gradients
+                )
+                return np.asarray(gradients, dtype=float).reshape(1, -1)
+            except TypeError as exc:
+                if "EstimatorV2.run" not in str(exc):
+                    raise
+                self._use_finite_differences = True
+
+        base_params = parameter_values.reshape(-1)
+        gradient = np.zeros((1, self._ansatz.num_parameters), dtype=float)
+        for param_idx in range(self._ansatz.num_parameters):
+            shifted_plus = base_params.copy()
+            shifted_minus = base_params.copy()
+            shifted_plus[param_idx] += eps
+            shifted_minus[param_idx] -= eps
+            gradient[0, param_idx] = (
+                self.get_expectation(self._ansatz, observable, shifted_plus)
+                - self.get_expectation(self._ansatz, observable, shifted_minus)
+            ) / (2 * eps)
+        return gradient
 
     def get_expectation(
         self, circuit: QuantumCircuit, observable: SparsePauliOp, params: np.ndarray
@@ -347,7 +474,9 @@ class OptimisticGDAOpt:
         Returns:
             The expectation value of the observable.
         """
-        return self._estimator.run(circuit, observable, params).result().values[0]
+        parameter_values = _normalize_primal_params(params, circuit.num_parameters)
+        result = self._estimator.run([(circuit, observable, parameter_values)]).result()
+        return _first_expectation_value(result)
 
     def optimize_primal_dual(
         self,
@@ -384,19 +513,19 @@ class OptimisticGDAOpt:
         """
         # Generate the initial parameters and dual variables randomly if not provided
         initial_params = (
-            initial_params
+            _normalize_primal_params(initial_params, self._ansatz.num_parameters)
             if initial_params is not None
-            else np.random.uniform(0, 2 * np.pi, self._ansatz.num_parameters)
+            else np.random.uniform(0, 2 * np.pi, (1, self._ansatz.num_parameters))
         )
         initial_dual_vars = (
-            initial_dual_vars
+            _normalize_dual_vars(initial_dual_vars, len(self._constr_ops))
             if initial_dual_vars is not None
             # else np.array([0.1] * len(constr_ops))
             else np.random.uniform(0, 1, len(self._constr_ops))
         )
 
-        primal_vars_list = [np.array([initial_params])]
-        dual_vars_list = [initial_dual_vars]
+        primal_vars_list = [initial_params.copy()]
+        dual_vars_list = [initial_dual_vars.copy()]
 
         energies = [
             self.get_expectation(self._ansatz, self._qubit_op, primal_vars_list[0])
@@ -412,26 +541,10 @@ class OptimisticGDAOpt:
         dynamic_lr = learning_rate
         for i in tqdm(range(max_iter)):
             # Compute gradients for the objective and constraint operators with current primal variables
-            obj_grad = np.array(
-                (
-                    self._gradient.run(
-                        circuits=self._ansatz,
-                        observables=self._qubit_op,
-                        parameter_values=primal_vars_list[-1],
-                    )
-                    .result()
-                    .gradients
-                )
-            )
+            obj_grad = self._get_gradient(self._qubit_op, primal_vars_list[-1])
             constr_grads = np.array(
                 [
-                    self._gradient.run(
-                        circuits=self._ansatz,
-                        observables=constr_op,
-                        parameter_values=primal_vars_list[-1],
-                    )
-                    .result()
-                    .gradients
+                    self._get_gradient(constr_op, primal_vars_list[-1])
                     for constr_op in self._constr_ops
                 ]
             )
@@ -500,7 +613,8 @@ class OptimisticGDAOpt:
 
             # Check for convergence
             tol = 1e-7
-            if np.abs(energies[-1] - energies[-2]) / np.abs(energies[-2]) < tol:
+            denominator = max(np.abs(energies[-2]), 1e-12)
+            if np.abs(energies[-1] - energies[-2]) / denominator < tol:
                 print(f"Converged after {i+1} iterations")
                 break
 
@@ -531,8 +645,8 @@ class OptimisticGDAOpt:
             "beta": beta,
             "energy_history": energies,
             "constraints_history": constraints,
-            "optimal_primal_vars": primal_vars_list[-1],
-            "optimal_dual_vars": dual_vars_list[-1],
+            "optimal_primal_vars": np.asarray(primal_vars_list[-1]).reshape(-1).copy(),
+            "optimal_dual_vars": np.asarray(dual_vars_list[-1]).reshape(-1).copy(),
         }
 
         return result

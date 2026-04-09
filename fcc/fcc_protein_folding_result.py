@@ -7,7 +7,11 @@
 """A class for the result of the protein folding problem."""
 
 from .fcc_peptide import Peptide
-from .fcc_protein_shape import ProteinShapeDecoder, ProteinShapeFileGen
+from .fcc_protein_shape import (
+    FIXED_CONFIG_QUBITS,
+    ProteinShapeDecoder,
+    ProteinShapeFileGen,
+)
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -23,17 +27,21 @@ class ProteinFoldingResult:
             problem.
             unused_qubits: The list of indices for qubits in the original
             problem formulation that were removed during compression.
-            solution_bitstring: The compact bitstring representing both the
-            configuration and interaction qubits.
+            solution_bitstring: The solution bitstring. This may be the
+            original full bitstring, the gauge-fixed bitstring, or the
+            compressed active-qubit bitstring returned after Hamiltonian
+            compression.
         """
-        self._solution_bitstring = solution_bitstring
-        self._unused_qubits = unused_qubits
+        self._raw_solution_bitstring = solution_bitstring.replace(" ", "").replace("_", "")
+        self._unused_qubits = sorted(set(unused_qubits))
         self._peptide = peptide
 
         self._protein_shape_decoder = ProteinShapeDecoder(
             peptide=self._peptide,
-            solution_bitstring=self._solution_bitstring,
+            solution_bitstring=self._raw_solution_bitstring,
+            unused_qubits=self._unused_qubits,
         )
+        self._solution_bitstring = self._protein_shape_decoder.correct_bitstring
 
         self._protein_shape_file_gen = ProteinShapeFileGen(
             peptide=self._peptide,
@@ -54,8 +62,13 @@ class ProteinFoldingResult:
 
     @property
     def solution_bitstring(self) -> str:
-        """Returns the bitstring encoding the turns of the protein."""
+        """Returns the canonical gauge-fixed bitstring for the interpreted solution."""
         return self._solution_bitstring
+
+    @property
+    def raw_solution_bitstring(self) -> str:
+        """Returns the raw bitstring provided to the result object after separator stripping."""
+        return self._raw_solution_bitstring
 
     @property
     def turn_sequence(self) -> list:
@@ -63,20 +76,33 @@ class ProteinFoldingResult:
         return self.protein_shape_decoder.turn_sequence
 
     def get_result_binary_vector(self) -> str:
-        """Returns the bitstring that encodes the solution of a protein folding
-        problem."""
-        unused_qubits = self._unused_qubits
-        result = []
-        offset = 0
-        size = len(self._solution_bitstring)
-        for i in range(size):
-            index = size - 1 - i
-            while i + offset in unused_qubits:
-                result.append("_")
-                offset += 1
-            result.append(self._solution_bitstring[index])
+        """Returns the full solution bitstring with removed qubits marked by ``_``.
 
-        return "".join(result[::-1])
+        The returned vector always matches the qubit count of the original
+        uncompressed Hamiltonian, regardless of whether this result object was
+        constructed from a compressed active-qubit bitstring, a gauge-fixed
+        bitstring, or the original full bitstring.
+        """
+        peptide_length = self._peptide.peptide_length
+        num_contact_qubits = (peptide_length**2 - 3 * peptide_length + 2) // 2
+        num_config_qubits = 4 * (peptide_length - 1)
+        total_qubits = num_contact_qubits + num_config_qubits
+
+        gauge_fixed_little_endian = self._solution_bitstring[::-1]
+        full_little_endian: list[str] = []
+        gauge_fixed_index = 0
+        for qubit_index in range(total_qubits):
+            if qubit_index in FIXED_CONFIG_QUBITS:
+                full_little_endian.append("0")
+            else:
+                full_little_endian.append(gauge_fixed_little_endian[gauge_fixed_index])
+                gauge_fixed_index += 1
+
+        rendered_little_endian = [
+            "_" if qubit_index in self._unused_qubits else bit
+            for qubit_index, bit in enumerate(full_little_endian)
+        ]
+        return "".join(rendered_little_endian[::-1])
 
     def save_xyz_file(
         self,

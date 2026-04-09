@@ -40,6 +40,11 @@ class ContactMap:
         """Returns the number of contacts calculated."""
         return self._num_contacts
 
+    @property
+    def num_qubits(self) -> int:
+        """Returns the number of interaction qubits in the contact map."""
+        return self._num_qubits
+
     def _build_contact_map(
         self,
     ) -> tuple[defaultdict[int, dict[int, SparsePauliOp]], int]:

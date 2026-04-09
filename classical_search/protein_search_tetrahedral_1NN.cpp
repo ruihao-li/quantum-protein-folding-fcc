@@ -9,11 +9,11 @@
 // Developed by: Frank DiFilippo, Nicholas DiSanto (Cleveland Clinic)
 
 #define _CRT_SECURE_NO_WARNINGS
-#define _CRT_SECURE_NO_WARNINGS
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <cstdint> // include this header for uint64_t and int64_t
+#include <cinttypes>
 #include <math.h>
 
 
@@ -53,7 +53,8 @@
 
 int main()
 {
-	int64_t index, permindex;
+	int64_t index;
+	uint64_t permindex;
 	uint64_t perm, perm_int, ilong, temp, temp2;
 	int a, b, i, j, k, kk, threadnum, threads, bitval, p, q, ctr, bitshift, collision;
 	char filename[4096];
@@ -88,6 +89,11 @@ int main()
 
 	// read in the interaction energies from .csv file
 	f = fopen("mj_matrix.csv", "r");
+	if (f == NULL)
+	{
+		fprintf(stderr, "Could not open mj_matrix.csv for reading. Run the executable from the classical_search directory.\n");
+		return 1;
+	}
 	//f = fopen("mj_matrix_1985.csv", "r");
 	//f = fopen("contactenergies_2003.csv", "r");
 	// first line is the amino acid list
@@ -108,12 +114,18 @@ int main()
 	// for each AA in the peptide, figure out its index
 	for (i = 0; i < AMINOACIDS; i++)
 	{
+		aa_index[i] = -1;
 		for (k = 0; k < 20; k++)
 		{
 			if (aa_string[i] == aa_list[k])
 			{
 				aa_index[i] = k;
 			}
+		}
+		if (aa_index[i] < 0)
+		{
+			printf("amino acid %c not found, exiting...\n\n", aa_string[i]);
+			exit(2);
 		}
 	}
 	// load up the interaction energies into the look-up matrix
@@ -388,7 +400,7 @@ int main()
 			}
 
 			printf("new best objective = %lf", objbest[threadnum]);
-			printf(", perm = %llu", permbest[threadnum]);
+			printf(", perm = %" PRIu64, permbest[threadnum]);
 			printf(", threadnum = %d\n", threadnum);
 
 		}
@@ -458,7 +470,13 @@ int main()
 			}
 		}
 	}
-	f = fopen("topobj.txt", "w");
+	sprintf(filename, "results/topobj_%s.txt", PEPTIDE);
+	f = fopen(filename, "w");
+	if (f == NULL)
+	{
+		fprintf(stderr, "Could not open %s for writing.\n", filename);
+		return 1;
+	}
 	for (i = 0; i < TOP; i++)
 	{
 		fprintf(f, "%lf\t", objtop_all[i]);
@@ -481,7 +499,7 @@ int main()
 				bitstring_config += (temp_uint64 << (2 * (k - 2)));
 				// and, the most significant bit is the lower qubit
 				temp_uint64 = turnseq_abs_top_all[k][i] / 2;
-				bitstring_config += (temp_uint64 << (2 * (k - 2)) - 1);
+				bitstring_config += (temp_uint64 << ((2 * (k - 2)) - 1));
 			}
 		}
 		else	// side chain, start with two bits
@@ -490,7 +508,7 @@ int main()
 			{
 				// LSB
 				temp_uint64 = turnseq_abs_top_all[k][i] % 2;
-				bitstring_config += (temp_uint64 << (2 * (k - 2)) + 1);
+				bitstring_config += (temp_uint64 << ((2 * (k - 2)) + 1));
 				// MSB
 				temp_uint64 = turnseq_abs_top_all[k][i] / 2;
 				bitstring_config += (temp_uint64 << (2 * (k - 2)));
@@ -516,6 +534,11 @@ int main()
 		// output the coordinates to a file
 		sprintf(filename, "top_%d_e%.3f_coord.xyz", i, objtop_all[i]);
 		g = fopen(filename, "w");
+		if (g == NULL)
+		{
+			fprintf(stderr, "Could not open %s for writing.\n", filename);
+			return 1;
+		}
 		fprintf(f, "%d\n\n", AMINOACIDS);
 		fprintf(g, "%d\n\n", AMINOACIDS);
 

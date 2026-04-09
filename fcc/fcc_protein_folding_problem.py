@@ -8,13 +8,25 @@
 
 from qiskit.quantum_info import SparsePauliOp
 from qiskit_algorithms.minimum_eigensolvers import SamplingVQEResult
-from qiskit.primitives import SamplerResult
 from .fcc_peptide import Peptide
 from .fcc_penalty_parameters import PenaltyParameters
-from .fcc_mj_interaction import MiyazawaJerniganInteraction
 from .fcc_qubit_op_builder import QubitOpBuilder
 from .fcc_protein_folding_result import ProteinFoldingResult
+from .measurement_utils import (
+    extract_counts_from_result,
+    normalize_bitstring_mapping,
+    normalize_counts,
+)
 from .utils import remove_unused_qubits
+from typing import Any, Protocol
+
+
+class InteractionModel(Protocol):
+    """Protocol for interaction models that can generate pair-energy matrices."""
+
+    def calculate_energy_matrix(self, residue_sequence: str): ...
+
+    def validate_residue_sequence(self, residue_sequence: str) -> None: ...
 
 
 class ProteinFoldingProblem:
@@ -22,20 +34,23 @@ class ProteinFoldingProblem:
     def __init__(
         self,
         peptide: Peptide,
-        interaction: MiyazawaJerniganInteraction,
+        interaction: InteractionModel,
         penalty_parameters: PenaltyParameters,
     ):
         """
         Args:
             peptide: A Peptide object that includes all information about a
             protein.
-            interaction: A Miyazawa-Jernigan interaction object that defines the
-            energy matrix.
+            interaction: An interaction model that defines the energy matrix
+            through ``calculate_energy_matrix``.
             penalty_parameters: Parameters that define the strength of
-            constraints enforcing in the problem.
+            constraints in the problem.
         """
         self._peptide = peptide
         self._interaction = interaction
+        validator = getattr(interaction, "validate_residue_sequence", None)
+        if callable(validator):
+            validator(peptide.peptide_sequence)
         self._penalty_parameters = penalty_parameters
         self._pair_energies = interaction.calculate_energy_matrix(
             peptide.peptide_sequence
@@ -45,7 +60,8 @@ class ProteinFoldingProblem:
             self._pair_energies,
             self._penalty_parameters,
         )
-        self._unused_qubits = []
+        self._unused_qubits: list[int] | None = None
+        self._reduced_qubit_op: SparsePauliOp | None = None
 
     def qubit_op(self, r2_threshold: float = 1.0, chunk: int = 20) -> SparsePauliOp:
         """
@@ -64,6 +80,7 @@ class ProteinFoldingProblem:
         qubit_op = self._qubit_op_builder.build_qubit_op(r2_threshold, chunk)
         reduced_qubit_op, unused_qubits = remove_unused_qubits(qubit_op)
         self._unused_qubits = unused_qubits
+        self._reduced_qubit_op = reduced_qubit_op
         return reduced_qubit_op
 
     def olap_constr_ops(self) -> tuple[list[tuple[int, int]], list[SparsePauliOp]]:
@@ -71,10 +88,31 @@ class ProteinFoldingProblem:
         Builds the overlap constraint operators for the protein folding problem
         on the FCC lattice that are used in the VQEC approach.
 
+        This method is only available when ``penalty_olap`` is ``None``. When a
+        finite overlap penalty is baked into the Hamiltonian, there is no
+        separate set of dualized overlap constraints to return.
+
+        Call :meth:`qubit_op` first so the overlap constraints are compressed
+        using the exact same unused-qubit map as the Hamiltonian passed to the
+        solver.
+
         Returns:
             A tuple of a list of bead pairs and a list of corresponding qubit
             operators for the overlap constraints.
+
+        Raises:
+            ValueError: If ``penalty_olap`` is not ``None``.
         """
+        if self._penalty_parameters.penalty_olap is not None:
+            raise ValueError(
+                "olap_constr_ops() is only available when penalty_olap is None. "
+                "Set penalty_olap=None to build explicit overlap constraints for VQEC."
+            )
+        if self._unused_qubits is None:
+            raise RuntimeError(
+                "Call qubit_op(...) before olap_constr_ops() so the constraint operators use the same qubit compression as the Hamiltonian."
+            )
+
         olap_constr_ops_dict = self._qubit_op_builder.build_olap_constr_ops()
         for pair in olap_constr_ops_dict:
             olap_constr_ops_dict[pair], _ = remove_unused_qubits(
@@ -84,9 +122,7 @@ class ProteinFoldingProblem:
         bead_pairs = list(olap_constr_ops_dict.keys())
         return bead_pairs, olap_constr_ops
 
-    def interpret(
-        self, raw_result: SamplingVQEResult | SamplerResult
-    ) -> ProteinFoldingResult:
+    def interpret(self, raw_result: SamplingVQEResult | Any) -> ProteinFoldingResult:
         """
         Interprets the raw algorithm result and returns a ProteinFoldingResult
         object.
@@ -97,15 +133,41 @@ class ProteinFoldingProblem:
         Returns:
             A ProteinFoldingResult object that includes the interpreted result.
         """
+        if self._unused_qubits is None or self._reduced_qubit_op is None:
+            raise RuntimeError(
+                "Call qubit_op(...) before interpret() so result decoding uses the same compressed Hamiltonian that produced the raw result."
+            )
+        num_active_qubits = self._reduced_qubit_op.num_qubits
         try:
-            best_turn_bitstring = raw_result.best_measurement["bitstring"]
-        except AttributeError:
-            prob_dist = raw_result.quasi_dists[0].binary_probabilities()
-            # Find the most probable bitstring
-            best_turn_bitstring = max(prob_dist, key=prob_dist.get)
+            best_turn_bitstring = next(
+                iter(
+                    normalize_counts(
+                        {raw_result.best_measurement["bitstring"]: 1}, num_active_qubits
+                    )
+                )
+            )
+        except (AttributeError, KeyError, TypeError):
+            if hasattr(raw_result, "quasi_dists"):
+                prob_dist = normalize_bitstring_mapping(
+                    raw_result.quasi_dists[0].binary_probabilities(), num_active_qubits
+                )
+                # Find the most probable bitstring
+                best_turn_bitstring = max(prob_dist, key=prob_dist.get)
+            else:
+                try:
+                    counts_like = extract_counts_from_result(raw_result)
+                except Exception:
+                    try:
+                        counts_like = extract_counts_from_result(raw_result[0])
+                    except Exception as exc:
+                        raise TypeError(
+                            "Unsupported result type. Expected a SamplingVQEResult, a legacy SamplerResult, or a SamplerV2 PrimitiveResult."
+                        ) from exc
+                counts = normalize_counts(counts_like, num_active_qubits)
+                best_turn_bitstring = max(counts, key=counts.get)
         return ProteinFoldingResult(
             peptide=self._peptide,
-            unused_qubits=self._unused_qubits,
+            unused_qubits=self.unused_qubits,
             solution_bitstring=best_turn_bitstring,
         )
 
@@ -113,7 +175,7 @@ class ProteinFoldingProblem:
     def unused_qubits(self) -> list[int]:
         """Returns the list of indices for qubits in the original problem
         formulation that were removed during compression."""
-        return self._unused_qubits
+        return [] if self._unused_qubits is None else self._unused_qubits
 
     @property
     def peptide(self) -> Peptide:

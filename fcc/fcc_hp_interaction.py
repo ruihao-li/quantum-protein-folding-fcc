@@ -52,8 +52,8 @@ def _validate_residue_sequence(residue_sequence: str):
         residue_sequence: A list or a string that contains characters defining
         residues for a chain of proteins.
 
-    Throws:
-        InvalidResidueException: If an illegal residue character is discovered.
+    Raises:
+        ValueError: If an illegal residue character is discovered.
     """
     for residue_symbol in residue_sequence:
         _validate_residue_symbol(residue_symbol)
@@ -62,13 +62,13 @@ def _validate_residue_sequence(residue_sequence: str):
 def _validate_residue_symbol(residue_symbol: str):
     """
     Checks if the provided residue character is legal ('H' or 'P').
-    If not, an InvalidResidueException is thrown.
+    If not, a ValueError is raised.
 
     Args:
         residue_symbol: symbol of a residue.
 
     Raises:
-        InvalidResidueException: if a symbol provided is not legal.
+        ValueError: If a symbol provided is not legal.
     """
     valid_residues = [
         "H",  # Hydrophobic
@@ -91,6 +91,10 @@ class HPInteraction:
         """
         self.energy_matrix_file = energy_matrix_file
 
+    def validate_residue_sequence(self, residue_sequence: str) -> None:
+        """Validate that the sequence matches the HP residue alphabet."""
+        _validate_residue_sequence(residue_sequence)
+
     def calculate_energy_matrix(self, residue_sequence: str) -> np.ndarray:
         """
         Calculates an energy matrix for an HP interaction based on
@@ -104,7 +108,7 @@ class HPInteraction:
             Numpy array of pair energies for residues.
         """
         chain_len = len(residue_sequence)
-        _validate_residue_sequence(residue_sequence)
+        self.validate_residue_sequence(residue_sequence)
         hp_interaction, list_residues = _load_energy_matrix_file(
             self.energy_matrix_file
         )

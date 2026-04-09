@@ -7,8 +7,22 @@
 """Builds Pauli operators of a given size."""
 
 from qiskit.quantum_info import SparsePauliOp, PauliList
-from qiskit._accelerate.sparse_pauli_op import unordered_unique
 import numpy as np
+
+
+def _unordered_unique_rows(array: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Return the indices of the unique rows and the inverse mapping without relying on Qiskit internals.
+
+    The previous implementation imported ``unordered_unique`` from
+    ``qiskit._accelerate``, which is a private module and therefore not part of
+    Qiskit's public compatibility surface.  This helper uses a structured
+    array view so row uniqueness stays stable across Qiskit releases.
+    """
+    contiguous = np.ascontiguousarray(array)
+    row_dtype = np.dtype((np.void, contiguous.dtype.itemsize * contiguous.shape[1]))
+    row_view = contiguous.view(row_dtype).ravel()
+    _, indices, inverse = np.unique(row_view, return_index=True, return_inverse=True)
+    return indices, inverse
 
 
 def build_full_identity(num_qubits: int) -> SparsePauliOp:
@@ -56,7 +70,7 @@ def build_pauli_z_op(num_qubits: int, pauli_z_indices: set[int]) -> SparsePauliO
 def fix_qubits(operator: SparsePauliOp | int) -> SparsePauliOp | int:
     """
     Assigns predefined values for turn qubits on positions 0, 1, 2, 3, 6, 7 in
-    the FCC chain without the loss of generality. Qubits on these positions are
+    the FCC chain without loss of generality. Qubits on these positions are
     considered fixed and not subject to optimization. Note that qubits at these
     positions are fixed to 0, which is equivalent to setting Z_i to identity
     operator.
@@ -96,6 +110,10 @@ def _find_unused_qubits(operator: SparsePauliOp) -> list[int]:
     Finds indices of qubits in a given operator that are equal to an identity
     operator across all terms, i.e., they are irrelevant for the problem.
 
+    A qubit is considered *used* if any term contains a non-identity Pauli on
+    that position, regardless of whether it appears through the X or Z
+    symplectic table.
+
     Args:
         operator: An operator whose unused qubits shall be removed, e.g., full
         Hamiltonian for the protein folding problem.
@@ -110,8 +128,9 @@ def _find_unused_qubits(operator: SparsePauliOp) -> list[int]:
     # Construct a map of used qubits
     for term in operator:
         table_z = term.paulis.z[0]
+        table_x = term.paulis.x[0]
         for i in range(num_qubits):
-            if table_z[i]:
+            if table_z[i] or table_x[i]:
                 used_map[i] = True
 
     for i in range(num_qubits):
@@ -170,7 +189,6 @@ def _compress_sparse_pauli_op(
     for term in operator:
         table_z = term.paulis.z[0]
         table_x = term.paulis.x[0]
-        coeffs = term.coeffs[0]
         new_table_z, new_table_x = _calc_reduced_pauli_tables(
             num_qubits, table_x, table_z, unused_qubits
         )
@@ -185,7 +203,7 @@ def _compress_sparse_pauli_op(
 
 
 def remove_unused_qubits(
-    operator: SparsePauliOp, unused_qubit_indices: list[int] = None
+    operator: SparsePauliOp, unused_qubit_indices: list[int] | None = None
 ) -> tuple[SparsePauliOp, list[int]]:
     """
     Removes qubits in a given operator that are equal to an identity operator
@@ -203,15 +221,16 @@ def remove_unused_qubits(
         indices of qubits in the original operator that were unused as
         optimization variables.
     """
+    if not isinstance(operator, SparsePauliOp):
+        raise TypeError("operator must be a SparsePauliOp.")
+
     if unused_qubit_indices is None:
         unused_qubits = _find_unused_qubits(operator)
     else:
         unused_qubits = unused_qubit_indices
-    if isinstance(operator, SparsePauliOp):
-        operator_compressed = _compress_sparse_pauli_op(operator, unused_qubits)
-        return operator_compressed, unused_qubits
-    else:
-        return None, None
+
+    operator_compressed = _compress_sparse_pauli_op(operator, unused_qubits)
+    return operator_compressed, unused_qubits
 
 
 def compose_IZ_ops(op_1: SparsePauliOp, op_2: SparsePauliOp) -> SparsePauliOp:
@@ -225,7 +244,8 @@ def compose_IZ_ops(op_1: SparsePauliOp, op_2: SparsePauliOp) -> SparsePauliOp:
     Returns:
         SparsePauliOp representing the composed operator.
     """
-    assert op_1.num_qubits == op_2.num_qubits, "Mismatched number of qubits"
+    if op_1.num_qubits != op_2.num_qubits:
+        raise ValueError("Mismatched number of qubits.")
     num_qubits = op_1.num_qubits
 
     # Combine Z terms: XOR for Z locations, AND for phase calculation (not needed)
@@ -239,7 +259,7 @@ def compose_IZ_ops(op_1: SparsePauliOp, op_2: SparsePauliOp) -> SparsePauliOp:
     # Simplify the pauli op here
     array = np.packbits(z_combined, axis=1).astype(np.uint16)
     # Find unique Pauli terms
-    indices, inverses = unordered_unique(array)
+    indices, inverses = _unordered_unique_rows(array)
 
     if indices.shape[0] == array.shape[0]:
         # No duplicate operator

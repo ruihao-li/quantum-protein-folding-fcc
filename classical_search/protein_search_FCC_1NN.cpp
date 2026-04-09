@@ -14,6 +14,7 @@
 #include <stdio.h>
 // #include <cstdint> // include this header for uint64_t and int64_t
 #include <stdint.h>
+#include <inttypes.h>
 #include <math.h>
 
 
@@ -76,7 +77,8 @@
 
 int main()
 {
-	int64_t index, permindex;
+	int64_t index;
+	uint64_t permindex;
 	uint64_t perm, perm_int, ilong, temp, temp2;
 	int a, b, i, j, k, kk, threadnum, threads, bitval, p, q, ctr, bitshift, collision, backtrack;
 	char filename[4096];
@@ -113,7 +115,7 @@ int main()
 
 
 	// FCC lattice step lookup
-	// This might not the most optimal ordering,
+	// This might not be the most optimal ordering,
 	// But importantly, the second half is the inverse of the first half
 	step_lookup[0] = 1;		step_lookup[1] = 1;		step_lookup[2] = 0;
 	step_lookup[3] = -1;	step_lookup[4] = 1;		step_lookup[5] = 0;
@@ -132,6 +134,11 @@ int main()
 
 	// read in the interaction energies from .csv file
 	f = fopen("mj_matrix.csv", "r");
+	if (f == NULL)
+	{
+		fprintf(stderr, "Could not open mj_matrix.csv for reading. Run the executable from the classical_search directory.\n");
+		return 1;
+	}
 	//f = fopen("mj_matrix_1985.csv", "r");
 	//f = fopen("contactenergies_2003.csv", "r");
 	// first line is the amino acid list
@@ -411,7 +418,7 @@ int main()
 			}
 
 			printf("new best objective = %lf", objbest[threadnum]);
-			printf(", perm = %llu", permbest[threadnum]);
+			printf(", perm = %" PRIu64, permbest[threadnum]);
 			printf(", threadnum = %d\n", threadnum);
 
 		}
@@ -481,7 +488,13 @@ int main()
 			}
 		}
 	}
-	f = fopen("topobj.txt", "w");
+	sprintf(filename, "results/topobj_%s.txt", PEPTIDE);
+	f = fopen(filename, "w");
+	if (f == NULL)
+	{
+		fprintf(stderr, "Could not open %s for writing.\n", filename);
+		return 1;
+	}
 	for (i = 0; i < TOP; i++)
 	{
 		fprintf(f, "%lf\t", objtop_all[i]);

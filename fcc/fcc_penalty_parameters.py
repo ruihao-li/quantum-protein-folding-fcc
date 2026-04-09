@@ -13,7 +13,7 @@ class PenaltyParameters:
         self,
         penalty_back: float = 10.0,
         penalty_redun: float = 10.0,
-        penalty_olap: float = None,
+        penalty_olap: float | None = None,
     ):
         """
         Args:
@@ -44,7 +44,7 @@ class PenaltyParameters:
         return self._penalty_redun
 
     @property
-    def penalty_olap(self) -> float:
+    def penalty_olap(self) -> float | None:
         """Returns a penalty parameter used to penalize long-range overlaps
         using higher-order polynomials."""
         return self._penalty_olap

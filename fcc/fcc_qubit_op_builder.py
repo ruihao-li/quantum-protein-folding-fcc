@@ -18,7 +18,6 @@ from .utils import (
     fix_qubits,
     compose_IZ_ops,
 )
-import time
 
 
 class QubitOpBuilder:
@@ -33,7 +32,7 @@ class QubitOpBuilder:
         Args:
             peptide: A Peptide object that includes all information about a protein.
             pair_energies: A matrix of pair energies between beads.
-            penalty_parameters: Parameters that define the strength of constraints enforcing in the problem.
+            penalty_parameters: Parameters that define the strength of constraints in the problem.
         """
         self._peptide = peptide
         self._peptide_length = peptide.peptide_length
@@ -41,8 +40,8 @@ class QubitOpBuilder:
         self._penalty_parameters = penalty_parameters
         self._contact_map = ContactMap(peptide)
         self._distance_map = DistanceMap(peptide)
-        self._num_config_qubits = self._distance_map._num_qubits
-        self._num_contact_qubits = self._contact_map._num_qubits
+        self._num_config_qubits = self._distance_map.num_qubits
+        self._num_contact_qubits = self._contact_map.num_qubits
 
     def build_qubit_op(self, r2_threshold: float, chunk: int = 20) -> SparsePauliOp:
         """
@@ -58,7 +57,13 @@ class QubitOpBuilder:
         Returns:
             A qubit operator for the full Hamiltonian encoding a protein folding
             problem.
+
+        Raises:
+            ValueError: If ``chunk`` is not a positive integer.
         """
+        if chunk <= 0:
+            raise ValueError("chunk must be a positive integer.")
+
         contact_id = build_full_identity(self._num_contact_qubits)
         h_back = self._create_h_back()
         if h_back != 0:
@@ -83,7 +88,15 @@ class QubitOpBuilder:
         Returns:
             A dictionary containing the indices of bead pairs as keys and the
             corresponding qubit operators as values.
+
+        Raises:
+            ValueError: If a polynomial overlap penalty is already enabled.
         """
+        if self._penalty_parameters.penalty_olap is not None:
+            raise ValueError(
+                "Overlap constraints for VQEC are only available when penalty_olap is None."
+            )
+
         contact_id = build_full_identity(self._num_contact_qubits)
         olap_constraints = self._create_olap_constraints()
         for key in olap_constraints:
@@ -204,7 +217,13 @@ class QubitOpBuilder:
 
         Returns:
             The composed qubit operator.
+
+        Raises:
+            ValueError: If ``chunk`` is not a positive integer.
         """
+        if chunk <= 0:
+            raise ValueError("chunk must be a positive integer.")
+
         final_op = 0
 
         for i in range(0, op2.size, chunk):
@@ -241,6 +260,9 @@ class QubitOpBuilder:
         Returns:
             A qubit operator for the H_olap term.
         """
+        if not 0 < r2_threshold <= 1:
+            raise ValueError("r2_threshold must be in the interval (0, 1].")
+
         penalty_olap = self._penalty_parameters.penalty_olap
         if penalty_olap is None:
             return 0
@@ -251,7 +273,6 @@ class QubitOpBuilder:
                 i + 3, self._peptide_length
             ):  # overlap cannot happen within 3 beads on FCC lattice
                 dist_op = self._distance_map[(i, j)]
-                print(f"Beads {i} and {j} -- dist_op size: {dist_op.size}")
                 # Perform Chebyshev fit to approximate the penalty function
                 x = np.arange(0, 2 * (j - i) ** 2 + 1, 2)  # x = D_{ij}
                 y = [penalty_olap] + [0] * (len(x) - 1)
@@ -275,9 +296,7 @@ class QubitOpBuilder:
                     if k == 1:
                         h_op = dist_op.simplify()
                     else:
-                        tic = time.time()
                         h_op = self._compose_in_chunks(h_op, dist_op, chunk)
-                        toc = time.time()
                         # print(f"Time taken to do composition @ k = {k}: {toc - tic}")
                     # print(f"h_op size @ k = {k}: {h_op.size}")
                     h_olap = SparsePauliOp.sum(
@@ -287,8 +306,8 @@ class QubitOpBuilder:
 
     def _create_h_contact(self) -> SparsePauliOp:
         """
-        Creates qubit operators for the H_contact term for first nearest
-        neighbor interactions.
+        Creates qubit operators for the H_contact term for nearest-neighbor
+        interactions.
 
         Returns:
             A qubit operator for the H_contact term.
@@ -322,7 +341,7 @@ class QubitOpBuilder:
         for i in range(self._peptide_length - 3):
             for j in range(i + 3, self._peptide_length):
                 dist_op = self._distance_map[(i, j)]
-                olap_constraints[(i, j)] = (
-                    2 * build_full_identity(self._num_config_qubits) - dist_op
-                ).simplify()
-        return fix_qubits(olap_constraints)
+                olap_constraints[(i, j)] = fix_qubits(
+                    (2 * build_full_identity(self._num_config_qubits) - dist_op).simplify()
+                )
+        return olap_constraints
