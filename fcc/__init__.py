@@ -10,7 +10,20 @@ from .fcc_peptide import Peptide
 from .fcc_penalty_parameters import PenaltyParameters
 from .fcc_mj_interaction import MiyazawaJerniganInteraction
 from .fcc_solver import ProteinSolver
-from .fcc_protein_shape import ProteinShapeDecoder, ProteinShapeFileGen
+from .fcc_protein_shape import (
+    ProteinShapeDecoder,
+    ProteinShapeFileGen,
+    compact_turn_qubit_count,
+    decode_compact_turn_bitstring,
+    noncovalent_residue_pairs,
+    turn_sequence_to_lattice_positions,
+)
+from .fcc_turn_only_model import (
+    TurnOnlyBitstringBatch,
+    TurnOnlyBitstringEvaluation,
+    TurnOnlyFCCModel,
+    build_turn_only_fcc_model,
+)
 
 __all__ = [
     "ProteinFoldingProblem",
@@ -21,4 +34,12 @@ __all__ = [
     "ProteinSolver",
     "ProteinShapeDecoder",
     "ProteinShapeFileGen",
+    "compact_turn_qubit_count",
+    "decode_compact_turn_bitstring",
+    "noncovalent_residue_pairs",
+    "turn_sequence_to_lattice_positions",
+    "TurnOnlyBitstringBatch",
+    "TurnOnlyBitstringEvaluation",
+    "TurnOnlyFCCModel",
+    "build_turn_only_fcc_model",
 ]

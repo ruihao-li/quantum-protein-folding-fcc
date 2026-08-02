@@ -73,6 +73,51 @@ class PerturbedPrimalDualOpt:
             self._estimator.run([(circuit, observable, params)]).result()[0].data.evs[0]
         )
 
+    def _evaluate_primitives(self, params: np.ndarray) -> tuple[float, np.ndarray]:
+        """Evaluate the objective and constraint residuals at ``params``.
+
+        Subclasses may override this hook for fixed diagonal quantities that
+        are evaluated from computational-basis samples.
+        """
+
+        objective = self.get_expectation(self._ansatz, self._qubit_op, params)
+        constraints = np.asarray(
+            [
+                self.get_expectation(self._ansatz, constr_op, params)
+                for constr_op in self._constr_ops
+            ],
+            dtype=float,
+        )
+        return float(objective), constraints
+
+    def _evaluate_gradients(
+        self, params: np.ndarray
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """Evaluate objective and constraint gradients at ``params``."""
+
+        objective_gradient = np.asarray(
+            self._gradient.run(
+                circuits=self._ansatz,
+                observables=self._qubit_op,
+                parameter_values=params,
+            )
+            .result()
+            .gradients
+        )
+        constraint_gradients = np.asarray(
+            [
+                self._gradient.run(
+                    circuits=self._ansatz,
+                    observables=constr_op,
+                    parameter_values=params,
+                )
+                .result()
+                .gradients
+                for constr_op in self._constr_ops
+            ]
+        )
+        return objective_gradient, constraint_gradients
+
     def optimize_primal_dual(
         self,
         initial_params: np.ndarray | None = None,
@@ -121,40 +166,16 @@ class PerturbedPrimalDualOpt:
         unperturbed_primal_vars = np.array([initial_params])
         unperturbed_dual_vars = initial_dual_vars
 
-        energies = [
-            self.get_expectation(self._ansatz, self._qubit_op, unperturbed_primal_vars)
-        ]
-        constraints = [
-            [
-                self.get_expectation(self._ansatz, constr_op, unperturbed_primal_vars)
-                for constr_op in self._constr_ops
-            ]
-        ]
+        initial_energy, initial_constraints = self._evaluate_primitives(
+            unperturbed_primal_vars
+        )
+        energies = [initial_energy]
+        constraints = [initial_constraints.tolist()]
         update_step_history = []
         for i in tqdm(range(max_iter)):
             # Compute gradients for the objective and constraint operators
-            obj_grad = np.array(
-                (
-                    self._gradient.run(
-                        circuits=self._ansatz,
-                        observables=self._qubit_op,
-                        parameter_values=unperturbed_primal_vars,
-                    )
-                    .result()
-                    .gradients
-                )
-            )
-            constr_grads = np.array(
-                [
-                    self._gradient.run(
-                        circuits=self._ansatz,
-                        observables=constr_op,
-                        parameter_values=unperturbed_primal_vars,
-                    )
-                    .result()
-                    .gradients
-                    for constr_op in self._constr_ops
-                ]
+            obj_grad, constr_grads = self._evaluate_gradients(
+                unperturbed_primal_vars
             )
 
             # Compute the perturbed primal variables
@@ -195,16 +216,11 @@ class PerturbedPrimalDualOpt:
                 )
                 # Compute the Lagrangian at perturbed primal variables
                 # First compute the expectation of the objective and constraint operators with the perturbed primal variables
-                obj_exp_perturbed_primal = self.get_expectation(
-                    self._ansatz, self._qubit_op, perturbed_primal_vars
-                )
-                constr_exp_perturbed_primal = np.array(
-                    [
-                        self.get_expectation(
-                            self._ansatz, constr_op, perturbed_primal_vars
-                        )
-                        for constr_op in self._constr_ops
-                    ]
+                (
+                    obj_exp_perturbed_primal,
+                    constr_exp_perturbed_primal,
+                ) = self._evaluate_primitives(
+                    perturbed_primal_vars
                 )
                 lagrangian_perturbed_primal = (
                     obj_exp_perturbed_primal
@@ -236,13 +252,8 @@ class PerturbedPrimalDualOpt:
                     obj_grad + (perturbed_dual_vars * constr_grads.T).T.sum(axis=0)
                 )
                 # d_\lambda = \nabla_\lambda L(\tilde{\theta}, \lambda)
-                constr_exp_perturbed_primal = np.array(
-                    [
-                        self.get_expectation(
-                            self._ansatz, constr_op, perturbed_primal_vars
-                        )
-                        for constr_op in self._constr_ops
-                    ]
+                _, constr_exp_perturbed_primal = self._evaluate_primitives(
+                    perturbed_primal_vars
                 )
                 grad_dual = constr_exp_perturbed_primal
                 step_size = gamma * 0.99**i
@@ -266,15 +277,11 @@ class PerturbedPrimalDualOpt:
             )
 
             # Compute expectation values with updated primal variables
-            energies.append(
-                self.get_expectation(self._ansatz, self._qubit_op, updated_primal_vars)
+            updated_energy, updated_constraints = self._evaluate_primitives(
+                updated_primal_vars
             )
-            constraints.append(
-                [
-                    self.get_expectation(self._ansatz, constr_op, updated_primal_vars)
-                    for constr_op in self._constr_ops
-                ]
-            )
+            energies.append(updated_energy)
+            constraints.append(updated_constraints.tolist())
 
             # Check for convergence
             tol = 1e-5

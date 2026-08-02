@@ -17,6 +17,7 @@ from .utils import (
     build_full_identity,
     fix_qubits,
     compose_IZ_ops,
+    remove_unused_qubits,
 )
 import time
 
@@ -28,21 +29,35 @@ class QubitOpBuilder:
         peptide: Peptide,
         pair_energies: np.ndarray,
         penalty_parameters: PenaltyParameters,
+        *,
+        build_geometry_maps: bool = True,
     ):
         """
         Args:
             peptide: A Peptide object that includes all information about a protein.
             pair_energies: A matrix of pair energies between beads.
             penalty_parameters: Parameters that define the strength of constraints enforcing in the problem.
+            build_geometry_maps: Whether to construct the symbolic distance and
+                contact maps eagerly. The turn-only path disables this.
         """
         self._peptide = peptide
         self._peptide_length = peptide.peptide_length
         self._pair_energies = pair_energies
         self._penalty_parameters = penalty_parameters
-        self._contact_map = ContactMap(peptide)
-        self._distance_map = DistanceMap(peptide)
-        self._num_config_qubits = self._distance_map._num_qubits
-        self._num_contact_qubits = self._contact_map._num_qubits
+        self._contact_map = ContactMap(peptide) if build_geometry_maps else None
+        self._distance_map = DistanceMap(peptide) if build_geometry_maps else None
+        self._num_config_qubits = 4 * (self._peptide_length - 1)
+        self._num_contact_qubits = (
+            self._peptide_length**2 - 3 * self._peptide_length + 2
+        ) // 2
+
+    def _ensure_geometry_maps(self) -> None:
+        """Construct the legacy symbolic geometry maps on first use."""
+
+        if self._contact_map is None:
+            self._contact_map = ContactMap(self._peptide)
+        if self._distance_map is None:
+            self._distance_map = DistanceMap(self._peptide)
 
     def build_qubit_op(self, r2_threshold: float, chunk: int = 20) -> SparsePauliOp:
         """
@@ -59,6 +74,7 @@ class QubitOpBuilder:
             A qubit operator for the full Hamiltonian encoding a protein folding
             problem.
         """
+        self._ensure_geometry_maps()
         contact_id = build_full_identity(self._num_contact_qubits)
         h_back = self._create_h_back()
         if h_back != 0:
@@ -84,11 +100,38 @@ class QubitOpBuilder:
             A dictionary containing the indices of bead pairs as keys and the
             corresponding qubit operators as values.
         """
+        self._ensure_geometry_maps()
         contact_id = build_full_identity(self._num_contact_qubits)
         olap_constraints = self._create_olap_constraints()
         for key in olap_constraints:
             olap_constraints[key] = contact_id ^ olap_constraints[key]
         return olap_constraints
+
+    def build_turn_penalty_ops(self) -> tuple[SparsePauliOp, SparsePauliOp]:
+        """Return compact backtracking and redundant-code Hamiltonians.
+
+        The six symmetry-fixed turn qubits are removed without constructing
+        distance maps, contact maps, interaction ancillas, or overlap fits.
+        """
+
+        if self._peptide_length < 3:
+            raise ValueError(
+                "Compact FCC turn Hamiltonians require at least three residues"
+            )
+        compact_qubits = 4 * self._peptide_length - 10
+        fixed_qubits = [0, 1, 2, 3, 6, 7]
+        zero = SparsePauliOp(
+            "I" * compact_qubits, coeffs=np.asarray([0.0], dtype=complex)
+        )
+
+        compact_ops = []
+        for operator in (self._create_h_back(), self._create_h_redun()):
+            if not isinstance(operator, SparsePauliOp):
+                compact_ops.append(zero)
+                continue
+            compact, _ = remove_unused_qubits(operator, fixed_qubits)
+            compact_ops.append(compact.simplify())
+        return compact_ops[0], compact_ops[1]
 
     def _create_turn_operator(
         self, lower_bead_idx: int, upper_bead_idx: int
