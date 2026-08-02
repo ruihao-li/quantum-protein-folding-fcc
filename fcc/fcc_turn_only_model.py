@@ -38,17 +38,51 @@ class PairInteraction(Protocol):
     """Structural type for residue-pair interaction models."""
 
     def calculate_energy_matrix(self, residue_sequence: str) -> np.ndarray:
-        """Return a residue-pair energy matrix."""
+        """
+        Computes the residue-pair interaction energy matrix.
+
+        Args:
+            residue_sequence: Amino-acid sequence of the peptide.
+
+        Returns:
+            A square interaction-energy matrix indexed by residue pair.
+        """
 
 
 def _read_only(values: np.ndarray) -> np.ndarray:
+    """
+    Marks an array as read-only.
+
+    Args:
+        values: Array whose write flag should be disabled.
+
+    Returns:
+        The same array with write access disabled.
+    """
+
     values.setflags(write=False)
     return values
 
 
 @dataclass(frozen=True)
 class TurnOnlyBitstringEvaluation:
-    """Objective decomposition and indicators for one compact bitstring."""
+    """
+    Stores the objective decomposition and indicators for one compact bitstring.
+
+    Args:
+        bitstring: Canonical compact turn bitstring.
+        turn_sequence: Decoded FCC turn indices.
+        positions: Integer FCC coordinates for all residues.
+        squared_distances: Squared distances for all noncovalent residue pairs.
+        contact_indicators: Contact indicators for the noncovalent pairs.
+        overlap_indicators: Exact-overlap indicators for constrained pairs.
+        backtracking_energy: Value of the backtracking penalty.
+        redundancy_energy: Value of the unused-code penalty.
+        contact_energy: Sum of pair energies for exact FCC contacts.
+        objective: Total turn-only objective value.
+        physical_encoding: Whether every turn code represents an FCC direction.
+        fully_valid: Whether the encoding is physical and self-avoiding.
+    """
 
     bitstring: str
     turn_sequence: tuple[int | None, ...]
@@ -65,14 +99,33 @@ class TurnOnlyBitstringEvaluation:
 
     @property
     def any_overlap(self) -> bool:
-        """Whether any configured residue pair overlaps."""
+        """
+        Returns:
+            ``True`` if any configured residue pair overlaps exactly.
+        """
 
         return bool(np.any(self.overlap_indicators))
 
 
 @dataclass(frozen=True)
 class TurnOnlyBitstringBatch:
-    """Vectorized evaluations for a caller-supplied bitstring collection."""
+    """
+    Stores vectorized evaluations for a supplied bitstring collection.
+
+    Args:
+        bitstrings: Canonical compact turn bitstrings.
+        turn_sequences: Decoded FCC turn indices for each bitstring.
+        positions: Integer FCC coordinates for each bitstring.
+        squared_distances: Squared noncovalent-pair distances for each bitstring.
+        contact_indicators: Contact indicators for each bitstring.
+        overlap_indicators: Exact-overlap indicators for each bitstring.
+        backtracking_energies: Backtracking penalties for each bitstring.
+        redundancy_energies: Unused-code penalties for each bitstring.
+        contact_energies: Contact energies for each bitstring.
+        objectives: Total objective values for each bitstring.
+        physical_mask: Mask identifying physical FCC encodings.
+        valid_mask: Mask identifying physical, self-avoiding encodings.
+    """
 
     bitstrings: tuple[str, ...]
     turn_sequences: tuple[tuple[int | None, ...], ...]
@@ -89,7 +142,11 @@ class TurnOnlyBitstringBatch:
 
     @property
     def any_overlap_mask(self) -> np.ndarray:
-        """Return a read-only joint-overlap indicator for each bitstring."""
+        """
+        Returns:
+            A read-only Boolean array indicating whether each bitstring has any
+            configured exact overlap.
+        """
 
         if self.overlap_indicators.shape[1] == 0:
             values = np.zeros(len(self.bitstrings), dtype=bool)
@@ -105,6 +162,20 @@ class TurnOnlyFCCModel:
     Bitstrings use Qiskit's displayed most-significant-bit-first order. Unused
     four-bit turn codes receive zero displacement and remain in the sampled
     domain, where ``H_redun`` penalizes them. Samples are never postselected.
+
+    Args:
+        sequence: Amino-acid sequence represented by the model.
+        num_qubits: Number of compact FCC turn qubits.
+        turn_qubit_blocks: Compact qubit indices associated with each turn.
+        noncovalent_pairs: Residue pairs eligible for interaction scoring.
+        constrained_pairs: Residue pairs with exact-overlap chance constraints.
+        constrained_pair_indices: Locations of constrained pairs in
+            ``noncovalent_pairs``.
+        pair_energies: Interaction energy for each noncovalent pair.
+        backtracking_hamiltonian: Compact backtracking penalty Hamiltonian.
+        redundancy_hamiltonian: Compact unused-code penalty Hamiltonian.
+        objective_scale: Positive divisor used to condition sampled objective
+            expectations.
     """
 
     sequence: str
@@ -120,40 +191,111 @@ class TurnOnlyFCCModel:
 
     @property
     def peptide_length(self) -> int:
-        """Number of residues in the modeled peptide."""
+        """
+        Returns:
+            The number of residues in the modeled peptide.
+        """
 
         return len(self.sequence)
 
     @property
     def constraint_count(self) -> int:
-        """Number of pairwise exact-overlap chance constraints."""
+        """
+        Returns:
+            The number of pairwise exact-overlap chance constraints.
+        """
 
         return len(self.constrained_pairs)
 
     def evaluate_bitstring(self, bitstring: str) -> TurnOnlyBitstringEvaluation:
-        """Score one compact turn bitstring."""
+        """
+        Scores one compact turn bitstring.
+
+        Args:
+            bitstring: Compact FCC turn bitstring in Qiskit's displayed order.
+
+        Returns:
+            The objective decomposition, geometry, and indicators for the
+            bitstring.
+
+        Raises:
+            TypeError: If ``bitstring`` is not a string.
+            ValueError: If the bitstring has an invalid length or character.
+        """
 
         return self._evaluate_bitstring(self._validated_bitstring(bitstring))
 
     def objective_value(self, bitstring: str) -> float:
-        """Return ``H_back + H_redun + E_int`` for one bitstring."""
+        """
+        Computes ``H_back + H_redun + E_int`` for one bitstring.
+
+        Args:
+            bitstring: Compact FCC turn bitstring in Qiskit's displayed order.
+
+        Returns:
+            The total unscaled turn-only objective value.
+
+        Raises:
+            TypeError: If ``bitstring`` is not a string.
+            ValueError: If the bitstring has an invalid length or character.
+        """
 
         return self.evaluate_bitstring(bitstring).objective
 
     def contact_indicator_values(self, bitstring: str) -> np.ndarray:
-        """Return ``1[D_mn == 2]`` for all objective contact pairs."""
+        """
+        Computes ``1[D_mn == 2]`` for all objective contact pairs.
+
+        Args:
+            bitstring: Compact FCC turn bitstring in Qiskit's displayed order.
+
+        Returns:
+            A read-only Boolean contact-indicator array ordered according to
+            ``noncovalent_pairs``.
+
+        Raises:
+            TypeError: If ``bitstring`` is not a string.
+            ValueError: If the bitstring has an invalid length or character.
+        """
 
         return self.evaluate_bitstring(bitstring).contact_indicators
 
     def overlap_indicator_values(self, bitstring: str) -> np.ndarray:
-        """Return ``1[D_mn == 0]`` for configured chance constraints."""
+        """
+        Computes ``1[D_mn == 0]`` for configured chance constraints.
+
+        Args:
+            bitstring: Compact FCC turn bitstring in Qiskit's displayed order.
+
+        Returns:
+            A read-only Boolean overlap-indicator array ordered according to
+            ``constrained_pairs``.
+
+        Raises:
+            TypeError: If ``bitstring`` is not a string.
+            ValueError: If the bitstring has an invalid length or character.
+        """
 
         return self.evaluate_bitstring(bitstring).overlap_indicators
 
     def evaluate_bitstrings(
         self, bitstrings: Iterable[str]
     ) -> TurnOnlyBitstringBatch:
-        """Score a finite bitstring collection, preserving order and duplicates."""
+        """
+        Scores a finite bitstring collection, preserving order and duplicates.
+
+        Args:
+            bitstrings: Compact FCC turn bitstrings in Qiskit's displayed order.
+
+        Returns:
+            A vectorized batch containing objective decompositions, geometries,
+            and indicators.
+
+        Raises:
+            TypeError: If any bitstring is not a string.
+            ValueError: If the collection is empty or any bitstring has an
+                invalid length or character.
+        """
 
         keys = tuple(self._validated_bitstring(value) for value in bitstrings)
         if not keys:
@@ -193,7 +335,21 @@ class TurnOnlyFCCModel:
         )
 
     def bitstring_primitive_values(self, bitstrings: Iterable[str]) -> np.ndarray:
-        """Return normalized objective and overlap indicators per bitstring."""
+        """
+        Computes normalized objective and overlap primitives per bitstring.
+
+        Args:
+            bitstrings: Compact FCC turn bitstrings in Qiskit's displayed order.
+
+        Returns:
+            A read-only array whose first column is the normalized objective
+            and whose remaining columns are constrained-pair overlap indicators.
+
+        Raises:
+            TypeError: If any bitstring is not a string.
+            ValueError: If the collection is empty or any bitstring has an
+                invalid length or character.
+        """
 
         batch = self.evaluate_bitstrings(bitstrings)
         values = np.column_stack(
@@ -209,7 +365,24 @@ class TurnOnlyFCCModel:
         counts: Mapping[str, int | float]
         | Sequence[Mapping[str, int | float]],
     ) -> np.ndarray:
-        """Return sampled objective and overlap-probability expectations."""
+        """
+        Computes sampled objective and overlap-probability expectations.
+
+        Args:
+            counts: One counts mapping or a sequence of counts mappings. Keys
+                are compact bitstrings and values are nonnegative sample
+                weights.
+
+        Returns:
+            An array with one row per counts mapping. The first column contains
+            normalized objective expectations and the remaining columns contain
+            constrained-pair overlap probabilities.
+
+        Raises:
+            TypeError: If a bitstring key is not a string.
+            ValueError: If no counts mapping is supplied, a mapping is empty,
+                a bitstring is invalid, or a sample weight is invalid.
+        """
 
         mappings = (counts,) if isinstance(counts, Mapping) else tuple(counts)
         if not mappings:
@@ -224,13 +397,42 @@ class TurnOnlyFCCModel:
     def counts_distribution(
         self, counts: Mapping[str, int | float]
     ) -> tuple[tuple[str, ...], np.ndarray, float]:
-        """Return canonical keys, probabilities, and total sample weight."""
+        """
+        Normalizes a counts mapping without filtering encoded states.
+
+        Args:
+            counts: Mapping from compact bitstrings to nonnegative sample
+                weights.
+
+        Returns:
+            A tuple containing canonical bitstring keys, their read-only
+            probabilities, and the total input sample weight.
+
+        Raises:
+            TypeError: If a bitstring key is not a string.
+            ValueError: If the mapping is empty, a bitstring is invalid, or a
+                sample weight is invalid.
+        """
 
         keys, weights = self._validated_counts(counts)
         total = float(weights.sum())
         return keys, _read_only(weights / total), total
 
     def _validated_bitstring(self, bitstring: str) -> str:
+        """
+        Validates and canonicalizes one compact turn bitstring.
+
+        Args:
+            bitstring: Compact turn bitstring, optionally containing spaces.
+
+        Returns:
+            The validated bitstring with spaces removed.
+
+        Raises:
+            TypeError: If ``bitstring`` is not a string.
+            ValueError: If the bitstring has an invalid length or character.
+        """
+
         if not isinstance(bitstring, str):
             raise TypeError("Compact turn bitstrings must be strings")
         value = bitstring.replace(" ", "")
@@ -245,6 +447,22 @@ class TurnOnlyFCCModel:
     def _validated_counts(
         self, counts: Mapping[str, int | float]
     ) -> tuple[tuple[str, ...], np.ndarray]:
+        """
+        Validates a counts mapping and merges canonical duplicate keys.
+
+        Args:
+            counts: Mapping from compact bitstrings to sample weights.
+
+        Returns:
+            A tuple containing canonical bitstring keys and their positive
+            sample weights.
+
+        Raises:
+            TypeError: If a bitstring key is not a string.
+            ValueError: If the mapping is empty, a bitstring is invalid, a
+                weight is negative or nonfinite, or the total weight is zero.
+        """
+
         if not isinstance(counts, Mapping) or not counts:
             raise ValueError("Counts must be a nonempty mapping")
         merged: dict[str, float] = {}
@@ -262,6 +480,21 @@ class TurnOnlyFCCModel:
 
     @lru_cache(maxsize=32768)
     def _evaluate_bitstring(self, bitstring: str) -> TurnOnlyBitstringEvaluation:
+        """
+        Evaluates one previously validated compact turn bitstring.
+
+        Args:
+            bitstring: Canonical compact FCC turn bitstring.
+
+        Returns:
+            The objective decomposition, geometry, and indicators for the
+            bitstring.
+
+        Raises:
+            ValueError: If the compact penalty Hamiltonians cannot be evaluated
+                as real diagonal operators on the bitstring.
+        """
+
         turns = decode_compact_turn_bitstring(bitstring, self.peptide_length)
         positions = turn_sequence_to_lattice_positions(
             turns, invalid_turns_as_zero=True
@@ -305,7 +538,21 @@ class TurnOnlyFCCModel:
 
 
 def _diagonal_pauli_value(operator: SparsePauliOp, bitstring: str) -> float:
-    """Evaluate an I/Z operator on a basis bitstring without a statevector."""
+    """
+    Evaluates an I/Z operator on a basis bitstring without a statevector.
+
+    Args:
+        operator: Diagonal Pauli operator to evaluate.
+        bitstring: Computational-basis bitstring in Qiskit's displayed order.
+
+    Returns:
+        The real diagonal value of the operator on the basis state.
+
+    Raises:
+        ValueError: If the operator and bitstring sizes differ, the operator
+            contains an X component, or the result has a nonnegligible
+            imaginary component.
+    """
 
     if operator.num_qubits != len(bitstring):
         raise ValueError("Hamiltonian and bitstring qubit counts differ")
@@ -325,6 +572,19 @@ def _diagonal_pauli_value(operator: SparsePauliOp, bitstring: str) -> float:
 
 
 def _sequence_value(peptide: Peptide | str) -> str:
+    """
+    Extracts and validates a peptide sequence.
+
+    Args:
+        peptide: Existing peptide object or amino-acid sequence.
+
+    Returns:
+        The amino-acid sequence represented as a string.
+
+    Raises:
+        ValueError: If the sequence contains fewer than three residues.
+    """
+
     sequence = (
         peptide.peptide_sequence if isinstance(peptide, Peptide) else str(peptide)
     )
@@ -336,6 +596,21 @@ def _sequence_value(peptide: Peptide | str) -> str:
 def _validated_pairs(
     pairs: Iterable[tuple[int, int]], peptide_length: int
 ) -> tuple[tuple[int, int], ...]:
+    """
+    Validates a caller-supplied noncovalent residue-pair collection.
+
+    Args:
+        pairs: Residue-index pairs to validate.
+        peptide_length: Number of residues in the peptide.
+
+    Returns:
+        The validated pairs as an immutable tuple.
+
+    Raises:
+        ValueError: If pairs are duplicated, out of range, not ascending, or
+            separated by fewer than two sequence positions.
+    """
+
     result = tuple((int(lower), int(upper)) for lower, upper in pairs)
     if len(set(result)) != len(result):
         raise ValueError("Residue-pair list contains duplicates")
@@ -359,12 +634,35 @@ def build_turn_only_fcc_model(
     constrained_pairs: Iterable[tuple[int, int]] | None = None,
     objective_scale: float = DEFAULT_OBJECTIVE_SCALE,
 ) -> TurnOnlyFCCModel:
-    """Build a turn-only sample scorer for a peptide.
+    """
+    Builds a turn-only sample scorer for a peptide.
 
     The raw objective is ``H_back + H_redun + sum(epsilon_mn * 1[D_mn == 2])``.
     Chance primitives are the distinct indicators ``1[D_mn == 0]``. No
     contact ancilla, contact Hamiltonian, statevector, or basis enumeration is
     constructed.
+
+    Args:
+        peptide: Existing peptide object or amino-acid sequence.
+        interaction: Interaction model used to compute residue-pair energies.
+            The Miyazawa-Jernigan model is used by default.
+        penalty_parameters: Existing penalty configuration. Package defaults
+            are used when this argument is omitted.
+        interaction_multiplier: Finite multiplier applied to each pair energy.
+        constrained_pairs: Explicit noncovalent pairs with exact-overlap chance
+            constraints. By default, all pairs separated by at least three
+            sequence positions are used.
+        objective_scale: Positive divisor used to condition sampled objective
+            expectations.
+
+    Returns:
+        A compact FCC model for direct bitstring and counts-based scoring.
+
+    Raises:
+        ValueError: If the sequence, model parameters, constrained pairs,
+            or interaction matrix is invalid.
+        RuntimeError: If a compact penalty Hamiltonian has an unexpected qubit
+            count.
     """
 
     sequence = _sequence_value(peptide)

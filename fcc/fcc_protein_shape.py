@@ -58,7 +58,18 @@ TURN_INDEX_TO_LABEL = tuple("0123456789ab")
 
 
 def compact_turn_qubit_count(peptide_length: int) -> int:
-    """Return the compact FCC register size ``4N - 10``."""
+    """
+    Computes the compact FCC turn-register size ``4N - 10``.
+
+    Args:
+        peptide_length: Number of residues in the peptide.
+
+    Returns:
+        The number of compact FCC turn qubits.
+
+    Raises:
+        ValueError: If the peptide contains fewer than three residues.
+    """
 
     length = int(peptide_length)
     if length < 3:
@@ -67,7 +78,18 @@ def compact_turn_qubit_count(peptide_length: int) -> int:
 
 
 def compact_turn_qubit_blocks(peptide_length: int) -> tuple[tuple[int, ...], ...]:
-    """Return the compact qubit blocks associated with unfixed turn codes."""
+    """
+    Builds the compact qubit blocks associated with unfixed turn codes.
+
+    Args:
+        peptide_length: Number of residues in the peptide.
+
+    Returns:
+        A tuple containing the compact qubit indices for each encoded turn.
+
+    Raises:
+        ValueError: If the peptide contains fewer than three residues.
+    """
 
     num_qubits = compact_turn_qubit_count(peptide_length)
     blocks = [tuple(range(0, min(2, num_qubits)))]
@@ -79,7 +101,20 @@ def compact_turn_qubit_blocks(peptide_length: int) -> tuple[tuple[int, ...], ...
 
 
 def bitstring_to_turn_sequence(bitstring: str) -> tuple[int | None, ...]:
-    """Decode a full turn bitstring in Qiskit's displayed bit order."""
+    """
+    Decodes a full turn bitstring in Qiskit's displayed bit order.
+
+    Args:
+        bitstring: A bitstring containing four bits for each FCC turn.
+
+    Returns:
+        The decoded turn indices. Unused four-bit codes are represented by
+        ``None``.
+
+    Raises:
+        ValueError: If the bitstring length is not divisible by four or the
+            bitstring contains characters other than zero and one.
+    """
 
     if len(bitstring) % 4:
         raise ValueError("A full turn bitstring must contain four bits per turn")
@@ -95,7 +130,22 @@ def bitstring_to_turn_sequence(bitstring: str) -> tuple[int | None, ...]:
 def decode_compact_turn_bitstring(
     compact_bitstring: str, peptide_length: int
 ) -> tuple[int | None, ...]:
-    """Decode a compact configuration bitstring into physical turn order."""
+    """
+    Decodes a compact configuration bitstring into physical turn order.
+
+    Args:
+        compact_bitstring: Compact FCC turn bitstring in Qiskit's displayed bit
+            order.
+        peptide_length: Number of residues in the peptide.
+
+    Returns:
+        The decoded turn indices, including the symmetry-fixed turns. Unused
+        four-bit codes are represented by ``None``.
+
+    Raises:
+        ValueError: If the peptide is too short or the compact bitstring has an
+            invalid length or character.
+    """
 
     expected = compact_turn_qubit_count(peptide_length)
     if len(compact_bitstring) != expected:
@@ -113,7 +163,21 @@ def decode_compact_turn_bitstring(
 def decode_compact_turn_index(
     index: int, peptide_length: int
 ) -> tuple[int | None, ...]:
-    """Decode a compact-register basis index into physical turn order."""
+    """
+    Decodes a compact-register basis index into physical turn order.
+
+    Args:
+        index: Computational-basis index of the compact register.
+        peptide_length: Number of residues in the peptide.
+
+    Returns:
+        The decoded turn indices, including the symmetry-fixed turns. Unused
+        four-bit codes are represented by ``None``.
+
+    Raises:
+        ValueError: If the peptide is too short or the index lies outside
+        the compact-register basis.
+    """
 
     num_qubits = compact_turn_qubit_count(peptide_length)
     configuration_index = int(index)
@@ -129,7 +193,19 @@ def decode_compact_turn_index(
 def format_turn_sequence(
     turn_sequence: Iterable[int | None], *, reverse: bool = False
 ) -> str:
-    """Format turn indices with hexadecimal labels and ``x`` for unused codes."""
+    """
+    Formats turn indices with hexadecimal labels and ``x`` for unused codes.
+
+    Args:
+        turn_sequence: FCC turn indices to format.
+        reverse: Whether to reverse the sequence before formatting.
+
+    Returns:
+        A compact string representation of the turn sequence.
+
+    Raises:
+        ValueError: If a turn index is outside the FCC direction range.
+    """
 
     turns = tuple(turn_sequence)
     if reverse:
@@ -148,7 +224,22 @@ def format_turn_sequence(
 def turn_sequence_to_lattice_positions(
     turn_sequence: Sequence[int | None], *, invalid_turns_as_zero: bool = False
 ) -> np.ndarray:
-    """Return unscaled integer FCC coordinates for a turn sequence."""
+    """
+    Computes unscaled integer FCC coordinates for a turn sequence.
+
+    Args:
+        turn_sequence: FCC turn indices in physical chain order.
+        invalid_turns_as_zero: Whether unused turn codes should produce zero
+            displacement instead of raising an exception.
+
+    Returns:
+        An array of shape ``(len(turn_sequence) + 1, 3)`` containing the
+        residue coordinates.
+
+    Raises:
+        ValueError: If the sequence contains an unknown turn index, or an
+        unused code when ``invalid_turns_as_zero`` is ``False``.
+    """
 
     positions = np.zeros((len(turn_sequence) + 1, 3), dtype=np.int16)
     for index, turn in enumerate(turn_sequence):
@@ -167,7 +258,20 @@ def turn_sequence_to_lattice_positions(
 def noncovalent_residue_pairs(
     peptide_length: int, *, minimum_separation: int = 2
 ) -> tuple[tuple[int, int], ...]:
-    """Return ordered residue pairs separated by at least the given amount."""
+    """
+    Builds ordered residue pairs separated by at least the given amount.
+
+    Args:
+        peptide_length: Number of residues in the peptide.
+        minimum_separation: Minimum separation between residue indices.
+
+    Returns:
+        A tuple of residue-index pairs in ascending lexicographic order.
+
+    Raises:
+        ValueError: If ``peptide_length`` or ``minimum_separation`` is not
+        positive.
+    """
 
     length = int(peptide_length)
     separation = int(minimum_separation)
@@ -183,7 +287,18 @@ def noncovalent_residue_pairs(
 
 
 def _compact_bitstring_from_turn_sequence(turn_sequence: Sequence[int]) -> str:
-    """Encode turns without validating compact-register symmetry choices."""
+    """
+    Encodes turns without validating compact-register symmetry choices.
+
+    Args:
+        turn_sequence: FCC turn indices in physical chain order.
+
+    Returns:
+        The compact configuration bitstring in Qiskit's displayed bit order.
+
+    Raises:
+        ValueError: If the sequence contains an invalid FCC turn index.
+    """
 
     try:
         full_bitstring = "".join(TURN_INDEX_TO_BITS[int(turn)] for turn in turn_sequence)
@@ -195,7 +310,19 @@ def _compact_bitstring_from_turn_sequence(turn_sequence: Sequence[int]) -> str:
 
 
 def turn_sequence_to_compact_bitstring(turn_sequence: Sequence[int]) -> str:
-    """Encode a symmetry-compatible physical turn sequence compactly."""
+    """
+    Encodes a symmetry-compatible physical turn sequence compactly.
+
+    Args:
+        turn_sequence: FCC turn indices in physical chain order.
+
+    Returns:
+        The compact configuration bitstring in Qiskit's displayed bit order.
+
+    Raises:
+        ValueError: If a turn index is invalid or the sequence conflicts
+        with the compact encoding's symmetry-fixed bits.
+    """
 
     turns = tuple(int(turn) for turn in turn_sequence)
     compact_bitstring = _compact_bitstring_from_turn_sequence(turns)
@@ -208,7 +335,15 @@ def turn_sequence_to_compact_bitstring(turn_sequence: Sequence[int]) -> str:
 
 
 def turn_sequence_to_compact_index(turn_sequence: Sequence[int]) -> int:
-    """Return the basis index for a symmetry-compatible turn sequence."""
+    """
+    Computes the basis index for a symmetry-compatible turn sequence.
+
+    Args:
+        turn_sequence: FCC turn indices in physical chain order.
+
+    Returns:
+        The corresponding compact-register computational-basis index.
+    """
 
     return int(turn_sequence_to_compact_bitstring(turn_sequence), 2)
 
@@ -261,6 +396,7 @@ class ProteinShapeDecoder:
 
         Args:
             bitstring: string containing the encoded shape information.
+
         Returns:
             A list of integers decoding the bitstring.
         """
@@ -322,8 +458,8 @@ class ProteinShapeFileGen:
 
         Raises:
             ValueError: If the turn sequence contains None values.
-            ValueError: If the length of the turn sequence does not match the
-            length of the peptide.
+            ValueError: If the length of the turn sequence does not match
+            the length of the peptide.
         """
         self._peptide = peptide
         self._peptide_length = peptide.peptide_length

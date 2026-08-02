@@ -78,6 +78,13 @@ class PerturbedPrimalDualOpt:
 
         Subclasses may override this hook for fixed diagonal quantities that
         are evaluated from computational-basis samples.
+
+        Args:
+            params: Parameters of the quantum circuit.
+
+        Returns:
+            A tuple containing the objective expectation and an array of
+            constraint expectations.
         """
 
         objective = self.get_expectation(self._ansatz, self._qubit_op, params)
@@ -93,7 +100,16 @@ class PerturbedPrimalDualOpt:
     def _evaluate_gradients(
         self, params: np.ndarray
     ) -> tuple[np.ndarray, np.ndarray]:
-        """Evaluate objective and constraint gradients at ``params``."""
+        """
+        Evaluates objective and constraint gradients at ``params``.
+
+        Args:
+            params: Parameters of the quantum circuit.
+
+        Returns:
+            A tuple containing the objective gradient and the constraint
+            gradients.
+        """
 
         objective_gradient = np.asarray(
             self._gradient.run(

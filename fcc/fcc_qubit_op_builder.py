@@ -108,10 +108,18 @@ class QubitOpBuilder:
         return olap_constraints
 
     def build_turn_penalty_ops(self) -> tuple[SparsePauliOp, SparsePauliOp]:
-        """Return compact backtracking and redundant-code Hamiltonians.
+        """
+        Builds compact backtracking and redundant-code Hamiltonians.
 
         The six symmetry-fixed turn qubits are removed without constructing
         distance maps, contact maps, interaction ancillas, or overlap fits.
+
+        Returns:
+            A tuple containing the compact backtracking Hamiltonian
+            followed by the compact redundant-code Hamiltonian.
+
+        Raises:
+            ValueError: If the peptide contains fewer than three residues.
         """
 
         if self._peptide_length < 3:

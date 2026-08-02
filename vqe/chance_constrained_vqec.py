@@ -31,23 +31,35 @@ class SampledChanceConstrainedProblem(Protocol):
 
     @property
     def constraint_count(self) -> int:
-        """Return the number of pairwise violation primitives."""
+        """
+        Returns:
+            The number of pairwise violation primitives.
+        """
 
     def primitive_values(
         self,
         counts: Mapping[str, int | float]
         | Sequence[Mapping[str, int | float]],
     ) -> np.ndarray:
-        """Return objective and violation expectations for each counts mapping."""
+        """
+        Computes objective and violation expectations from sampled counts.
+
+        Args:
+            counts: One counts mapping or a sequence of counts mappings.
+
+        Returns:
+            An array containing one objective and the pairwise violation
+            expectations for each counts mapping.
+        """
 
 
 class ChanceConstrainedVQEC(PerturbedPrimalDualOpt):
     """Run the existing PDP equations on sample-scored diagonal primitives.
 
     The ansatz must be an unmeasured circuit whose parameters each obey the
-    standard ``+/- pi/2`` shift rule, such as a decomposed ``RealAmplitudes``
-    circuit. Every sampled bitstring is passed to the problem without filtering
-    or postselection.
+    standard ``+/- pi/2`` shift rule, such as a decomposed
+    ``RealAmplitudes`` circuit. Every sampled bitstring is passed to the
+    problem without filtering or postselection.
     """
 
     def __init__(
@@ -59,6 +71,23 @@ class ChanceConstrainedVQEC(PerturbedPrimalDualOpt):
         constraint_limits: Sequence[float] | np.ndarray,
         shots: int = DEFAULT_SHOTS,
     ) -> None:
+        """
+        Args:
+            problem: Sample-scored diagonal objective and constraint problem.
+            ansatz: Unmeasured parameterized circuit acting on the compact turn
+                register.
+            sampler: SamplerV2 implementation used to obtain basis-state counts.
+            constraint_limits: One overlap-probability limit for each problem
+                constraint, in the problem's constraint order.
+            shots: Positive number of samples used for every circuit execution.
+
+        Raises:
+            TypeError: If the ansatz is not a quantum circuit or the sampler
+                does not provide the SamplerV2 run interface.
+            ValueError: If the ansatz, limits, shot count, or objective scale is
+                incompatible with the sampled problem.
+        """
+
         if not isinstance(ansatz, QuantumCircuit):
             raise TypeError("ansatz must be a QuantumCircuit")
         if ansatz.num_qubits != int(problem.num_qubits):
@@ -108,7 +137,21 @@ class ChanceConstrainedVQEC(PerturbedPrimalDualOpt):
     def shifted_parameters(
         self, parameters: np.ndarray, *, shift: float = PARAMETER_SHIFT
     ) -> np.ndarray:
-        """Return batched plus/minus shifts in circuit-parameter order."""
+        """
+        Builds batched plus/minus shifts in circuit-parameter order.
+
+        Args:
+            parameters: One complete ansatz parameter vector.
+            shift: Finite shift applied once in each direction per parameter.
+
+        Returns:
+            An array containing all positive shifts followed by all negative
+            shifts.
+
+        Raises:
+            ValueError: If the parameter vector has an invalid shape or value,
+                or if ``shift`` is nonfinite.
+        """
 
         values = self._parameter_vector(parameters)
         shift_value = float(shift)
@@ -124,7 +167,21 @@ class ChanceConstrainedVQEC(PerturbedPrimalDualOpt):
     def sample_counts(
         self, parameters: np.ndarray
     ) -> tuple[Mapping[str, int], ...]:
-        """Sample one parameter vector or a batch using SamplerV2."""
+        """
+        Samples one parameter vector or a batch using SamplerV2.
+
+        Args:
+            parameters: One parameter vector or a two-dimensional batch of
+                parameter vectors.
+
+        Returns:
+            A tuple containing one unfiltered compact-bitstring counts mapping
+            per parameter vector.
+
+        Raises:
+            ValueError: If the parameter batch is invalid or the sampler result
+                has an unexpected register, result count, or shot total.
+        """
 
         batch = np.atleast_2d(np.asarray(parameters, dtype=float))
         if batch.shape[1:] != (self._ansatz.num_parameters,):
@@ -158,18 +215,60 @@ class ChanceConstrainedVQEC(PerturbedPrimalDualOpt):
         return tuple(sampled)
 
     def primitive_values(self, parameters: np.ndarray) -> np.ndarray:
-        """Sample and return normalized objective plus overlap probabilities."""
+        """
+        Samples normalized objective and overlap-probability primitives.
+
+        Args:
+            parameters: One parameter vector or a two-dimensional batch of
+                parameter vectors.
+
+        Returns:
+            An array whose first column contains normalized objective
+            expectations and whose remaining columns contain overlap
+            probabilities.
+
+        Raises:
+            ValueError: If the parameter batch, sampler result, or problem
+                primitive array is invalid.
+        """
 
         return self._primitive_rows(self.sample_counts(parameters))
 
     def primitive_gradients(self, parameters: np.ndarray) -> np.ndarray:
-        """Estimate all primitive gradients with the parameter-shift rule."""
+        """
+        Estimates all primitive gradients with the parameter-shift rule.
+
+        Args:
+            parameters: One complete ansatz parameter vector.
+
+        Returns:
+            An array with one row per primitive and one column per ansatz
+            parameter.
+
+        Raises:
+            ValueError: If the parameters, sampler result, or problem primitive
+                array is invalid.
+        """
 
         primitives = self.primitive_values(self.shifted_parameters(parameters))
         count = self._ansatz.num_parameters
         return 0.5 * (primitives[:count] - primitives[count:]).T
 
     def _evaluate_primitives(self, params: np.ndarray) -> tuple[float, np.ndarray]:
+        """
+        Evaluates the PDP objective and chance-constraint residuals.
+
+        Args:
+            params: One complete ansatz parameter vector.
+
+        Returns:
+            A tuple containing the normalized objective expectation and the
+            overlap probabilities after subtracting their constraint limits.
+
+        Raises:
+            ValueError: If the parameters or sampled primitives are invalid.
+        """
+
         primitive = self.primitive_values(self._parameter_vector(params))[0]
         residuals = primitive[1:] - self.constraint_limits
         return float(primitive[0]), residuals
@@ -177,12 +276,41 @@ class ChanceConstrainedVQEC(PerturbedPrimalDualOpt):
     def _evaluate_gradients(
         self, params: np.ndarray
     ) -> tuple[np.ndarray, np.ndarray]:
+        """
+        Evaluates objective and constraint gradients for the PDP update.
+
+        Args:
+            params: One complete ansatz parameter vector.
+
+        Returns:
+            A tuple containing the objective gradient with shape
+            ``(1, num_parameters)`` and the constraint gradients with shape
+            ``(num_constraints, 1, num_parameters)``.
+
+        Raises:
+            ValueError: If the parameters or sampled primitives are invalid.
+        """
+
         gradients = self.primitive_gradients(self._parameter_vector(params))
         objective_gradient = gradients[0][None, :]
         constraint_gradients = gradients[1:, None, :]
         return objective_gradient, constraint_gradients
 
     def _parameter_vector(self, parameters: np.ndarray) -> np.ndarray:
+        """
+        Validates and flattens one complete ansatz parameter vector.
+
+        Args:
+            parameters: Candidate one-dimensional vector or one-row array.
+
+        Returns:
+            A one-dimensional finite parameter vector.
+
+        Raises:
+            ValueError: If the parameters have an invalid shape or contain a
+                nonfinite value.
+        """
+
         values = np.asarray(parameters, dtype=float)
         if values.shape == (1, self._ansatz.num_parameters):
             values = values[0]
@@ -197,6 +325,20 @@ class ChanceConstrainedVQEC(PerturbedPrimalDualOpt):
     def _primitive_rows(
         self, counts: Sequence[Mapping[str, int | float]]
     ) -> np.ndarray:
+        """
+        Validates problem primitive rows for a sampled counts batch.
+
+        Args:
+            counts: Sequence of compact-bitstring counts mappings.
+
+        Returns:
+            A finite primitive array with one row per counts mapping.
+
+        Raises:
+            ValueError: If the problem returns an array with an unexpected
+                shape or a nonfinite value.
+        """
+
         values = np.asarray(self.problem.primitive_values(counts), dtype=float)
         expected = (len(counts), 1 + int(self.problem.constraint_count))
         if values.shape != expected or not np.isfinite(values).all():
