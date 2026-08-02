@@ -1,4 +1,8 @@
 include workflow_demo.ipynb
+include CHANGELOG.md
+include requirements.txt
+include docs/migration/RELEASE_NOTES_v1.1.0.md
+recursive-include tests *.py
 recursive-include fcc/potentials *.txt
 recursive-include classical_search *
 global-exclude .DS_Store

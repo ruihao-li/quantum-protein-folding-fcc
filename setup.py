@@ -29,7 +29,7 @@ def collect_data_files(
 
 setup(
     name="quantum-protein-folding-fcc",
-    version="0.1.0",
+    version="1.1.0",
     description="A project for quantum protein folding using FCC lattice models.",
     author="The Cleveland Clinic and IBM Team",
     author_email="lir9@ccf.org, raubenb@ccf.org, hakandoga@ibm.com, saki@ibm.com, difilif@ccf.org, radivot@gmail.com, blanked2@ccf.org",
