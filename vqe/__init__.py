@@ -5,8 +5,14 @@
 #     http://www.apache.org/licenses/LICENSE-2.0
 
 from .vqec_optimization import PerturbedPrimalDualOpt, OptimisticGDAOpt
+from .chance_constrained_vqec import (
+    ChanceConstrainedVQEC,
+    SampledChanceConstrainedProblem,
+)
 
 __all__ = [
     "PerturbedPrimalDualOpt",
     "OptimisticGDAOpt",
+    "ChanceConstrainedVQEC",
+    "SampledChanceConstrainedProblem",
 ]
