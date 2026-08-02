@@ -11,8 +11,52 @@ This repository contains the core functionality for performing protein structure
 
 - The original code is built on the tetrahedral lattice, while this implementation is adapted for the face-centered cubic (FCC) lattice, and can be easily extended to other lattices.
 - The `qubit_op_builder` module contains some key differences due to a different formulation of the Hamiltonian for the FCC lattice.
-- We include two ways to enforce the non-overlapping constraint without invoking slack variables: the polynomial fit and Lagrangian duality methods.
+- We include two ways to enforce the non-overlapping constraint without invoking slack variables: the polynomial fit method and a turn-only, chance-constrained VQEC method based on Lagrangian duality.
 - In the polynomial fit approach, we use the Sampler primitive. This allows us to accelerate the energy computations with parallelization using [Ray](https://docs.ray.io/en/latest/index.html) and record the best solutions throughout the optimization process.
+
+---
+
+## Turn-only chance-constrained VQEC
+
+The revised VQEC path uses only the compact FCC turn register,
+`4 * len(sequence) - 10` qubits. Interaction energies are scored directly from
+decoded lattice geometry when `D_mn == 2`; pairwise chance constraints bound
+the sampled probability of exact overlap, `D_mn == 0`. Contact ancillas and
+optimizer-side postselection are not used.
+
+```python
+import numpy as np
+from qiskit.circuit.library import RealAmplitudes
+from qiskit_aer.primitives import SamplerV2 as Sampler
+
+from fcc import build_turn_only_fcc_model
+from vqe import ChanceConstrainedVQEC
+
+model = build_turn_only_fcc_model("KLVFFA")
+ansatz = RealAmplitudes(
+    model.num_qubits, reps=1, entanglement="linear"
+).decompose()
+
+# One explicit overlap-probability limit for each model.constrained_pairs item.
+delta_mn = np.full(model.constraint_count, 0.01)
+solver = ChanceConstrainedVQEC(
+    model,
+    ansatz,
+    Sampler(default_shots=8192, seed=7),
+    constraint_limits=delta_mn,
+    shots=8192,
+)
+result = solver.optimize_primal_dual(
+    initial_dual_vars=np.zeros(model.constraint_count),
+    max_iter=100,
+)
+```
+
+The historical `ProteinFoldingProblem.qubit_op()` plus
+`olap_constr_ops()` estimator workflow remains available for compatibility,
+but it constrains expected distance expressions rather than pairwise overlap
+probabilities. See the VQEC section of `workflow_demo.ipynb` for the revised
+API.
 
 ---
 
