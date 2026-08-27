@@ -12,7 +12,7 @@ from qiskit_algorithms.gradients import ParamShiftEstimatorGradient
 
 from fcc.fcc_protein_folding_problem import ProteinFoldingProblem
 from fcc.utils import compose_IZ_ops
-from vqe import OptimisticGDAOpt, PerturbedPrimalDualOpt
+from vqe import ChanceConstrainedVQEC, OptimisticGDAOpt, PerturbedPrimalDualOpt
 
 
 class _MeasurementData:
@@ -69,6 +69,29 @@ class Qiskit2CompatibilityTests(unittest.TestCase):
             self.assertAlmostEqual(
                 optimizer.get_expectation(ansatz, observable, parameters), 1.0
             )
+
+    def test_chance_vqec_accepts_separate_sampling_circuit(self) -> None:
+        class Problem:
+            num_qubits = 2
+            objective_scale = 1.0
+            constraint_count = 1
+
+        class Sampler:
+            def run(self, *args, **kwargs):  # pragma: no cover - not submitted
+                raise AssertionError("constructor test must not submit")
+
+        ansatz = real_amplitudes(2, reps=1)
+        sampling_circuit = ansatz.copy()
+        sampling_circuit.measure_all()
+        solver = ChanceConstrainedVQEC(
+            Problem(),
+            ansatz,
+            Sampler(),
+            constraint_limits=[0.01],
+            shots=100,
+            sampling_circuit=sampling_circuit,
+        )
+        self.assertIs(solver._measured_ansatz, sampling_circuit)
 
 
 if __name__ == "__main__":

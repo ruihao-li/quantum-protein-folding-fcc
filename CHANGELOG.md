@@ -18,10 +18,14 @@ All notable user-facing changes to this project are documented here.
   Python multiprocessing.
 - Relax exact dependency pins while retaining NumPy 1.x compatibility for the
   broader scientific Python stack.
-- Add an opt-in, low-shot IBM Runtime SamplerV2 hardware smoke test to the
-  workflow notebook.
+- Add full simulator and IBM Runtime hardware execution modes for both notebook
+  workflows, with separate QPU refinement budgets.
 - Consolidate all simulator, optimizer, parallelizer, random-seed, and hardware
   settings into a self-contained notebook configuration cell.
+- Save simulator-optimized PolyFit and VQEC parameters and dual variables to a
+  validated warm-start file for subsequent hardware refinement.
+- Allow chance-constrained VQEC to keep a logical ansatz separate from its
+  measured, transpiled hardware sampling circuit.
 
 ### Compatibility
 

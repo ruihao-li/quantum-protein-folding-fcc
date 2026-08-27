@@ -70,6 +70,7 @@ class ChanceConstrainedVQEC(PerturbedPrimalDualOpt):
         *,
         constraint_limits: Sequence[float] | np.ndarray,
         shots: int = DEFAULT_SHOTS,
+        sampling_circuit: QuantumCircuit | None = None,
     ) -> None:
         """
         Args:
@@ -80,6 +81,9 @@ class ChanceConstrainedVQEC(PerturbedPrimalDualOpt):
             constraint_limits: One overlap-probability limit for each problem
                 constraint, in the problem's constraint order.
             shots: Positive number of samples used for every circuit execution.
+            sampling_circuit: Optional measured, transpiled circuit submitted to
+                the sampler. Its parameters must match ``ansatz``. This allows
+                a logical ansatz to remain separate from a hardware ISA circuit.
 
         Raises:
             TypeError: If the ansatz is not a quantum circuit or the sampler
@@ -124,8 +128,21 @@ class ChanceConstrainedVQEC(PerturbedPrimalDualOpt):
         self.shots = shot_count
         self._sampler = sampler
         self._ansatz = ansatz
-        self._measured_ansatz = ansatz.copy()
-        self._measured_ansatz.measure_all()
+        if sampling_circuit is None:
+            self._measured_ansatz = ansatz.copy()
+            self._measured_ansatz.measure_all()
+        else:
+            if not isinstance(sampling_circuit, QuantumCircuit):
+                raise TypeError("sampling_circuit must be a QuantumCircuit")
+            if sampling_circuit.num_clbits < problem.num_qubits:
+                raise ValueError(
+                    "sampling_circuit must measure every logical problem qubit"
+                )
+            if set(sampling_circuit.parameters) != set(ansatz.parameters):
+                raise ValueError(
+                    "sampling_circuit and ansatz must contain the same parameters"
+                )
+            self._measured_ansatz = sampling_circuit
 
         # The parent update loop uses only the ansatz parameter count and the
         # constraint collection length once these two hooks are overridden.

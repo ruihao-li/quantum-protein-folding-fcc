@@ -87,11 +87,18 @@ The package supports Qiskit 2.0 through 2.4. Qiskit 2.5 requires NumPy 2,
 while this release retains NumPy 1.x compatibility for the broader scientific
 Python stack used by the workflow.
 
-The notebook contains a single configuration cell for simulator, optimizer,
-parallelization, reproducibility, and hardware settings. Set `RUN_HARDWARE =
-True` there to enable the opt-in IBM Quantum smoke test. Set `HARDWARE_BACKEND`
-to choose a specific backend; `None` selects the least-busy operational QPU
-with at least three qubits.
+The notebook contains a single, extensively commented configuration cell for
+simulator, optimizer, parallelization, reproducibility, warm-start, and hardware
+settings. `EXECUTION_MODE = "simulator"` runs both workflows locally and saves
+their optimized parameters. Change it to `"hardware"` to load those parameters
+and refine both workflows on an IBM QPU. Separate hardware iteration budgets
+limit QPU use. Set `HARDWARE_BACKEND` to choose a backend; `None` selects the
+least-busy operational QPU with enough qubits.
+
+Warm starts are stored in `fcc_warm_start.npz` by default. The notebook checks
+the protein sequence, logical qubit count, ansatz depth, constraint count, and
+parameter-vector sizes before using saved values, preventing an incompatible
+simulator result from being submitted to hardware.
 
 ---
 
