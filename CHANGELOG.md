@@ -15,11 +15,13 @@ All notable user-facing changes to this project are documented here.
   folding results.
 - Make Ray an optional `ray` installation extra and import it only when the Ray
   parallelizer is selected. The workflow notebook now defaults to portable
-  Python multiprocessing and enables Ray through `FCC_PARALLELIZER=ray`.
+  Python multiprocessing.
 - Relax exact dependency pins while retaining NumPy 1.x compatibility for the
   broader scientific Python stack.
 - Add an opt-in, low-shot IBM Runtime SamplerV2 hardware smoke test to the
   workflow notebook.
+- Consolidate all simulator, optimizer, parallelizer, random-seed, and hardware
+  settings into a self-contained notebook configuration cell.
 
 ### Compatibility
 
