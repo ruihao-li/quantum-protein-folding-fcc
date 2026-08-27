@@ -7,6 +7,8 @@ All notable user-facing changes to this project are documented here.
 ### Changed
 
 - Support Qiskit 2.0 through 2.4 using SamplerV2 and EstimatorV2 public APIs.
+- Install Qiskit IBM Runtime 0.44 with the core dependencies so the notebook's
+  hardware execution mode works after a standalone project installation.
 - Replace the deprecated `RealAmplitudes` class with `real_amplitudes()` in the
   workflow, examples, and tests.
 - Replace the private `qiskit._accelerate` dependency with NumPy-based Pauli
