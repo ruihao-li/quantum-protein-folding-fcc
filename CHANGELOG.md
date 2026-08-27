@@ -21,6 +21,7 @@ All notable user-facing changes to this project are documented here.
   Windows, avoiding repeated process-spawn overhead on those platforms.
 - Require NumPy 2.x for compatibility with the shared QBioCode and Qiskit
   Machine Learning environment.
+- Retain psutil 5.x compatibility with Galaxy's Jupyter resource monitor.
 - Add full simulator and IBM Runtime hardware execution modes for both notebook
   workflows, with separate QPU refinement budgets.
 - Consolidate all simulator, optimizer, parallelizer, random-seed, and hardware
