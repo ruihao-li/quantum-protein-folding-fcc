@@ -75,6 +75,8 @@ API.
    ```bash
    pip install -e ".[ray]"
    ```
+   The workflow uses portable Python multiprocessing by default. Launch it
+   with `FCC_PARALLELIZER=ray` to opt into Ray acceleration.
 3. [Optional] Run the workflow demo notebook to see how it works:
    ```bash
    jupyter notebook workflow_demo.ipynb
@@ -83,6 +85,16 @@ API.
 The package supports Qiskit 2.0 through 2.4. Qiskit 2.5 requires NumPy 2,
 while this release retains NumPy 1.x compatibility for the broader scientific
 Python stack used by the workflow.
+
+The notebook's IBM Quantum hardware smoke test is opt-in and submits one small
+SamplerV2 job using the saved account:
+
+```bash
+FCC_RUN_HARDWARE=1 FCC_HARDWARE_SHOTS=100 jupyter notebook workflow_demo.ipynb
+```
+
+Set `FCC_BACKEND` to choose a specific backend; otherwise the least-busy
+operational QPU with at least three qubits is selected.
 
 ---
 
