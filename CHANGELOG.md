@@ -19,8 +19,8 @@ All notable user-facing changes to this project are documented here.
   parallelizer is selected. The workflow notebook now defaults to an adaptive
   policy: Python multiprocessing on Linux and serial evaluation on macOS or
   Windows, avoiding repeated process-spawn overhead on those platforms.
-- Relax exact dependency pins while retaining NumPy 1.x compatibility for the
-  broader scientific Python stack.
+- Require NumPy 2.x for compatibility with the shared QBioCode and Qiskit
+  Machine Learning environment.
 - Add full simulator and IBM Runtime hardware execution modes for both notebook
   workflows, with separate QPU refinement budgets.
 - Consolidate all simulator, optimizer, parallelizer, random-seed, and hardware
@@ -32,8 +32,8 @@ All notable user-facing changes to this project are documented here.
 
 ### Compatibility
 
-- Qiskit 2.5 is intentionally excluded because it requires NumPy 2; this
-  release retains compatibility with the shared NumPy 1.x environment.
+- Qiskit 2.5 remains intentionally excluded pending a separate compatibility
+  validation; this release targets the shared Qiskit 2.2 environment.
 
 ## 1.1.0
 
