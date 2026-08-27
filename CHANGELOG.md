@@ -14,8 +14,9 @@ All notable user-facing changes to this project are documented here.
 - Accept SamplerV2 primitive results and direct count mappings when interpreting
   folding results.
 - Make Ray an optional `ray` installation extra and import it only when the Ray
-  parallelizer is selected. The workflow notebook now defaults to portable
-  Python multiprocessing.
+  parallelizer is selected. The workflow notebook now defaults to an adaptive
+  policy: Python multiprocessing on Linux and serial evaluation on macOS or
+  Windows, avoiding repeated process-spawn overhead on those platforms.
 - Relax exact dependency pins while retaining NumPy 1.x compatibility for the
   broader scientific Python stack.
 - Add full simulator and IBM Runtime hardware execution modes for both notebook

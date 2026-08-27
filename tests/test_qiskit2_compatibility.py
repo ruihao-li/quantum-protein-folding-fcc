@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import unittest
+from unittest.mock import patch
 
 import numpy as np
 from qiskit.circuit.library import real_amplitudes
@@ -11,6 +12,7 @@ from qiskit.quantum_info import SparsePauliOp
 from qiskit_algorithms.gradients import ParamShiftEstimatorGradient
 
 from fcc.fcc_protein_folding_problem import ProteinFoldingProblem
+from fcc.measurement_utils import process_counts, resolve_parallelizer
 from fcc.utils import compose_IZ_ops
 from vqe import ChanceConstrainedVQEC, OptimisticGDAOpt, PerturbedPrimalDualOpt
 
@@ -92,6 +94,22 @@ class Qiskit2CompatibilityTests(unittest.TestCase):
             sampling_circuit=sampling_circuit,
         )
         self.assertIs(solver._measured_ansatz, sampling_circuit)
+
+    def test_auto_parallelizer_is_platform_aware(self) -> None:
+        with patch("fcc.measurement_utils.sys.platform", "linux"):
+            self.assertEqual(resolve_parallelizer("auto"), "python-mp")
+        with patch("fcc.measurement_utils.sys.platform", "darwin"):
+            self.assertEqual(resolve_parallelizer("auto"), "serial")
+        with patch("fcc.measurement_utils.sys.platform", "win32"):
+            self.assertEqual(resolve_parallelizer("auto"), "serial")
+
+    def test_serial_count_processing_matches_observable(self) -> None:
+        observable = SparsePauliOp.from_list([("ZI", 1.0), ("IZ", 2.0)])
+        energies, measurements = process_counts(
+            {"00": 3, "01": 1}, observable, parallelizer="serial"
+        )
+        self.assertEqual(energies, {"00": 3.0, "01": -1.0})
+        self.assertEqual(measurements, [(0.75, 3.0), (0.25, -1.0)])
 
 
 if __name__ == "__main__":

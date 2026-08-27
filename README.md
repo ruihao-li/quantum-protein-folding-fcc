@@ -75,9 +75,10 @@ API.
    ```bash
    pip install -e ".[ray]"
    ```
-   The workflow uses portable Python multiprocessing by default. Select
-   `PARALLELIZER = "ray"` in the notebook configuration cell to opt into Ray
-   acceleration.
+   The workflow's default `PARALLELIZER = "auto"` uses multiprocessing in
+   Linux/Galaxy containers and serial evaluation for direct macOS or Windows
+   runs, avoiding expensive process spawning. Ray remains an explicit optional
+   accelerator.
 3. [Optional] Run the workflow demo notebook to see how it works:
    ```bash
    jupyter notebook workflow_demo.ipynb

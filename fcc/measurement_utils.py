@@ -5,17 +5,41 @@
 #     http://www.apache.org/licenses/LICENSE-2.0
 
 from itertools import chain
+import multiprocessing as mp
+import sys
 from typing import Iterable, Literal
+
 import numpy as np
 import psutil
-import multiprocessing as mp
 from qiskit.quantum_info import SparsePauliOp
 from qiskit.result import Counts
+
+Parallelizer = Literal["auto", "serial", "python-mp", "ray"]
 
 # https://github.com/qiskit-community/qiskit-algorithms/blob/3fb69b3051f39602b1e4c3f0229a849a2ff6b8e4/qiskit_algorithms/minimum_eigensolvers/diagonal_estimator.py#L190-L197
 _PARITY = np.array(
     [-1 if bin(i).count("1") % 2 else 1 for i in range(256)], dtype=np.float64
 )
+
+
+def resolve_parallelizer(
+    parallelizer: Parallelizer,
+) -> Literal["serial", "python-mp", "ray"]:
+    """Resolve the portable ``auto`` policy for the current operating system.
+
+    Linux uses inexpensive ``fork`` workers, including inside Galaxy Docker
+    containers. macOS and Windows use ``spawn`` workers; repeatedly creating
+    those workers during an optimizer run is substantially slower than direct
+    evaluation for this workload.
+    """
+    if parallelizer == "auto":
+        return "python-mp" if sys.platform.startswith("linux") else "serial"
+    if parallelizer not in ("serial", "python-mp", "ray"):
+        raise ValueError(
+            "Unsupported parallelizer. Supported values are 'auto', 'serial', "
+            "'python-mp', and 'ray'."
+        )
+    return parallelizer
 
 
 def _evaluate_sparsepauli(state: str, observable: SparsePauliOp) -> float:
@@ -117,7 +141,7 @@ def process_counts(
     observable: SparsePauliOp,
     num_batches: int | None = None,
     global_bitstring_energies: dict[str, float] | None = None,
-    parallelizer: Literal["ray", "python-mp"] = "ray",
+    parallelizer: Parallelizer = "auto",
 ) -> tuple[dict[str, float], list[tuple[float, float]]]:
     """
     Process a Counts distribution in parallel batches using Ray. First, it
@@ -136,8 +160,9 @@ def process_counts(
         global dictionary that keeps track of all bitstrings ever measured.
         Bitstrings that are already in this dictionary will not be
         processed. If None, an empty dictionary is used.
-        parallelizer (str, optional): The parallelizer to use. Defaults to
-        "ray". Options: "ray", "python-mp".
+        parallelizer: Energy-evaluation strategy. ``"auto"`` selects
+            multiprocessing on Linux and serial evaluation on macOS/Windows.
+            Explicit options are ``"serial"``, ``"python-mp"``, and ``"ray"``.
 
     Returns:
         state_wise_energies (dict[str, float]): Dictionary where keys are unique
@@ -150,10 +175,7 @@ def process_counts(
     if global_bitstring_energies is None:
         global_bitstring_energies = {}
 
-    if parallelizer not in ("ray", "python-mp"):
-        raise ValueError(
-            "Unsupported parallelizer. Supported values are 'ray' and 'python-mp'."
-        )
+    parallelizer = resolve_parallelizer(parallelizer)
 
     total_shots = sum(counts.values())
     states = list(counts.keys())
@@ -179,14 +201,16 @@ def process_counts(
         num_batches = num_unique_states
     batch_size = num_unique_states // num_batches
 
-    if parallelizer == "ray":
+    if parallelizer == "serial":
+        unique_energies = calculate_batch_energy_mp(unique_states, observable)
+    elif parallelizer == "ray":
         try:
             import ray
         except ImportError as exc:
             raise ImportError(
                 "Ray parallelization requires the optional 'ray' dependency. "
                 "Install quantum-protein-folding-fcc[ray] or select "
-                "parallelizer='python-mp'."
+                "parallelizer='serial' or 'python-mp'."
             ) from exc
 
         observable_id = ray.put(observable)
