@@ -6,9 +6,8 @@
 
 """Builds Pauli operators of a given size."""
 
-from qiskit.quantum_info import SparsePauliOp, PauliList
-from qiskit._accelerate.sparse_pauli_op import unordered_unique
 import numpy as np
+from qiskit.quantum_info import PauliList, SparsePauliOp
 
 
 def build_full_identity(num_qubits: int) -> SparsePauliOp:
@@ -239,7 +238,12 @@ def compose_IZ_ops(op_1: SparsePauliOp, op_2: SparsePauliOp) -> SparsePauliOp:
     # Simplify the pauli op here
     array = np.packbits(z_combined, axis=1).astype(np.uint16)
     # Find unique Pauli terms
-    indices, inverses = unordered_unique(array)
+    # Do not depend on Qiskit's private ``qiskit._accelerate`` implementation.
+    # NumPy provides the public, stable operation needed here and returns both
+    # representative row indices and the inverse map used to combine terms.
+    _, indices, inverses = np.unique(
+        array, axis=0, return_index=True, return_inverse=True
+    )
 
     if indices.shape[0] == array.shape[0]:
         # No duplicate operator

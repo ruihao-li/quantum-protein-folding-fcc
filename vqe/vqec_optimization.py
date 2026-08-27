@@ -69,9 +69,8 @@ class PerturbedPrimalDualOpt:
         Returns:
             The expectation value of the observable.
         """
-        return (
-            self._estimator.run([(circuit, observable, params)]).result()[0].data.evs[0]
-        )
+        values = self._estimator.run([(circuit, observable, params)]).result()[0].data.evs
+        return float(np.asarray(values).reshape(-1)[0])
 
     def _evaluate_primitives(self, params: np.ndarray) -> tuple[float, np.ndarray]:
         """Evaluate the objective and constraint residuals at ``params``.
@@ -334,7 +333,7 @@ class OptimisticGDAOpt:
         qubit_op: SparsePauliOp,
         constr_ops: list[SparsePauliOp],
         ansatz: QuantumCircuit,
-        estimator: BaseEstimator,
+        estimator: BaseEstimatorV2,
         gradient: BaseEstimatorGradient,
     ):
         """
@@ -370,7 +369,8 @@ class OptimisticGDAOpt:
         Returns:
             The expectation value of the observable.
         """
-        return self._estimator.run(circuit, observable, params).result().values[0]
+        values = self._estimator.run([(circuit, observable, params)]).result()[0].data.evs
+        return float(np.asarray(values).reshape(-1)[0])
 
     def optimize_primal_dual(
         self,

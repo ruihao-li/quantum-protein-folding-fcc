@@ -8,7 +8,6 @@ from itertools import chain
 from typing import Iterable, Literal
 import numpy as np
 import psutil
-import ray
 import multiprocessing as mp
 from qiskit.quantum_info import SparsePauliOp
 from qiskit.result import Counts
@@ -73,7 +72,6 @@ def get_cvar_energy(
     return cvar / alpha
 
 
-@ray.remote
 def calculate_batch_energy_ray(
     conf_bitstring_list: list[str],
     observable: SparsePauliOp,
@@ -182,12 +180,22 @@ def process_counts(
     batch_size = num_unique_states // num_batches
 
     if parallelizer == "ray":
+        try:
+            import ray
+        except ImportError as exc:
+            raise ImportError(
+                "Ray parallelization requires the optional 'ray' dependency. "
+                "Install quantum-protein-folding-fcc[ray] or select "
+                "parallelizer='python-mp'."
+            ) from exc
+
         observable_id = ray.put(observable)
+        remote_calculate_batch_energy = ray.remote(calculate_batch_energy_ray)
         doubled_batch_refs = []
         for i in range(0, num_unique_states, batch_size):
             batch_states = unique_states[i : i + batch_size]
             doubled_batch_refs.append(
-                calculate_batch_energy_ray.remote(batch_states, observable_id)
+                remote_calculate_batch_energy.remote(batch_states, observable_id)
             )
         unique_energies = list(chain(*ray.get(doubled_batch_refs)))
         assert num_unique_states == len(unique_energies)

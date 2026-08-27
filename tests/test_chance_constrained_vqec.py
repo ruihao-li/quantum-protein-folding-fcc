@@ -5,7 +5,7 @@ from __future__ import annotations
 import unittest
 
 import numpy as np
-from qiskit.circuit.library import RealAmplitudes
+from qiskit.circuit.library import real_amplitudes
 from qiskit.quantum_info import Statevector
 from qiskit_aer.primitives import SamplerV2 as Sampler
 
@@ -44,9 +44,9 @@ class ChanceConstrainedVQECTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.model = build_turn_only_fcc_model("ACDE", objective_scale=20.0)
-        cls.ansatz = RealAmplitudes(
+        cls.ansatz = real_amplitudes(
             cls.model.num_qubits, reps=1, entanglement="linear"
-        ).decompose()
+        )
         cls.parameters = np.linspace(
             0.13, 1.37, cls.ansatz.num_parameters, dtype=float
         )

@@ -2,6 +2,27 @@
 
 All notable user-facing changes to this project are documented here.
 
+## Unreleased
+
+### Changed
+
+- Support Qiskit 2.0 through 2.4 using SamplerV2 and EstimatorV2 public APIs.
+- Replace the deprecated `RealAmplitudes` class with `real_amplitudes()` in the
+  workflow, examples, and tests.
+- Replace the private `qiskit._accelerate` dependency with NumPy-based Pauli
+  term deduplication.
+- Accept SamplerV2 primitive results and direct count mappings when interpreting
+  folding results.
+- Make Ray an optional `ray` installation extra and import it only when the Ray
+  parallelizer is selected.
+- Relax exact dependency pins while retaining NumPy 1.x compatibility for the
+  broader scientific Python stack.
+
+### Compatibility
+
+- Qiskit 2.5 is intentionally excluded because it requires NumPy 2; this
+  release retains compatibility with the shared NumPy 1.x environment.
+
 ## 1.1.0
 
 ### Added

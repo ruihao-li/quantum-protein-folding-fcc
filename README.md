@@ -1,5 +1,5 @@
 # quantum-protein-folding-fcc
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) [![Supported Python Versions](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/) ![Qiskit](https://img.shields.io/badge/qiskit-1.4+-green.svg)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) [![Supported Python Versions](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/) ![Qiskit](https://img.shields.io/badge/qiskit-2.x-green.svg)
 
 
 Link to the paper: [Quantum Algorithm for Protein Structure Prediction Using the Face-Centered Cubic Lattice](https://doi.org/10.48550/arXiv.2507.08955)
@@ -26,16 +26,16 @@ optimizer-side postselection are not used.
 
 ```python
 import numpy as np
-from qiskit.circuit.library import RealAmplitudes
+from qiskit.circuit.library import real_amplitudes
 from qiskit_aer.primitives import SamplerV2 as Sampler
 
 from fcc import build_turn_only_fcc_model
 from vqe import ChanceConstrainedVQEC
 
 model = build_turn_only_fcc_model("KLVFFA")
-ansatz = RealAmplitudes(
+ansatz = real_amplitudes(
     model.num_qubits, reps=1, entanglement="linear"
-).decompose()
+)
 
 # One explicit overlap-probability limit for each model.constrained_pairs item.
 delta_mn = np.full(model.constraint_count, 0.01)
@@ -71,10 +71,18 @@ API.
    cd quantum-protein-folding-fcc
    pip install -e .
    ```
+   Ray-based parallel processing is optional. Install it with:
+   ```bash
+   pip install -e ".[ray]"
+   ```
 3. [Optional] Run the workflow demo notebook to see how it works:
    ```bash
    jupyter notebook workflow_demo.ipynb
    ```
+
+The package supports Qiskit 2.0 through 2.4. Qiskit 2.5 requires NumPy 2,
+while this release retains NumPy 1.x compatibility for the broader scientific
+Python stack used by the workflow.
 
 ---
 

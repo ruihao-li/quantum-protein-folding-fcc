@@ -58,7 +58,7 @@ class ChanceConstrainedVQEC(PerturbedPrimalDualOpt):
 
     The ansatz must be an unmeasured circuit whose parameters each obey the
     standard ``+/- pi/2`` shift rule, such as a decomposed
-    ``RealAmplitudes`` circuit. Every sampled bitstring is passed to the
+    ``real_amplitudes`` circuit. Every sampled bitstring is passed to the
     problem without filtering or postselection.
     """
 
