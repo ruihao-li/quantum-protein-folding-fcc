@@ -6,6 +6,7 @@ import unittest
 from unittest.mock import patch
 
 import numpy as np
+from qiskit import ClassicalRegister
 from qiskit.circuit.library import real_amplitudes
 from qiskit.primitives import StatevectorEstimator
 from qiskit.quantum_info import SparsePauliOp
@@ -94,6 +95,69 @@ class Qiskit2CompatibilityTests(unittest.TestCase):
             sampling_circuit=sampling_circuit,
         )
         self.assertIs(solver._measured_ansatz, sampling_circuit)
+
+    def test_sampling_circuit_uses_actual_measurement_register(self) -> None:
+        class Problem:
+            num_qubits = 2
+            objective_scale = 1.0
+            constraint_count = 1
+
+        class MeasurementData:
+            def get_counts(self):
+                return {"00": 3}
+
+        class PubResult:
+            class Data:
+                readout = MeasurementData()
+
+            data = Data()
+
+        class Sampler:
+            def run(self, *args, **kwargs):
+                return self
+
+            def result(self):
+                return [PubResult()]
+
+        ansatz = real_amplitudes(2, reps=1)
+        sampling_circuit = ansatz.copy()
+        readout = ClassicalRegister(2, "readout")
+        sampling_circuit.add_register(readout)
+        for qubit, clbit in zip(sampling_circuit.qubits, readout):
+            sampling_circuit.measure(qubit, clbit)
+        solver = ChanceConstrainedVQEC(
+            Problem(),
+            ansatz,
+            Sampler(),
+            constraint_limits=[0.01],
+            shots=3,
+            sampling_circuit=sampling_circuit,
+        )
+        self.assertEqual(solver._measurement_register_name, "readout")
+        self.assertEqual(solver.sample_counts(np.zeros(ansatz.num_parameters)), ({"00": 3},))
+
+    def test_sampling_circuit_rejects_unused_classical_bits(self) -> None:
+        class Problem:
+            num_qubits = 2
+            objective_scale = 1.0
+            constraint_count = 1
+
+        class Sampler:
+            def run(self, *args, **kwargs):  # pragma: no cover - not submitted
+                raise AssertionError("constructor test must not submit")
+
+        ansatz = real_amplitudes(2, reps=1)
+        sampling_circuit = ansatz.copy()
+        sampling_circuit.add_register(ClassicalRegister(2, "unused"))
+        with self.assertRaises(ValueError):
+            ChanceConstrainedVQEC(
+                Problem(),
+                ansatz,
+                Sampler(),
+                constraint_limits=[0.01],
+                shots=100,
+                sampling_circuit=sampling_circuit,
+            )
 
     def test_auto_parallelizer_is_platform_aware(self) -> None:
         with patch("fcc.measurement_utils.sys.platform", "linux"):

@@ -84,9 +84,10 @@ API.
    jupyter notebook workflow_demo.ipynb
    ```
 
-The package supports Qiskit 2.0 through 2.4. Qiskit 2.5 requires NumPy 2,
-while this release retains NumPy 1.x compatibility for the broader scientific
-Python stack used by the workflow.
+The package supports Qiskit 2.0 through 2.4 and requires NumPy 2.x
+(`numpy>=2,<2.3`) for compatibility with the shared scientific Python and
+Qiskit Machine Learning stack. Qiskit 2.5 remains outside this release's
+validated compatibility range.
 
 The notebook contains a single, extensively commented configuration cell for
 simulator, optimizer, parallelization, reproducibility, warm-start, and hardware

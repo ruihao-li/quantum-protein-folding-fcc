@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import math
+from collections import Counter
 from collections.abc import Mapping, Sequence
 from typing import Protocol
 
@@ -131,16 +132,43 @@ class ChanceConstrainedVQEC(PerturbedPrimalDualOpt):
         if sampling_circuit is None:
             self._measured_ansatz = ansatz.copy()
             self._measured_ansatz.measure_all()
+            self._measurement_register_name = "meas"
         else:
             if not isinstance(sampling_circuit, QuantumCircuit):
                 raise TypeError("sampling_circuit must be a QuantumCircuit")
-            if sampling_circuit.num_clbits < problem.num_qubits:
-                raise ValueError(
-                    "sampling_circuit must measure every logical problem qubit"
-                )
             if set(sampling_circuit.parameters) != set(ansatz.parameters):
                 raise ValueError(
                     "sampling_circuit and ansatz must contain the same parameters"
+                )
+
+            # SamplerV2 exposes counts through the classical register name.  A
+            # simple num_clbits check is insufficient: a circuit may contain
+            # unused bits or measure into a differently named register.  Find a
+            # complete, exactly-once measured register of the logical width and
+            # remember its actual name for result extraction.
+            measured_clbits = Counter()
+            for instruction in sampling_circuit.data:
+                if instruction.operation.name == "measure":
+                    measured_clbits.update(instruction.clbits)
+            candidate_registers = [
+                creg.name
+                for creg in sampling_circuit.cregs
+                if len(creg) == int(problem.num_qubits)
+                and all(measured_clbits[clbit] == 1 for clbit in creg)
+            ]
+            if not candidate_registers:
+                raise ValueError(
+                    "sampling_circuit must contain one fully measured classical "
+                    "register matching the logical problem width"
+                )
+            if "meas" in candidate_registers:
+                self._measurement_register_name = "meas"
+            elif len(candidate_registers) == 1:
+                self._measurement_register_name = candidate_registers[0]
+            else:
+                raise ValueError(
+                    "sampling_circuit has multiple eligible measurement registers; "
+                    "name the intended register 'meas'"
                 )
             self._measured_ansatz = sampling_circuit
 
@@ -214,10 +242,12 @@ class ChanceConstrainedVQEC(PerturbedPrimalDualOpt):
         for pub_result in result:
             data = pub_result.data
             try:
-                counts = data.meas.get_counts()
+                measurement_data = getattr(data, self._measurement_register_name)
+                counts = measurement_data.get_counts()
             except AttributeError as exc:
                 raise ValueError(
-                    "Sampler result does not contain the expected 'meas' register"
+                    "Sampler result does not contain the configured "
+                    f"'{self._measurement_register_name}' register"
                 ) from exc
             normalized = {
                 str(bitstring).replace(" ", ""): int(count)
