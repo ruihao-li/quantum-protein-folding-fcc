@@ -1,5 +1,5 @@
 # quantum-protein-folding-fcc
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) [![Supported Python Versions](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/) ![Qiskit](https://img.shields.io/badge/qiskit-1.4+-green.svg)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) [![Supported Python Versions](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/) ![Qiskit](https://img.shields.io/badge/qiskit-2.x-green.svg)
 
 
 Link to the paper: [Quantum Algorithm for Protein Structure Prediction Using the Face-Centered Cubic Lattice](https://doi.org/10.48550/arXiv.2507.08955)
@@ -26,16 +26,16 @@ optimizer-side postselection are not used.
 
 ```python
 import numpy as np
-from qiskit.circuit.library import RealAmplitudes
+from qiskit.circuit.library import real_amplitudes
 from qiskit_aer.primitives import SamplerV2 as Sampler
 
 from fcc import build_turn_only_fcc_model
 from vqe import ChanceConstrainedVQEC
 
 model = build_turn_only_fcc_model("KLVFFA")
-ansatz = RealAmplitudes(
+ansatz = real_amplitudes(
     model.num_qubits, reps=1, entanglement="linear"
-).decompose()
+)
 
 # One explicit overlap-probability limit for each model.constrained_pairs item.
 delta_mn = np.full(model.constraint_count, 0.01)
@@ -71,10 +71,36 @@ API.
    cd quantum-protein-folding-fcc
    pip install -e .
    ```
+   Ray-based parallel processing is optional. Install it with:
+   ```bash
+   pip install -e ".[ray]"
+   ```
+   The workflow's default `PARALLELIZER = "auto"` uses multiprocessing in
+   Linux/Galaxy containers and serial evaluation for direct macOS or Windows
+   runs, avoiding expensive process spawning. Ray remains an explicit optional
+   accelerator.
 3. [Optional] Run the workflow demo notebook to see how it works:
    ```bash
    jupyter notebook workflow_demo.ipynb
    ```
+
+The package supports Qiskit 2.0 through 2.4 and requires NumPy 2.x
+(`numpy>=2,<2.3`) for compatibility with the shared scientific Python and
+Qiskit Machine Learning stack. Qiskit 2.5 remains outside this release's
+validated compatibility range.
+
+The notebook contains a single, extensively commented configuration cell for
+simulator, optimizer, parallelization, reproducibility, warm-start, and hardware
+settings. `EXECUTION_MODE = "simulator"` runs both workflows locally and saves
+their optimized parameters. Change it to `"hardware"` to load those parameters
+and refine both workflows on an IBM QPU. Separate hardware iteration budgets
+limit QPU use. Set `HARDWARE_BACKEND` to choose a backend; `None` selects the
+least-busy operational QPU with enough qubits.
+
+Warm starts are stored in `fcc_warm_start.npz` by default. The notebook checks
+the protein sequence, logical qubit count, ansatz depth, constraint count, and
+parameter-vector sizes before using saved values, preventing an incompatible
+simulator result from being submitted to hardware.
 
 ---
 

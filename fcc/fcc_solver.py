@@ -25,7 +25,7 @@ class ProteinSolver:
         ansatz: QuantumCircuit,
         hamiltonian: SparsePauliOp,
         sampler: BaseSampler,
-        parallelizer: str = "ray",
+        parallelizer: str = "auto",
     ):
         """
         Initialize the solver.
@@ -35,8 +35,9 @@ class ProteinSolver:
             measurements).
             hamiltonian: The Hamiltonian to use.
             sampler: The sampler to use.
-            parallelizer: The parallelizer to use. Defaults to "ray". Options:
-            "ray", "python-mp".
+            parallelizer: Energy-evaluation strategy. ``"auto"`` selects
+            multiprocessing on Linux and serial evaluation on macOS/Windows.
+            Explicit options are ``"serial"``, ``"python-mp"``, and ``"ray"``.
         """
         self.ansatz = ansatz
         if self.ansatz.num_clbits == 0:

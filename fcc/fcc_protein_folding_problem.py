@@ -6,9 +6,11 @@
 
 """A class for the protein folding problem on an FCC lattice."""
 
+from collections.abc import Mapping
+from typing import Any
+
 from qiskit.quantum_info import SparsePauliOp
 from qiskit_algorithms.minimum_eigensolvers import SamplingVQEResult
-from qiskit.primitives import SamplerResult
 from .fcc_peptide import Peptide
 from .fcc_penalty_parameters import PenaltyParameters
 from .fcc_mj_interaction import MiyazawaJerniganInteraction
@@ -85,7 +87,7 @@ class ProteinFoldingProblem:
         return bead_pairs, olap_constr_ops
 
     def interpret(
-        self, raw_result: SamplingVQEResult | SamplerResult
+        self, raw_result: SamplingVQEResult | Mapping[str, int] | Any
     ) -> ProteinFoldingResult:
         """
         Interprets the raw algorithm result and returns a ProteinFoldingResult
@@ -97,16 +99,44 @@ class ProteinFoldingProblem:
         Returns:
             A ProteinFoldingResult object that includes the interpreted result.
         """
-        try:
-            best_turn_bitstring = raw_result.best_measurement["bitstring"]
-        except AttributeError:
-            prob_dist = raw_result.quasi_dists[0].binary_probabilities()
-            # Find the most probable bitstring
-            best_turn_bitstring = max(prob_dist, key=prob_dist.get)
+        best_measurement = getattr(raw_result, "best_measurement", None)
+        if best_measurement is not None:
+            best_turn_bitstring = best_measurement["bitstring"]
+        else:
+            counts = self._extract_counts(raw_result)
+            best_turn_bitstring = max(counts, key=counts.get)
         return ProteinFoldingResult(
             peptide=self._peptide,
             unused_qubits=self._unused_qubits,
             solution_bitstring=best_turn_bitstring,
+        )
+
+    @staticmethod
+    def _extract_counts(raw_result: Any) -> Mapping[str, float]:
+        """Extract a bitstring distribution from Sampler V2 or legacy results."""
+        if isinstance(raw_result, Mapping):
+            return raw_result
+
+        # Sampler V2 returns a PrimitiveResult containing one or more
+        # PubResults. Accept a PubResult directly as well for convenience.
+        pub_result = raw_result
+        try:
+            pub_result = raw_result[0]
+        except (TypeError, IndexError, KeyError):
+            pass
+        measurement_data = getattr(getattr(pub_result, "data", None), "meas", None)
+        if measurement_data is not None and hasattr(measurement_data, "get_counts"):
+            return measurement_data.get_counts()
+
+        # Retain compatibility with SamplingVQE and the former Sampler V1
+        # result shape without importing the removed SamplerResult class.
+        quasi_dists = getattr(raw_result, "quasi_dists", None)
+        if quasi_dists:
+            return quasi_dists[0].binary_probabilities()
+
+        raise TypeError(
+            "raw_result must be a SamplingVQE result, a Sampler V2 result, "
+            "or a bitstring-to-count mapping"
         )
 
     @property

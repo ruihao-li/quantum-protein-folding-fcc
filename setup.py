@@ -43,6 +43,9 @@ setup(
         *collect_data_files("classical_search", DATA_INSTALL_PREFIX),
     ],
     install_requires=load_requirements("requirements.txt"),
+    extras_require={
+        "ray": ["ray>=2.47"],
+    },
     python_requires=">=3.10",
     license="Apache-2.0",
     classifiers=[
